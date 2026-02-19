@@ -4,6 +4,7 @@ const express = require('express');
 const WebSocket = require('ws');
 const osc = require('osc');
 const { parseOscMessage } = require('./src/oscParser');
+const { loadLayouts } = require('./src/layouts');
 
 const HTTP_PORT = Number(process.env.PORT || 3000);
 const OSC_PORT = Number(process.env.OSC_PORT || 9000);
@@ -14,8 +15,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+const layouts = loadLayouts();
+
 const state = {
-  sources: {}
+  sources: {},
+  layouts,
+  selectedLayoutKey: layouts[0]?.key || null
 };
 
 function broadcast(payload) {
@@ -69,10 +74,28 @@ oscUdpPort.on('error', (err) => {
 });
 
 wss.on('connection', (ws) => {
+  ws.on('message', (message) => {
+    try {
+      const payload = JSON.parse(message.toString());
+      if (payload?.type === 'layout:select') {
+        const hasLayout = state.layouts.some((layout) => layout.key === payload.key);
+        if (!hasLayout) {
+          return;
+        }
+        state.selectedLayoutKey = payload.key;
+        broadcast({ type: 'layout:selected', key: state.selectedLayoutKey });
+      }
+    } catch {
+      // Ignore invalid client payloads.
+    }
+  });
+
   ws.send(
     JSON.stringify({
       type: 'state:init',
-      sources: state.sources
+      sources: state.sources,
+      layouts: state.layouts,
+      selectedLayoutKey: state.selectedLayoutKey
     })
   );
 });

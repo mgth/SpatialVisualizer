@@ -1,6 +1,7 @@
 import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
 
 const statusEl = document.getElementById('status');
+const layoutSelectEl = document.getElementById('layoutSelect');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -30,8 +31,13 @@ const axes = new THREE.AxesHelper(1.2);
 scene.add(axes);
 
 const sourceMeshes = new Map();
+const speakerMeshes = [];
 const sourceMaterial = new THREE.MeshStandardMaterial({ color: 0xff7c4d, emissive: 0x64210c });
 const sourceGeometry = new THREE.SphereGeometry(0.07, 24, 24);
+const speakerGeometry = new THREE.SphereGeometry(0.04, 16, 16);
+const speakerMaterial = new THREE.MeshStandardMaterial({ color: 0x8ec8ff, emissive: 0x10253a });
+
+const layoutsByKey = new Map();
 
 function getSourceMesh(id) {
   if (!sourceMeshes.has(id)) {
@@ -57,6 +63,51 @@ function removeSource(id) {
   sourceMeshes.delete(id);
 }
 
+function clearSpeakers() {
+  speakerMeshes.forEach((mesh) => {
+    scene.remove(mesh);
+    mesh.geometry.dispose();
+    mesh.material.dispose();
+  });
+  speakerMeshes.length = 0;
+}
+
+function renderLayout(key) {
+  clearSpeakers();
+  const layout = layoutsByKey.get(key);
+  if (!layout) {
+    return;
+  }
+
+  layout.speakers.forEach((speaker) => {
+    const mesh = new THREE.Mesh(speakerGeometry.clone(), speakerMaterial.clone());
+    mesh.position.set(speaker.x, speaker.y, speaker.z);
+    scene.add(mesh);
+    speakerMeshes.push(mesh);
+  });
+}
+
+function hydrateLayoutSelect(layouts, selectedLayoutKey) {
+  layoutsByKey.clear();
+  layoutSelectEl.innerHTML = '';
+
+  layouts.forEach((layout) => {
+    layoutsByKey.set(layout.key, layout);
+
+    const option = document.createElement('option');
+    option.value = layout.key;
+    option.textContent = layout.name;
+    layoutSelectEl.appendChild(option);
+  });
+
+  if (selectedLayoutKey && layoutsByKey.has(selectedLayoutKey)) {
+    layoutSelectEl.value = selectedLayoutKey;
+    renderLayout(selectedLayoutKey);
+  }
+
+  layoutSelectEl.disabled = layouts.length === 0;
+}
+
 const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
 const ws = new WebSocket(`${wsProtocol}://${location.host}`);
 
@@ -68,6 +119,19 @@ ws.onclose = () => {
   statusEl.textContent = 'déconnecté';
 };
 
+layoutSelectEl.addEventListener('change', () => {
+  if (ws.readyState !== WebSocket.OPEN) {
+    return;
+  }
+
+  ws.send(
+    JSON.stringify({
+      type: 'layout:select',
+      key: layoutSelectEl.value
+    })
+  );
+});
+
 ws.onmessage = (event) => {
   const payload = JSON.parse(event.data);
 
@@ -75,6 +139,14 @@ ws.onmessage = (event) => {
     Object.entries(payload.sources).forEach(([id, position]) => {
       updateSource(id, position);
     });
+    hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
+  }
+
+  if (payload.type === 'layout:selected') {
+    if (payload.key && layoutsByKey.has(payload.key)) {
+      layoutSelectEl.value = payload.key;
+      renderLayout(payload.key);
+    }
   }
 
   if (payload.type === 'source:update') {

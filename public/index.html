@@ -33,6 +33,11 @@
       #status {
         font-weight: 700;
       }
+
+      #layoutSelect {
+        margin-top: 0.35rem;
+        width: 100%;
+      }
     </style>
   </head>
   <body>
@@ -40,6 +45,10 @@
       <div><strong>Spatial Visualizer</strong></div>
       <div>WS: <span id="status">connexion...</span></div>
       <div>OSC attendu: <code>/source/position id x y z</code></div>
+      <label for="layoutSelect">Layout:</label>
+      <select id="layoutSelect" disabled>
+        <option>Chargement...</option>
+      </select>
     </div>
 
     <script type="module" src="./app.js"></script>
