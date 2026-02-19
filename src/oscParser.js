@@ -72,11 +72,11 @@ function mapCartesianByAddress(parts, position) {
     return position;
   }
 
-  // truehdd/object/{id}/xyz uses x=right, y=up, z=front.
+  // truehdd/object/{id}/xyz uses x=right, y=front, z=up.
   // Our scene convention is x=front, y=up, z=right.
   return {
-    x: position.z,
-    y: position.y,
+    x: position.y,
+    y: position.z,
     z: position.x
   };
 }

@@ -36,7 +36,7 @@ test('parse spherical /source/kick/aed', () => {
 test('map truehdd object xyz orientation to scene convention', () => {
   const out = parseOscMessage({
     address: '/truehdd/object/10/xyz',
-    args: [0.2, 0.1, 0.8]
+    args: [0.2, 0.8, 0.1]
   });
 
   assert.deepEqual(out, {
