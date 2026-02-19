@@ -12,8 +12,17 @@ test('normalizeSpeaker supports spherical coordinates', () => {
 
 test('loadLayouts returns available layouts', () => {
   const layouts = loadLayouts();
-  assert.ok(layouts.length >= 2);
+  assert.equal(layouts.length, 8);
   const stereo = layouts.find((l) => l.key === 'stereo');
   assert.ok(stereo);
   assert.equal(stereo.speakers.length, 2);
+
+  const atmos = layouts.find((l) => l.key === '7.1.4');
+  assert.ok(atmos);
+  assert.ok(atmos.speakers.length >= 10);
+
+  const json51 = layouts.find((l) => l.key === '5.1-json');
+  const yaml51 = layouts.find((l) => l.key === '5.1-yaml');
+  assert.ok(json51);
+  assert.ok(yaml51);
 });
