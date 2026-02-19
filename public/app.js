@@ -41,8 +41,13 @@ const sourceMeshes = new Map();
 const speakerMeshes = [];
 const sourceMaterial = new THREE.MeshStandardMaterial({ color: 0xff7c4d, emissive: 0x64210c });
 const sourceGeometry = new THREE.SphereGeometry(0.07, 24, 24);
-const speakerGeometry = new THREE.SphereGeometry(0.04, 16, 16);
-const speakerMaterial = new THREE.MeshStandardMaterial({ color: 0x8ec8ff, emissive: 0x10253a });
+const speakerGeometry = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+const speakerMaterial = new THREE.MeshStandardMaterial({
+  color: 0x8ec8ff,
+  emissive: 0x10253a,
+  transparent: true,
+  opacity: 0.65
+});
 
 const layoutsByKey = new Map();
 
