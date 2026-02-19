@@ -39,6 +39,8 @@ scene.add(axes);
 
 const sourceMeshes = new Map();
 const speakerMeshes = [];
+const sourceLevels = new Map();
+const speakerLevels = new Map();
 const sourceMaterial = new THREE.MeshStandardMaterial({ color: 0xff7c4d, emissive: 0x64210c });
 const sourceGeometry = new THREE.SphereGeometry(0.07, 24, 24);
 const speakerGeometry = new THREE.BoxGeometry(0.08, 0.08, 0.08);
@@ -51,12 +53,29 @@ const speakerMaterial = new THREE.MeshStandardMaterial({
 
 const layoutsByKey = new Map();
 
+function dbfsToScale(dbfs, minScale, maxScale) {
+  const clamped = Math.min(0, Math.max(-100, Number(dbfs ?? -100)));
+  const normalized = (clamped + 100) / 100;
+  return minScale + normalized * (maxScale - minScale);
+}
+
+function applySourceLevel(mesh, meter) {
+  const scale = dbfsToScale(meter?.rmsDbfs, 0.5, 2.4);
+  mesh.scale.setScalar(scale);
+}
+
+function applySpeakerLevel(mesh, meter) {
+  const scale = dbfsToScale(meter?.rmsDbfs, 0.65, 2.2);
+  mesh.scale.setScalar(scale);
+}
+
 function getSourceMesh(id) {
   if (!sourceMeshes.has(id)) {
     const mesh = new THREE.Mesh(sourceGeometry, sourceMaterial.clone());
     mesh.material.color.setHSL(Math.random(), 0.8, 0.6);
     scene.add(mesh);
     sourceMeshes.set(id, mesh);
+    applySourceLevel(mesh, sourceLevels.get(id));
   }
   return sourceMeshes.get(id);
 }
@@ -66,6 +85,14 @@ function updateSource(id, position) {
   mesh.position.set(position.x, position.y, position.z);
 }
 
+function updateSourceLevel(id, meter) {
+  sourceLevels.set(id, meter);
+  const mesh = sourceMeshes.get(id);
+  if (mesh) {
+    applySourceLevel(mesh, meter);
+  }
+}
+
 function removeSource(id) {
   const mesh = sourceMeshes.get(id);
   if (!mesh) return;
@@ -73,6 +100,7 @@ function removeSource(id) {
   mesh.geometry.dispose();
   mesh.material.dispose();
   sourceMeshes.delete(id);
+  sourceLevels.delete(id);
 }
 
 function clearSpeakers() {
@@ -91,12 +119,21 @@ function renderLayout(key) {
     return;
   }
 
-  layout.speakers.forEach((speaker) => {
+  layout.speakers.forEach((speaker, index) => {
     const mesh = new THREE.Mesh(speakerGeometry.clone(), speakerMaterial.clone());
     mesh.position.set(speaker.x, speaker.y, speaker.z);
     scene.add(mesh);
     speakerMeshes.push(mesh);
+    applySpeakerLevel(mesh, speakerLevels.get(String(index)));
   });
+}
+
+function updateSpeakerLevel(index, meter) {
+  speakerLevels.set(String(index), meter);
+  const mesh = speakerMeshes[index];
+  if (mesh) {
+    applySpeakerLevel(mesh, meter);
+  }
 }
 
 function hydrateLayoutSelect(layouts, selectedLayoutKey) {
@@ -151,6 +188,13 @@ ws.onmessage = (event) => {
     Object.entries(payload.sources).forEach(([id, position]) => {
       updateSource(id, position);
     });
+    Object.entries(payload.sourceLevels || {}).forEach(([id, meter]) => {
+      updateSourceLevel(id, meter);
+    });
+    Object.entries(payload.speakerLevels || {}).forEach(([index, meter]) => {
+      updateSpeakerLevel(Number(index), meter);
+    });
+
     hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
   }
 
@@ -163,6 +207,14 @@ ws.onmessage = (event) => {
 
   if (payload.type === 'source:update') {
     updateSource(payload.id, payload.position);
+  }
+
+  if (payload.type === 'source:meter') {
+    updateSourceLevel(payload.id, payload.meter);
+  }
+
+  if (payload.type === 'speaker:meter') {
+    updateSpeakerLevel(Number(payload.id), payload.meter);
   }
 
   if (payload.type === 'source:remove') {

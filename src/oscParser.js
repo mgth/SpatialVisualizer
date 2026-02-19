@@ -41,10 +41,38 @@ function findIdInAddress(parts) {
   return null;
 }
 
+function parseMeterMessage(parts, args) {
+  const meterIndex = parts.indexOf('meter');
+  if (meterIndex === -1 || parts.length <= meterIndex + 2) {
+    return null;
+  }
+
+  const meterKind = parts[meterIndex + 1];
+  const meterId = parts[meterIndex + 2];
+  const [peakRaw, rmsRaw] = args;
+  const peakDbfs = clamp(toNumber(peakRaw) ?? -100, -100, 0);
+  const rmsDbfs = clamp(toNumber(rmsRaw) ?? -100, -100, 0);
+
+  if (!['object', 'speaker'].includes(meterKind) || !meterId) {
+    return null;
+  }
+
+  return {
+    type: meterKind === 'object' ? 'meter:object' : 'meter:speaker',
+    id: String(meterId),
+    peakDbfs,
+    rmsDbfs
+  };
+}
+
 function parseOscMessage(oscMsg) {
   const address = String(oscMsg.address || '');
   const parts = address.split('/').filter(Boolean).map((p) => p.toLowerCase());
   const args = (oscMsg.args || []).map(unwrapArg);
+
+  if (parts.includes('meter')) {
+    return parseMeterMessage(parts, args);
+  }
 
   const isRemove = parts.some((p) => ['remove', 'delete', 'off'].includes(p));
   if (isRemove) {

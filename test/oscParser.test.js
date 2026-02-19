@@ -38,3 +38,29 @@ test('parse remove message', () => {
   });
   assert.deepEqual(out, { type: 'remove', id: 'kick' });
 });
+
+test('parse object meter message', () => {
+  const out = parseOscMessage({
+    address: '/truehdd/meter/object/10',
+    args: [-4.2, -18.7]
+  });
+  assert.deepEqual(out, {
+    type: 'meter:object',
+    id: '10',
+    peakDbfs: -4.2,
+    rmsDbfs: -18.7
+  });
+});
+
+test('parse speaker meter message', () => {
+  const out = parseOscMessage({
+    address: '/truehdd/meter/speaker/3',
+    args: [{ type: 'f', value: 1.2 }, { type: 'f', value: -120 }]
+  });
+  assert.deepEqual(out, {
+    type: 'meter:speaker',
+    id: '3',
+    peakDbfs: 0,
+    rmsDbfs: -100
+  });
+});
