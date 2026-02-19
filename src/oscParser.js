@@ -1,0 +1,102 @@
+function unwrapArg(arg) {
+  return arg && typeof arg === 'object' && Object.prototype.hasOwnProperty.call(arg, 'value')
+    ? arg.value
+    : arg;
+}
+
+function toNumber(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function sphericalToCartesian(azimuthDeg, elevationDeg, distance) {
+  const az = (azimuthDeg * Math.PI) / 180;
+  const el = (elevationDeg * Math.PI) / 180;
+  const d = distance;
+
+  const x = d * Math.cos(el) * Math.cos(az);
+  const y = d * Math.sin(el);
+  const z = d * Math.cos(el) * Math.sin(az);
+
+  return { x, y, z };
+}
+
+function findIdInAddress(parts) {
+  const anchors = ['source', 'sources', 'object', 'obj', 'track', 'channel'];
+  const reserved = new Set(['position', 'pos', 'xyz', 'aed', 'spherical', 'polar', 'angles', 'remove', 'delete', 'off']);
+
+  for (let i = 0; i < parts.length - 1; i += 1) {
+    if (anchors.includes(parts[i])) {
+      const candidate = parts[i + 1];
+      if (!reserved.has(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return null;
+}
+
+function parseOscMessage(oscMsg) {
+  const address = String(oscMsg.address || '');
+  const parts = address.split('/').filter(Boolean).map((p) => p.toLowerCase());
+  const args = (oscMsg.args || []).map(unwrapArg);
+
+  const isRemove = parts.some((p) => ['remove', 'delete', 'off'].includes(p));
+  if (isRemove) {
+    const idFromAddress = findIdInAddress(parts);
+    const idFromArg = args.length > 0 ? String(args[0]) : null;
+    const id = idFromArg || idFromAddress;
+    return id ? { type: 'remove', id } : null;
+  }
+
+  const idFromAddress = findIdInAddress(parts);
+
+  const hasSphericalHint = parts.some((p) => ['aed', 'spherical', 'polar', 'angles'].includes(p));
+  const hasPositionHint = parts.some((p) => ['position', 'xyz', 'pos'].includes(p));
+
+  let id = idFromAddress;
+  let numericArgs = args.map(toNumber).filter((n) => n !== null);
+
+  if (!id && args.length >= 4) {
+    id = String(args[0]);
+    numericArgs = args.slice(1).map(toNumber).filter((n) => n !== null);
+  }
+
+  if (!id || numericArgs.length < 3) {
+    return null;
+  }
+
+  let position;
+  if (hasSphericalHint) {
+    const [azimuth, elevation, distance] = numericArgs;
+    position = sphericalToCartesian(azimuth, elevation, distance);
+  } else if (hasPositionHint || numericArgs.length >= 3) {
+    const [x, y, z] = numericArgs;
+    position = { x, y, z };
+  }
+
+  if (!position) {
+    return null;
+  }
+
+  return {
+    type: 'update',
+    id,
+    position: {
+      x: clamp(position.x, -1, 1),
+      y: clamp(position.y, -1, 1),
+      z: clamp(position.z, -1, 1)
+    }
+  };
+}
+
+module.exports = {
+  parseOscMessage,
+  sphericalToCartesian,
+  clamp
+};
