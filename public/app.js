@@ -1,4 +1,5 @@
 import * as THREE from 'https://unpkg.com/three@0.165.0/build/three.module.js';
+import { OrbitControls } from 'https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js';
 
 const statusEl = document.getElementById('status');
 const layoutSelectEl = document.getElementById('layoutSelect');
@@ -13,6 +14,12 @@ camera.lookAt(0, 0, 0);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.update();
 
 const ambient = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambient);
@@ -160,7 +167,7 @@ ws.onmessage = (event) => {
 
 function animate() {
   requestAnimationFrame(animate);
-  room.rotation.y += 0.0015;
+  controls.update();
   renderer.render(scene, camera);
 }
 
