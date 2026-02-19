@@ -5,24 +5,43 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Spatial Visualizer</title>
     <style>
-      :root { color-scheme: dark; }
-      body { margin: 0; overflow: hidden; font-family: Inter, system-ui, sans-serif; background: #0a0b10; }
-      #overlay {
-        position: fixed; top: 1rem; left: 1rem; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.2);
-        border-radius: 12px; padding: .75rem 1rem; backdrop-filter: blur(8px); font-size: 14px; line-height: 1.45; z-index: 2;
+      :root {
+        color-scheme: dark;
       }
-      #status { font-weight: 700; }
-      #layoutSelect { margin-top: .4rem; width: 100%; background: #141927; color: #dce4ff; border: 1px solid #3f4b72; border-radius: 6px; padding: .3rem; }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Inter, system-ui, sans-serif;
+        background: #0a0b10;
+      }
+
+      #overlay {
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        backdrop-filter: blur(8px);
+        font-size: 14px;
+        line-height: 1.45;
+        z-index: 2;
+      }
+
+      #status {
+        font-weight: 700;
+      }
     </style>
   </head>
   <body>
     <div id="overlay">
       <div><strong>Spatial Visualizer</strong></div>
       <div>WS: <span id="status">connexion...</span></div>
-      <div>Layout enceintes:</div>
-      <select id="layoutSelect"><option>chargement...</option></select>
       <div>OSC attendu: <code>/source/position id x y z</code></div>
     </div>
+
     <script type="module" src="./app.js"></script>
   </body>
 </html>
