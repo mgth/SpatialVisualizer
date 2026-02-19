@@ -65,6 +65,22 @@ function parseMeterMessage(parts, args) {
   };
 }
 
+
+function mapCartesianByAddress(parts, position) {
+  const isTruehddObjectXyz = parts.includes('truehdd') && parts.includes('object') && parts.includes('xyz');
+  if (!isTruehddObjectXyz) {
+    return position;
+  }
+
+  // truehdd/object/{id}/xyz uses x=right, y=up, z=front.
+  // Our scene convention is x=front, y=up, z=right.
+  return {
+    x: position.z,
+    y: position.y,
+    z: position.x
+  };
+}
+
 function parseOscMessage(oscMsg) {
   const address = String(oscMsg.address || '');
   const parts = address.split('/').filter(Boolean).map((p) => p.toLowerCase());
@@ -112,13 +128,15 @@ function parseOscMessage(oscMsg) {
     return null;
   }
 
+  const mappedPosition = mapCartesianByAddress(parts, position);
+
   return {
     type: 'update',
     id,
     position: {
-      x: clamp(position.x, -1, 1),
-      y: clamp(position.y, -1, 1),
-      z: clamp(position.z, -1, 1)
+      x: clamp(mappedPosition.x, -1, 1),
+      y: clamp(mappedPosition.y, -1, 1),
+      z: clamp(mappedPosition.z, -1, 1)
     }
   };
 }

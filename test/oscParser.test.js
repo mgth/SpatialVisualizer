@@ -31,6 +31,20 @@ test('parse spherical /source/kick/aed', () => {
   assert.ok(Math.abs(out.position.z - 1) < 1e-6);
 });
 
+
+
+test('map truehdd object xyz orientation to scene convention', () => {
+  const out = parseOscMessage({
+    address: '/truehdd/object/10/xyz',
+    args: [0.2, 0.1, 0.8]
+  });
+
+  assert.deepEqual(out, {
+    type: 'update',
+    id: '10',
+    position: { x: 0.8, y: 0.1, z: 0.2 }
+  });
+});
 test('parse remove message', () => {
   const out = parseOscMessage({
     address: '/source/remove',
