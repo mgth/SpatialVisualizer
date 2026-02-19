@@ -7,6 +7,7 @@ Prototype d'application de visualisation 3D des objets d'un flux audio spatialis
 - Le serveur écoute des messages OSC en UDP (port `9000` par défaut).
 - Les positions reçues sont diffusées en WebSocket au front web.
 - Le front affiche chaque source comme une sphère dans un volume 3D normalisé `[-1, 1]`.
+- Le menu **Layout** permet de choisir la configuration d’enceintes chargée depuis `layouts/*.json` et affichée dans la scène.
 
 ## Formats OSC supportés
 
