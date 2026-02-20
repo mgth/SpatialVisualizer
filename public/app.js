@@ -69,6 +69,7 @@ const sourceSelectedEmissive = new THREE.Color(0x9b7f22);
 const layoutsByKey = new Map();
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
+let pointerDownPosition = null;
 
 function createLabelSprite(text) {
   const canvas = document.createElement('canvas');
@@ -158,6 +159,7 @@ function getSourceMesh(id) {
     scene.add(mesh);
 
     const label = createLabelSprite(String(id));
+    label.userData.sourceId = id;
     scene.add(label);
 
     sourceMeshes.set(id, mesh);
@@ -277,13 +279,18 @@ function hydrateLayoutSelect(layouts, selectedLayoutKey) {
   layoutSelectEl.disabled = layouts.length === 0;
 }
 
-function selectSourceFromPointer(event) {
+function pointerEventToNdc(event) {
   const rect = renderer.domElement.getBoundingClientRect();
   pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+}
+
+function selectSourceFromPointer(event) {
+  pointerEventToNdc(event);
 
   raycaster.setFromCamera(pointer, camera);
-  const intersects = raycaster.intersectObjects(Array.from(sourceMeshes.values()), false);
+  const hitTargets = [...sourceLabels.values(), ...sourceMeshes.values()];
+  const intersects = raycaster.intersectObjects(hitTargets, false);
 
   if (intersects.length > 0) {
     const selectedId = intersects[0].object?.userData?.sourceId || null;
@@ -294,7 +301,23 @@ function selectSourceFromPointer(event) {
   setSelectedSource(null);
 }
 
-renderer.domElement.addEventListener('pointerdown', selectSourceFromPointer);
+renderer.domElement.addEventListener('pointerdown', (event) => {
+  pointerDownPosition = { x: event.clientX, y: event.clientY };
+});
+
+renderer.domElement.addEventListener('pointerup', (event) => {
+  if (!pointerDownPosition) {
+    return;
+  }
+
+  const dx = event.clientX - pointerDownPosition.x;
+  const dy = event.clientY - pointerDownPosition.y;
+  pointerDownPosition = null;
+
+  if (Math.hypot(dx, dy) <= 6) {
+    selectSourceFromPointer(event);
+  }
+});
 
 const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
 const ws = new WebSocket(`${wsProtocol}://${location.host}`);
