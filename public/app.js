@@ -66,8 +66,6 @@ function createLabelSprite(text) {
   canvas.height = 96;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'rgba(10, 11, 16, 0.7)';
-  ctx.fillRect(0, 18, canvas.width, 56);
   ctx.font = 'bold 36px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -89,7 +87,7 @@ function updateSourceLabelPosition(id) {
     return;
   }
 
-  label.position.set(mesh.position.x, mesh.position.y + 0.12 + mesh.scale.y * 0.08, mesh.position.z);
+  label.position.set(mesh.position.x, mesh.position.y, mesh.position.z);
 }
 
 function dbfsToScale(dbfs, minScale, maxScale) {
