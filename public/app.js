@@ -38,6 +38,7 @@ const axes = new THREE.AxesHelper(1.2);
 scene.add(axes);
 
 const sourceMeshes = new Map();
+const sourceLabels = new Map();
 const speakerMeshes = [];
 const sourceLevels = new Map();
 const speakerLevels = new Map();
@@ -58,15 +59,49 @@ const speakerMaterial = new THREE.MeshStandardMaterial({
 
 const layoutsByKey = new Map();
 
+
+function createLabelSprite(text) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 96;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgba(10, 11, 16, 0.7)';
+  ctx.fillRect(0, 18, canvas.width, 56);
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(0.42, 0.16, 1);
+  return sprite;
+}
+
+function updateSourceLabelPosition(id) {
+  const mesh = sourceMeshes.get(id);
+  const label = sourceLabels.get(id);
+  if (!mesh || !label) {
+    return;
+  }
+
+  label.position.set(mesh.position.x, mesh.position.y + 0.12 + mesh.scale.y * 0.08, mesh.position.z);
+}
+
 function dbfsToScale(dbfs, minScale, maxScale) {
   const clamped = Math.min(0, Math.max(-100, Number(dbfs ?? -100)));
   const normalized = (clamped + 100) / 100;
   return minScale + normalized * (maxScale - minScale);
 }
 
-function applySourceLevel(mesh, meter) {
+function applySourceLevel(id, mesh, meter) {
   const scale = dbfsToScale(meter?.rmsDbfs, 0.5, 2.4);
   mesh.scale.setScalar(scale);
+  updateSourceLabelPosition(id);
 }
 
 function applySpeakerLevel(mesh, meter) {
@@ -79,8 +114,13 @@ function getSourceMesh(id) {
     const mesh = new THREE.Mesh(sourceGeometry, sourceMaterial.clone());
     mesh.material.color.setHSL(Math.random(), 0.8, 0.6);
     scene.add(mesh);
+
+    const label = createLabelSprite(String(id));
+    scene.add(label);
+
     sourceMeshes.set(id, mesh);
-    applySourceLevel(mesh, sourceLevels.get(id));
+    sourceLabels.set(id, label);
+    applySourceLevel(id, mesh, sourceLevels.get(id));
   }
   return sourceMeshes.get(id);
 }
@@ -88,23 +128,31 @@ function getSourceMesh(id) {
 function updateSource(id, position) {
   const mesh = getSourceMesh(id);
   mesh.position.set(position.x, position.y, position.z);
+  updateSourceLabelPosition(id);
 }
 
 function updateSourceLevel(id, meter) {
   sourceLevels.set(id, meter);
   const mesh = sourceMeshes.get(id);
   if (mesh) {
-    applySourceLevel(mesh, meter);
+    applySourceLevel(id, mesh, meter);
   }
 }
 
 function removeSource(id) {
   const mesh = sourceMeshes.get(id);
   if (!mesh) return;
+  const label = sourceLabels.get(id);
   scene.remove(mesh);
+  if (label) {
+    scene.remove(label);
+    label.material.map.dispose();
+    label.material.dispose();
+  }
   mesh.geometry.dispose();
   mesh.material.dispose();
   sourceMeshes.delete(id);
+  sourceLabels.delete(id);
   sourceLevels.delete(id);
 }
 
