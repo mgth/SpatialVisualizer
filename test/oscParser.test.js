@@ -66,6 +66,20 @@ test('parse object meter message', () => {
   });
 });
 
+
+test('parse object speaker gains message', () => {
+  const out = parseOscMessage({
+    address: '/truehdd/meter/object/1/gains',
+    args: [0.972, 0, 0.135, -1, 1.7]
+  });
+
+  assert.deepEqual(out, {
+    type: 'meter:object:gains',
+    id: '1',
+    gains: [0.972, 0, 0.135, 0, 1]
+  });
+});
+
 test('parse speaker meter message', () => {
   const out = parseOscMessage({
     address: '/truehdd/meter/speaker/3',

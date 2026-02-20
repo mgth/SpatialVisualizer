@@ -42,6 +42,10 @@ const sourceLabels = new Map();
 const speakerMeshes = [];
 const sourceLevels = new Map();
 const speakerLevels = new Map();
+const sourceGains = new Map();
+
+let selectedSourceId = null;
+
 const sourceMaterial = new THREE.MeshStandardMaterial({
   color: 0xff7c4d,
   emissive: 0x64210c,
@@ -57,8 +61,14 @@ const speakerMaterial = new THREE.MeshStandardMaterial({
   opacity: 0.65
 });
 
-const layoutsByKey = new Map();
+const speakerBaseColor = new THREE.Color(0x8ec8ff);
+const speakerHotColor = new THREE.Color(0xff3030);
+const sourceDefaultEmissive = new THREE.Color(0x64210c);
+const sourceSelectedEmissive = new THREE.Color(0x9b7f22);
 
+const layoutsByKey = new Map();
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
 
 function createLabelSprite(text) {
   const canvas = document.createElement('canvas');
@@ -96,6 +106,10 @@ function dbfsToScale(dbfs, minScale, maxScale) {
   return minScale + normalized * (maxScale - minScale);
 }
 
+function gainToMix(gain) {
+  return Math.min(1, Math.max(0, Number(gain ?? 0)));
+}
+
 function applySourceLevel(id, mesh, meter) {
   const scale = dbfsToScale(meter?.rmsDbfs, 0.5, 2.4);
   mesh.scale.setScalar(scale);
@@ -107,10 +121,40 @@ function applySpeakerLevel(mesh, meter) {
   mesh.scale.setScalar(scale);
 }
 
+function getSelectedSourceGains() {
+  if (!selectedSourceId) {
+    return null;
+  }
+  return sourceGains.get(selectedSourceId) || null;
+}
+
+function updateSourceSelectionStyles() {
+  sourceMeshes.forEach((mesh, id) => {
+    mesh.material.emissive.copy(id === selectedSourceId ? sourceSelectedEmissive : sourceDefaultEmissive);
+  });
+}
+
+function updateSpeakerColorsFromSelection() {
+  const gains = getSelectedSourceGains();
+
+  speakerMeshes.forEach((mesh, index) => {
+    const mix = gainToMix(gains?.[index]);
+    mesh.material.color.copy(speakerBaseColor).lerp(speakerHotColor, mix);
+  });
+}
+
+function setSelectedSource(id) {
+  selectedSourceId = id;
+  updateSourceSelectionStyles();
+  updateSpeakerColorsFromSelection();
+}
+
 function getSourceMesh(id) {
   if (!sourceMeshes.has(id)) {
     const mesh = new THREE.Mesh(sourceGeometry, sourceMaterial.clone());
     mesh.material.color.setHSL(Math.random(), 0.8, 0.6);
+    mesh.material.emissive.copy(sourceDefaultEmissive);
+    mesh.userData.sourceId = id;
     scene.add(mesh);
 
     const label = createLabelSprite(String(id));
@@ -119,6 +163,7 @@ function getSourceMesh(id) {
     sourceMeshes.set(id, mesh);
     sourceLabels.set(id, label);
     applySourceLevel(id, mesh, sourceLevels.get(id));
+    updateSourceSelectionStyles();
   }
   return sourceMeshes.get(id);
 }
@@ -137,6 +182,23 @@ function updateSourceLevel(id, meter) {
   }
 }
 
+function normalizeGainsPayload(payload) {
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (payload && Array.isArray(payload.gains)) {
+    return payload.gains;
+  }
+  return [];
+}
+
+function updateSourceGains(id, gainsPayload) {
+  sourceGains.set(id, normalizeGainsPayload(gainsPayload));
+  if (selectedSourceId === id) {
+    updateSpeakerColorsFromSelection();
+  }
+}
+
 function removeSource(id) {
   const mesh = sourceMeshes.get(id);
   if (!mesh) return;
@@ -152,6 +214,11 @@ function removeSource(id) {
   sourceMeshes.delete(id);
   sourceLabels.delete(id);
   sourceLevels.delete(id);
+  sourceGains.delete(id);
+
+  if (selectedSourceId === id) {
+    setSelectedSource(null);
+  }
 }
 
 function clearSpeakers() {
@@ -177,6 +244,8 @@ function renderLayout(key) {
     speakerMeshes.push(mesh);
     applySpeakerLevel(mesh, speakerLevels.get(String(index)));
   });
+
+  updateSpeakerColorsFromSelection();
 }
 
 function updateSpeakerLevel(index, meter) {
@@ -207,6 +276,25 @@ function hydrateLayoutSelect(layouts, selectedLayoutKey) {
 
   layoutSelectEl.disabled = layouts.length === 0;
 }
+
+function selectSourceFromPointer(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(pointer, camera);
+  const intersects = raycaster.intersectObjects(Array.from(sourceMeshes.values()), false);
+
+  if (intersects.length > 0) {
+    const selectedId = intersects[0].object?.userData?.sourceId || null;
+    setSelectedSource(selectedId);
+    return;
+  }
+
+  setSelectedSource(null);
+}
+
+renderer.domElement.addEventListener('pointerdown', selectSourceFromPointer);
 
 const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
 const ws = new WebSocket(`${wsProtocol}://${location.host}`);
@@ -245,6 +333,9 @@ ws.onmessage = (event) => {
     Object.entries(payload.speakerLevels || {}).forEach(([index, meter]) => {
       updateSpeakerLevel(Number(index), meter);
     });
+    Object.entries(payload.objectSpeakerGains || {}).forEach(([id, gains]) => {
+      updateSourceGains(id, gains);
+    });
 
     hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
   }
@@ -262,6 +353,10 @@ ws.onmessage = (event) => {
 
   if (payload.type === 'source:meter') {
     updateSourceLevel(payload.id, payload.meter);
+  }
+
+  if (payload.type === 'source:gains') {
+    updateSourceGains(payload.id, payload.gains);
   }
 
   if (payload.type === 'speaker:meter') {

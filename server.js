@@ -21,6 +21,7 @@ const state = {
   sources: {},
   sourceLevels: {},
   speakerLevels: {},
+  objectSpeakerGains: {},
   layouts,
   selectedLayoutKey: layouts[0]?.key || null
 };
@@ -55,6 +56,7 @@ function handleParsedOsc(parsed) {
   if (parsed.type === 'remove') {
     delete state.sources[parsed.id];
     delete state.sourceLevels[parsed.id];
+    delete state.objectSpeakerGains[parsed.id];
     broadcast({ type: 'source:remove', id: parsed.id });
   }
 
@@ -69,6 +71,20 @@ function handleParsedOsc(parsed) {
       type: 'source:meter',
       id: parsed.id,
       meter: state.sourceLevels[parsed.id]
+    });
+  }
+
+
+  if (parsed.type === 'meter:object:gains') {
+    state.objectSpeakerGains[parsed.id] = {
+      gains: parsed.gains,
+      updatedAt: Date.now()
+    };
+
+    broadcast({
+      type: 'source:gains',
+      id: parsed.id,
+      gains: parsed.gains
     });
   }
 
@@ -140,6 +156,7 @@ wss.on('connection', (ws) => {
       sources: state.sources,
       sourceLevels: state.sourceLevels,
       speakerLevels: state.speakerLevels,
+      objectSpeakerGains: state.objectSpeakerGains,
       layouts: state.layouts,
       selectedLayoutKey: state.selectedLayoutKey
     })

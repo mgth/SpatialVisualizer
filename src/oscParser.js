@@ -41,6 +41,31 @@ function findIdInAddress(parts) {
   return null;
 }
 
+
+function parseObjectGainsMessage(parts, args) {
+  const meterIndex = parts.indexOf('meter');
+  if (meterIndex === -1 || parts.length <= meterIndex + 3) {
+    return null;
+  }
+
+  const meterKind = parts[meterIndex + 1];
+  const meterId = parts[meterIndex + 2];
+  const suffix = parts[meterIndex + 3];
+
+  if (meterKind !== 'object' || suffix !== 'gains' || !meterId) {
+    return null;
+  }
+
+  const gains = args
+    .map((value) => clamp(toNumber(value) ?? 0, 0, 1));
+
+  return {
+    type: 'meter:object:gains',
+    id: String(meterId),
+    gains
+  };
+}
+
 function parseMeterMessage(parts, args) {
   const meterIndex = parts.indexOf('meter');
   if (meterIndex === -1 || parts.length <= meterIndex + 2) {
@@ -87,6 +112,11 @@ function parseOscMessage(oscMsg) {
   const args = (oscMsg.args || []).map(unwrapArg);
 
   if (parts.includes('meter')) {
+    const parsedGains = parseObjectGainsMessage(parts, args);
+    if (parsedGains) {
+      return parsedGains;
+    }
+
     return parseMeterMessage(parts, args);
   }
 
