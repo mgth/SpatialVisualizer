@@ -28,6 +28,30 @@
         font-size: 14px;
         line-height: 1.45;
         z-index: 2;
+        width: min(360px, 90vw);
+        height: calc(100vh - 2rem);
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      #speakersOverlay {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        backdrop-filter: blur(8px);
+        font-size: 14px;
+        line-height: 1.45;
+        z-index: 2;
+        width: min(360px, 90vw);
+        height: calc(100vh - 2rem);
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
       }
 
       #status {
@@ -37,6 +61,104 @@
       #layoutSelect {
         margin-top: 0.35rem;
         width: 100%;
+      }
+
+      .info-section {
+        margin-top: 0.75rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .info-title {
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+      }
+
+      .info-list {
+        max-height: none;
+        overflow: auto;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        font-size: 12.5px;
+        display: grid;
+        gap: 0.25rem;
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
+      .info-item {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.1rem;
+        padding: 0.25rem 0.35rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .info-item strong {
+        font-weight: 600;
+        color: #d9ecff;
+      }
+
+      .meter-row {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .meter-bar {
+        position: relative;
+        height: 6px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(77, 215, 255, 0.18) 0%, rgba(123, 255, 106, 0.18) 60%, rgba(255, 209, 58, 0.18) 82%, rgba(255, 93, 93, 0.18) 100%);
+        overflow: hidden;
+      }
+
+      .meter-fill {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        background: linear-gradient(90deg, #4dd7ff 0%, #7bff6a 60%, #ffd13a 82%, #ff5d5d 100%);
+        box-shadow: 0 0 8px rgba(255, 140, 80, 0.35);
+        clip-path: inset(0 calc(100% - var(--level, 0%)) 0 0);
+      }
+
+      .control-row {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 0.35rem;
+        align-items: center;
+        margin-top: 0.2rem;
+      }
+
+      .gain-slider {
+        width: 100%;
+      }
+
+      .toggle-btn {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #dfe8f3;
+        border-radius: 6px;
+        font-size: 11px;
+        padding: 0.1rem 0.35rem;
+        cursor: pointer;
+      }
+
+      .toggle-btn.active {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+      }
+
+      .info-item.is-dimmed {
+        opacity: 0.45;
+      }
+
+      .info-item.is-muted {
+        opacity: 0.35;
       }
     </style>
   </head>
@@ -49,6 +171,17 @@
       <select id="layoutSelect" disabled>
         <option>Chargement...</option>
       </select>
+
+      <div class="info-section" id="objectsSection">
+        <div class="info-title">Objets</div>
+        <div id="objectsList" class="info-list">Aucun objet.</div>
+      </div>
+    </div>
+    <div id="speakersOverlay">
+      <div class="info-section" id="speakersSection">
+        <div class="info-title">Speakers</div>
+        <div id="speakersList" class="info-list">Aucun speaker.</div>
+      </div>
     </div>
 
     <script type="module" src="./app.js"></script>

@@ -72,6 +72,8 @@ const state = {
   sourceLevels: {},
   speakerLevels: {},
   objectSpeakerGains: {},
+  objectGains: {},
+  speakerGains: {},
   layouts,
   selectedLayoutKey: layouts[0]?.key || null
 };
@@ -182,6 +184,24 @@ function handleParsedOsc(parsed) {
       meter: state.speakerLevels[parsed.id]
     });
   }
+
+  if (parsed.type === 'state:object:gain') {
+    state.objectGains[parsed.id] = parsed.gain;
+    broadcast({
+      type: 'object:gain',
+      id: parsed.id,
+      gain: parsed.gain
+    });
+  }
+
+  if (parsed.type === 'state:speaker:gain') {
+    state.speakerGains[parsed.id] = parsed.gain;
+    broadcast({
+      type: 'speaker:gain',
+      id: parsed.id,
+      gain: parsed.gain
+    });
+  }
 }
 
 function handleOscMessage(oscMsg) {
@@ -250,6 +270,17 @@ function sendTruehddControlMessage(address, listenPort) {
     {
       address,
       args: [{ type: 'i', value: listenPort }]
+    },
+    OSC_HOST,
+    OSC_RX_PORT
+  );
+}
+
+function sendTruehddFloatControl(address, value) {
+  oscUdpPort.send(
+    {
+      address,
+      args: [{ type: 'f', value }]
     },
     OSC_HOST,
     OSC_RX_PORT
@@ -335,6 +366,26 @@ wss.on('connection', (ws) => {
         state.selectedLayoutKey = payload.key;
         broadcast({ type: 'layout:selected', key: state.selectedLayoutKey });
       }
+
+      if (payload?.type === 'control:object:gain') {
+        const id = Number(payload.id);
+        const gain = Number(payload.gain);
+        if (!Number.isFinite(id) || id < 0 || !Number.isFinite(gain)) {
+          return;
+        }
+        const clampedGain = Math.min(2, Math.max(0, gain));
+        sendTruehddFloatControl(`/truehdd/control/object/${Math.floor(id)}/gain`, clampedGain);
+      }
+
+      if (payload?.type === 'control:speaker:gain') {
+        const id = Number(payload.id);
+        const gain = Number(payload.gain);
+        if (!Number.isFinite(id) || id < 0 || !Number.isFinite(gain)) {
+          return;
+        }
+        const clampedGain = Math.min(2, Math.max(0, gain));
+        sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/gain`, clampedGain);
+      }
     } catch {
       // Ignore invalid client payloads.
     }
@@ -347,6 +398,8 @@ wss.on('connection', (ws) => {
       sourceLevels: state.sourceLevels,
       speakerLevels: state.speakerLevels,
       objectSpeakerGains: state.objectSpeakerGains,
+      objectGains: state.objectGains,
+      speakerGains: state.speakerGains,
       layouts: state.layouts,
       selectedLayoutKey: state.selectedLayoutKey
     })

@@ -3,6 +3,10 @@ import { OrbitControls } from 'https://unpkg.com/three@0.165.0/examples/jsm/cont
 
 const statusEl = document.getElementById('status');
 const layoutSelectEl = document.getElementById('layoutSelect');
+const speakersListEl = document.getElementById('speakersList');
+const objectsListEl = document.getElementById('objectsList');
+const speakersSectionEl = document.getElementById('speakersSection');
+const objectsSectionEl = document.getElementById('objectsSection');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -45,6 +49,16 @@ const speakerLabels = [];
 const sourceLevels = new Map();
 const speakerLevels = new Map();
 const sourceGains = new Map();
+const speakerGainCache = new Map();
+const objectGainCache = new Map();
+const speakerBaseGains = new Map();
+const objectBaseGains = new Map();
+const speakerMuted = new Set();
+const objectMuted = new Set();
+let speakerSoloId = null;
+let objectSoloId = null;
+const speakerItems = new Map();
+const objectItems = new Map();
 
 let selectedSourceId = null;
 
@@ -74,6 +88,407 @@ const layoutsByKey = new Map();
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 let pointerDownPosition = null;
+let currentLayoutKey = null;
+let currentLayoutSpeakers = [];
+
+function formatNumber(value, digits = 2) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return '—';
+  }
+  return value.toFixed(digits);
+}
+
+function formatPosition(position) {
+  if (!position) {
+    return 'x:— y:— z:—';
+  }
+  return `x:${formatNumber(position.x)} y:${formatNumber(position.y)} z:${formatNumber(position.z)}`;
+}
+
+function formatLevel(meter) {
+  if (!meter) {
+    return '— dB';
+  }
+  return `${formatNumber(meter.rmsDbfs, 1)} dB`;
+}
+
+function meterToPercent(meter) {
+  const db = typeof meter?.rmsDbfs === 'number' ? meter.rmsDbfs : -100;
+  const clamped = Math.min(0, Math.max(-100, db));
+  return ((clamped + 100) / 100) * 100;
+}
+
+function updateMeterUI(entry, meter) {
+  if (!entry) return;
+  entry.levelText.textContent = `niveau ${formatLevel(meter)}`;
+  entry.meterFill.style.setProperty('--level', `${meterToPercent(meter).toFixed(1)}%`);
+}
+
+function updateItemClasses(entry, isMuted, isDimmed) {
+  entry.root.classList.toggle('is-muted', isMuted);
+  entry.root.classList.toggle('is-dimmed', isDimmed);
+}
+
+function updateSpeakerMeterUI(id) {
+  const entry = speakerItems.get(id);
+  if (!entry) return;
+  updateMeterUI(entry, speakerLevels.get(id));
+}
+
+function updateObjectMeterUI(id) {
+  const entry = objectItems.get(id);
+  if (!entry) return;
+  updateMeterUI(entry, sourceLevels.get(id));
+}
+
+function updateObjectPositionUI(id, position) {
+  const entry = objectItems.get(id);
+  if (!entry) return;
+  entry.position.textContent = `pos ${formatPosition(position)}`;
+}
+
+function updateSpeakerControlsUI() {
+  speakerItems.forEach((entry, id) => {
+    entry.gainSlider.value = String(getBaseGain(speakerBaseGains, speakerGainCache, id));
+    entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
+    entry.soloBtn.classList.toggle('active', speakerSoloId === id);
+    updateItemClasses(entry, speakerMuted.has(id), speakerSoloId && speakerSoloId !== id);
+  });
+}
+
+function updateObjectControlsUI() {
+  objectItems.forEach((entry, id) => {
+    entry.gainSlider.value = String(getBaseGain(objectBaseGains, objectGainCache, id));
+    entry.muteBtn.classList.toggle('active', objectMuted.has(id));
+    entry.soloBtn.classList.toggle('active', objectSoloId === id);
+    updateItemClasses(entry, objectMuted.has(id), objectSoloId && objectSoloId !== id);
+  });
+}
+
+function createSpeakerItem(id, speaker) {
+  const root = document.createElement('div');
+  root.className = 'info-item';
+
+  const label = document.createElement('strong');
+  root.appendChild(label);
+
+  const position = document.createElement('div');
+  root.appendChild(position);
+
+  const level = document.createElement('div');
+  level.className = 'meter-row';
+
+  const levelText = document.createElement('div');
+  level.appendChild(levelText);
+
+  const meterBar = document.createElement('div');
+  meterBar.className = 'meter-bar';
+  const meterFill = document.createElement('div');
+  meterFill.className = 'meter-fill';
+  meterBar.appendChild(meterFill);
+  level.appendChild(meterBar);
+  root.appendChild(level);
+
+  const controls = document.createElement('div');
+  controls.className = 'control-row';
+
+  const gainSlider = document.createElement('input');
+  gainSlider.type = 'range';
+  gainSlider.min = '0';
+  gainSlider.max = '2';
+  gainSlider.step = '0.01';
+  gainSlider.className = 'gain-slider';
+  gainSlider.addEventListener('input', () => {
+    speakerBaseGains.set(id, Number(gainSlider.value));
+    applyGroupGains('speaker');
+  });
+  controls.appendChild(gainSlider);
+
+  const muteBtn = document.createElement('button');
+  muteBtn.type = 'button';
+  muteBtn.className = 'toggle-btn';
+  muteBtn.textContent = 'M';
+  muteBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    toggleMute('speaker', id);
+  });
+  controls.appendChild(muteBtn);
+
+  const soloBtn = document.createElement('button');
+  soloBtn.type = 'button';
+  soloBtn.className = 'toggle-btn';
+  soloBtn.textContent = 'S';
+  soloBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    toggleSolo('speaker', id);
+  });
+  controls.appendChild(soloBtn);
+
+  root.appendChild(controls);
+
+  return { root, label, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
+}
+
+function updateSpeakerItem(entry, id, speaker) {
+  entry.label.textContent = String(speaker.id ?? id);
+  entry.position.textContent = `pos ${formatPosition(speaker)}`;
+  entry.gainSlider.value = String(getBaseGain(speakerBaseGains, speakerGainCache, id));
+  entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
+  entry.soloBtn.classList.toggle('active', speakerSoloId === id);
+  updateItemClasses(entry, speakerMuted.has(id), speakerSoloId && speakerSoloId !== id);
+  updateMeterUI(entry, speakerLevels.get(id));
+}
+
+function createObjectItem(id) {
+  const root = document.createElement('div');
+  root.className = 'info-item';
+
+  const label = document.createElement('strong');
+  label.textContent = String(id);
+  root.appendChild(label);
+
+  const position = document.createElement('div');
+  root.appendChild(position);
+
+  const level = document.createElement('div');
+  level.className = 'meter-row';
+
+  const levelText = document.createElement('div');
+  level.appendChild(levelText);
+
+  const meterBar = document.createElement('div');
+  meterBar.className = 'meter-bar';
+  const meterFill = document.createElement('div');
+  meterFill.className = 'meter-fill';
+  meterBar.appendChild(meterFill);
+  level.appendChild(meterBar);
+  root.appendChild(level);
+
+  const controls = document.createElement('div');
+  controls.className = 'control-row';
+
+  const gainSlider = document.createElement('input');
+  gainSlider.type = 'range';
+  gainSlider.min = '0';
+  gainSlider.max = '2';
+  gainSlider.step = '0.01';
+  gainSlider.className = 'gain-slider';
+  gainSlider.addEventListener('input', () => {
+    objectBaseGains.set(id, Number(gainSlider.value));
+    applyGroupGains('object');
+  });
+  controls.appendChild(gainSlider);
+
+  const muteBtn = document.createElement('button');
+  muteBtn.type = 'button';
+  muteBtn.className = 'toggle-btn';
+  muteBtn.textContent = 'M';
+  muteBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    toggleMute('object', id);
+  });
+  controls.appendChild(muteBtn);
+
+  const soloBtn = document.createElement('button');
+  soloBtn.type = 'button';
+  soloBtn.className = 'toggle-btn';
+  soloBtn.textContent = 'S';
+  soloBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    toggleSolo('object', id);
+  });
+  controls.appendChild(soloBtn);
+
+  root.appendChild(controls);
+
+  return { root, label, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
+}
+
+function updateObjectItem(entry, id, position) {
+  entry.position.textContent = `pos ${formatPosition(position)}`;
+  entry.gainSlider.value = String(getBaseGain(objectBaseGains, objectGainCache, id));
+  entry.muteBtn.classList.toggle('active', objectMuted.has(id));
+  entry.soloBtn.classList.toggle('active', objectSoloId === id);
+  updateItemClasses(entry, objectMuted.has(id), objectSoloId && objectSoloId !== id);
+  updateMeterUI(entry, sourceLevels.get(id));
+}
+
+function renderSpeakersList() {
+  if (!speakersListEl) return;
+
+  if (!currentLayoutSpeakers.length) {
+    speakersListEl.textContent = 'Aucun speaker.';
+    speakerItems.clear();
+    updateSectionProportions();
+    return;
+  }
+
+  speakersListEl.textContent = '';
+  const activeIds = new Set();
+  currentLayoutSpeakers.forEach((speaker, index) => {
+    const id = String(index);
+    activeIds.add(id);
+    let entry = speakerItems.get(id);
+    if (!entry) {
+      entry = createSpeakerItem(id, speaker);
+      speakerItems.set(id, entry);
+    }
+    updateSpeakerItem(entry, id, speaker);
+    speakersListEl.appendChild(entry.root);
+  });
+  speakerItems.forEach((entry, id) => {
+    if (!activeIds.has(id)) {
+      entry.root.remove();
+      speakerItems.delete(id);
+    }
+  });
+  updateSectionProportions();
+}
+
+function renderObjectsList() {
+  if (!objectsListEl) return;
+
+  const ids = [...sourceMeshes.keys()].sort((a, b) => String(a).localeCompare(String(b)));
+  if (!ids.length) {
+    objectsListEl.textContent = 'Aucun objet.';
+    objectItems.clear();
+    updateSectionProportions();
+    return;
+  }
+
+  objectsListEl.textContent = '';
+  const activeIds = new Set();
+  ids.forEach((id) => {
+    const mesh = sourceMeshes.get(id);
+    if (!mesh) return;
+    const key = String(id);
+    activeIds.add(key);
+    let entry = objectItems.get(key);
+    if (!entry) {
+      entry = createObjectItem(key);
+      objectItems.set(key, entry);
+    }
+    updateObjectItem(entry, key, mesh.position);
+    objectsListEl.appendChild(entry.root);
+  });
+  objectItems.forEach((entry, id) => {
+    if (!activeIds.has(id)) {
+      entry.root.remove();
+      objectItems.delete(id);
+    }
+  });
+  updateSectionProportions();
+}
+
+function refreshOverlayLists() {
+  renderSpeakersList();
+  renderObjectsList();
+  updateSectionProportions();
+}
+
+function getBaseGain(map, cache, id) {
+  if (map.has(id)) {
+    return map.get(id);
+  }
+  if (cache.has(id)) {
+    return cache.get(id);
+  }
+  return 1;
+}
+
+function getSpeakerIds() {
+  return currentLayoutSpeakers.map((_, index) => String(index));
+}
+
+function getObjectIds() {
+  return [...sourceMeshes.keys()].map((id) => String(id));
+}
+
+function sendObjectGain(id, gain) {
+  if (ws.readyState !== WebSocket.OPEN) {
+    return;
+  }
+  ws.send(
+    JSON.stringify({
+      type: 'control:object:gain',
+      id,
+      gain
+    })
+  );
+}
+
+function sendSpeakerGain(id, gain) {
+  if (ws.readyState !== WebSocket.OPEN) {
+    return;
+  }
+  ws.send(
+    JSON.stringify({
+      type: 'control:speaker:gain',
+      id,
+      gain
+    })
+  );
+}
+
+function applyGroupGains(group) {
+  const isSpeaker = group === 'speaker';
+  const ids = isSpeaker ? getSpeakerIds() : getObjectIds();
+  const baseMap = isSpeaker ? speakerBaseGains : objectBaseGains;
+  const cache = isSpeaker ? speakerGainCache : objectGainCache;
+  const mutedSet = isSpeaker ? speakerMuted : objectMuted;
+  const soloId = isSpeaker ? speakerSoloId : objectSoloId;
+
+  ids.forEach((id) => {
+    const baseGain = getBaseGain(baseMap, cache, id);
+    const muted = mutedSet.has(id);
+    const soloActive = soloId !== null;
+    const soloMatch = soloId === id;
+    const effectiveGain = soloActive ? (soloMatch ? baseGain : 0) : muted ? 0 : baseGain;
+    if (isSpeaker) {
+      sendSpeakerGain(id, effectiveGain);
+    } else {
+      sendObjectGain(id, effectiveGain);
+    }
+  });
+}
+
+function toggleMute(group, id) {
+  const mutedSet = group === 'speaker' ? speakerMuted : objectMuted;
+  if (mutedSet.has(id)) {
+    mutedSet.delete(id);
+  } else {
+    mutedSet.add(id);
+  }
+  applyGroupGains(group);
+  if (group === 'speaker') {
+    updateSpeakerControlsUI();
+  } else {
+    updateObjectControlsUI();
+  }
+}
+
+function toggleSolo(group, id) {
+  if (group === 'speaker') {
+    speakerSoloId = speakerSoloId === id ? null : id;
+  } else {
+    objectSoloId = objectSoloId === id ? null : id;
+  }
+  applyGroupGains(group);
+  if (group === 'speaker') {
+    updateSpeakerControlsUI();
+  } else {
+    updateObjectControlsUI();
+  }
+}
+
+function updateSectionProportions() {
+  if (speakersSectionEl) {
+    speakersSectionEl.style.flex = '1 1 0%';
+  }
+  if (objectsSectionEl) {
+    objectsSectionEl.style.flex = '1 1 0%';
+  }
+}
 
 function createLabelSprite(text) {
   const canvas = document.createElement('canvas');
@@ -231,6 +646,12 @@ function updateSource(id, position) {
   const mesh = getSourceMesh(id);
   mesh.position.set(position.x, position.y, position.z);
   updateSourceDecorations(id);
+  const key = String(id);
+  if (!objectItems.has(key)) {
+    renderObjectsList();
+  } else {
+    updateObjectPositionUI(key, mesh.position);
+  }
 }
 
 function updateSourceLevel(id, meter) {
@@ -239,6 +660,7 @@ function updateSourceLevel(id, meter) {
   if (mesh) {
     applySourceLevel(id, mesh, meter);
   }
+  updateObjectMeterUI(String(id));
 }
 
 function normalizeGainsPayload(payload) {
@@ -285,6 +707,18 @@ function removeSource(id) {
   if (selectedSourceId === id) {
     setSelectedSource(null);
   }
+  if (objectSoloId === String(id)) {
+    objectSoloId = null;
+  }
+  objectMuted.delete(String(id));
+  objectBaseGains.delete(String(id));
+  const entry = objectItems.get(String(id));
+  if (entry) {
+    entry.root.remove();
+    objectItems.delete(String(id));
+  }
+  updateObjectControlsUI();
+  updateSectionProportions();
 }
 
 function clearSpeakers() {
@@ -306,8 +740,28 @@ function renderLayout(key) {
   clearSpeakers();
   const layout = layoutsByKey.get(key);
   if (!layout) {
+    currentLayoutKey = null;
+    currentLayoutSpeakers = [];
+    renderSpeakersList();
     return;
   }
+
+  currentLayoutKey = key;
+  currentLayoutSpeakers = Array.isArray(layout.speakers) ? layout.speakers : [];
+  const speakerIds = getSpeakerIds();
+  if (speakerSoloId && !speakerIds.includes(speakerSoloId)) {
+    speakerSoloId = null;
+  }
+  speakerMuted.forEach((id) => {
+    if (!speakerIds.includes(id)) {
+      speakerMuted.delete(id);
+    }
+  });
+  speakerBaseGains.forEach((_, id) => {
+    if (!speakerIds.includes(id)) {
+      speakerBaseGains.delete(id);
+    }
+  });
 
   layout.speakers.forEach((speaker, index) => {
     const mesh = new THREE.Mesh(speakerGeometry.clone(), speakerMaterial.clone());
@@ -327,6 +781,7 @@ function renderLayout(key) {
   });
 
   updateSpeakerColorsFromSelection();
+  refreshOverlayLists();
 }
 
 function updateSpeakerLevel(index, meter) {
@@ -335,6 +790,7 @@ function updateSpeakerLevel(index, meter) {
   if (mesh) {
     applySpeakerLevel(mesh, meter);
   }
+  updateSpeakerMeterUI(String(index));
 }
 
 function hydrateLayoutSelect(layouts, selectedLayoutKey) {
@@ -353,6 +809,10 @@ function hydrateLayoutSelect(layouts, selectedLayoutKey) {
   if (selectedLayoutKey && layoutsByKey.has(selectedLayoutKey)) {
     layoutSelectEl.value = selectedLayoutKey;
     renderLayout(selectedLayoutKey);
+  } else {
+    currentLayoutKey = null;
+    currentLayoutSpeakers = [];
+    renderSpeakersList();
   }
 
   layoutSelectEl.disabled = layouts.length === 0;
@@ -438,8 +898,15 @@ ws.onmessage = (event) => {
     Object.entries(payload.objectSpeakerGains || {}).forEach(([id, gains]) => {
       updateSourceGains(id, gains);
     });
+    Object.entries(payload.objectGains || {}).forEach(([id, gain]) => {
+      objectGainCache.set(String(id), Number(gain));
+    });
+    Object.entries(payload.speakerGains || {}).forEach(([id, gain]) => {
+      speakerGainCache.set(String(id), Number(gain));
+    });
 
     hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
+    refreshOverlayLists();
   }
 
   if (payload.type === 'layouts:update') {
@@ -467,6 +934,16 @@ ws.onmessage = (event) => {
 
   if (payload.type === 'speaker:meter') {
     updateSpeakerLevel(Number(payload.id), payload.meter);
+  }
+
+  if (payload.type === 'object:gain') {
+    objectGainCache.set(String(payload.id), Number(payload.gain));
+    updateObjectControlsUI();
+  }
+
+  if (payload.type === 'speaker:gain') {
+    speakerGainCache.set(String(payload.id), Number(payload.gain));
+    updateSpeakerControlsUI();
   }
 
   if (payload.type === 'source:remove') {

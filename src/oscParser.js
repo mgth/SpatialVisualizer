@@ -107,6 +107,33 @@ function parseTruehddConfigMessage(parts, args) {
   return null;
 }
 
+function parseTruehddStateMessage(parts, args) {
+  if (parts.length === 5 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[4] === 'gain') {
+    const kind = parts[2];
+    if (!['object', 'speaker'].includes(kind)) {
+      return null;
+    }
+
+    const index = toNumber(parts[3]);
+    if (index === null || index < 0) {
+      return null;
+    }
+
+    const gain = toNumber(args[0]);
+    if (gain === null) {
+      return null;
+    }
+
+    return {
+      type: kind === 'speaker' ? 'state:speaker:gain' : 'state:object:gain',
+      id: String(Math.floor(index)),
+      gain: clamp(gain, 0, 2)
+    };
+  }
+
+  return null;
+}
+
 
 function parseObjectGainsMessage(parts, args) {
   const meterIndex = parts.indexOf('meter');
@@ -180,6 +207,11 @@ function parseOscMessage(oscMsg) {
   const parsedTruehddConfig = parseTruehddConfigMessage(parts, args);
   if (parsedTruehddConfig) {
     return parsedTruehddConfig;
+  }
+
+  const parsedTruehddState = parseTruehddStateMessage(parts, args);
+  if (parsedTruehddState) {
+    return parsedTruehddState;
   }
 
   if (parts.includes('meter')) {
