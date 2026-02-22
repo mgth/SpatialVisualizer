@@ -142,6 +142,14 @@ function updateSpeakerColorsFromSelection() {
   speakerMeshes.forEach((mesh, index) => {
     const mix = gainToMix(gains?.[index]);
     mesh.material.color.copy(speakerBaseColor).lerp(speakerHotColor, mix);
+
+    const baseOpacity = Number(mesh.userData.baseOpacity ?? 0.65);
+    if (!selectedSourceId) {
+      mesh.material.opacity = baseOpacity;
+      return;
+    }
+
+    mesh.material.opacity = mix <= 1e-6 ? Math.min(baseOpacity, 0.08) : baseOpacity;
   });
 }
 
@@ -249,9 +257,9 @@ function renderLayout(key) {
   layout.speakers.forEach((speaker, index) => {
     const mesh = new THREE.Mesh(speakerGeometry.clone(), speakerMaterial.clone());
     mesh.position.set(speaker.x, speaker.y, speaker.z);
-    if (speaker.spatialize === 0) {
-      mesh.material.opacity = 0.3;
-    }
+    const baseOpacity = speaker.spatialize === 0 ? 0.3 : 0.65;
+    mesh.userData.baseOpacity = baseOpacity;
+    mesh.material.opacity = baseOpacity;
     scene.add(mesh);
     speakerMeshes.push(mesh);
 
