@@ -59,6 +59,10 @@ let speakerSoloId = null;
 let objectSoloId = null;
 const speakerItems = new Map();
 const objectItems = new Map();
+const speakerSoloMuted = new Set();
+const objectSoloMuted = new Set();
+const speakerManualMuted = new Set();
+const objectManualMuted = new Set();
 
 let selectedSourceId = null;
 
@@ -167,13 +171,18 @@ function updateObjectControlsUI() {
 
 function createSpeakerItem(id, speaker) {
   const root = document.createElement('div');
-  root.className = 'info-item';
+  root.className = 'info-item speaker-item';
 
-  const label = document.createElement('strong');
-  root.appendChild(label);
+  const idStrip = document.createElement('div');
+  idStrip.className = 'id-strip';
+  const idText = document.createElement('span');
+  idStrip.appendChild(idText);
+
+  const content = document.createElement('div');
+  content.className = 'speaker-content';
 
   const position = document.createElement('div');
-  root.appendChild(position);
+  content.appendChild(position);
 
   const level = document.createElement('div');
   level.className = 'meter-row';
@@ -187,7 +196,7 @@ function createSpeakerItem(id, speaker) {
   meterFill.className = 'meter-fill';
   meterBar.appendChild(meterFill);
   level.appendChild(meterBar);
-  root.appendChild(level);
+  content.appendChild(level);
 
   const controls = document.createElement('div');
   controls.className = 'control-row';
@@ -224,9 +233,11 @@ function createSpeakerItem(id, speaker) {
   });
   controls.appendChild(soloBtn);
 
-  root.appendChild(controls);
+  content.appendChild(controls);
+  root.appendChild(content);
+  root.appendChild(idStrip);
 
-  return { root, label, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
+  return { root, label: idText, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
 }
 
 function updateSpeakerItem(entry, id, speaker) {
@@ -241,14 +252,20 @@ function updateSpeakerItem(entry, id, speaker) {
 
 function createObjectItem(id) {
   const root = document.createElement('div');
-  root.className = 'info-item';
+  root.className = 'info-item object-item';
 
-  const label = document.createElement('strong');
-  label.textContent = String(id);
-  root.appendChild(label);
+  const idStrip = document.createElement('div');
+  idStrip.className = 'id-strip flip';
+  const idText = document.createElement('span');
+  idText.textContent = String(id);
+  idStrip.appendChild(idText);
+  root.appendChild(idStrip);
+
+  const content = document.createElement('div');
+  content.className = 'object-content';
 
   const position = document.createElement('div');
-  root.appendChild(position);
+  content.appendChild(position);
 
   const level = document.createElement('div');
   level.className = 'meter-row';
@@ -262,7 +279,7 @@ function createObjectItem(id) {
   meterFill.className = 'meter-fill';
   meterBar.appendChild(meterFill);
   level.appendChild(meterBar);
-  root.appendChild(level);
+  content.appendChild(level);
 
   const controls = document.createElement('div');
   controls.className = 'control-row';
@@ -299,9 +316,10 @@ function createObjectItem(id) {
   });
   controls.appendChild(soloBtn);
 
-  root.appendChild(controls);
+  content.appendChild(controls);
+  root.appendChild(content);
 
-  return { root, label, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
+  return { root, label: idText, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
 }
 
 function updateObjectItem(entry, id, position) {
@@ -430,6 +448,32 @@ function sendSpeakerGain(id, gain) {
   );
 }
 
+function sendObjectMute(id, muted) {
+  if (ws.readyState !== WebSocket.OPEN) {
+    return;
+  }
+  ws.send(
+    JSON.stringify({
+      type: 'control:object:mute',
+      id,
+      muted: muted ? 1 : 0
+    })
+  );
+}
+
+function sendSpeakerMute(id, muted) {
+  if (ws.readyState !== WebSocket.OPEN) {
+    return;
+  }
+  ws.send(
+    JSON.stringify({
+      type: 'control:speaker:mute',
+      id,
+      muted: muted ? 1 : 0
+    })
+  );
+}
+
 function applyGroupGains(group) {
   const isSpeaker = group === 'speaker';
   const ids = isSpeaker ? getSpeakerIds() : getObjectIds();
@@ -452,28 +496,90 @@ function applyGroupGains(group) {
   });
 }
 
+function applySoloMute(group) {
+  const isSpeaker = group === 'speaker';
+  const ids = isSpeaker ? getSpeakerIds() : getObjectIds();
+  const soloId = isSpeaker ? speakerSoloId : objectSoloId;
+  const mutedSet = isSpeaker ? speakerMuted : objectMuted;
+  const soloMutedSet = isSpeaker ? speakerSoloMuted : objectSoloMuted;
+
+  soloMutedSet.clear();
+  if (!soloId) {
+    return;
+  }
+
+  ids.forEach((id) => {
+    if (id === soloId) {
+      return;
+    }
+    if (!mutedSet.has(id)) {
+      soloMutedSet.add(id);
+      mutedSet.add(id);
+      if (isSpeaker) {
+        sendSpeakerMute(id, true);
+      } else {
+        sendObjectMute(id, true);
+      }
+    }
+  });
+}
+
+function clearSoloMute(group) {
+  const isSpeaker = group === 'speaker';
+  const soloMutedSet = isSpeaker ? speakerSoloMuted : objectSoloMuted;
+  const manualMutedSet = isSpeaker ? speakerManualMuted : objectManualMuted;
+  const mutedSet = isSpeaker ? speakerMuted : objectMuted;
+
+  soloMutedSet.forEach((id) => {
+    if (!manualMutedSet.has(id)) {
+      mutedSet.delete(id);
+      if (isSpeaker) {
+        sendSpeakerMute(id, false);
+      } else {
+        sendObjectMute(id, false);
+      }
+    }
+  });
+  soloMutedSet.clear();
+}
+
 function toggleMute(group, id) {
   const mutedSet = group === 'speaker' ? speakerMuted : objectMuted;
+  const manualMutedSet = group === 'speaker' ? speakerManualMuted : objectManualMuted;
   if (mutedSet.has(id)) {
     mutedSet.delete(id);
+    manualMutedSet.delete(id);
   } else {
     mutedSet.add(id);
+    manualMutedSet.add(id);
   }
-  applyGroupGains(group);
   if (group === 'speaker') {
+    sendSpeakerMute(id, speakerMuted.has(id));
     updateSpeakerControlsUI();
   } else {
+    sendObjectMute(id, objectMuted.has(id));
     updateObjectControlsUI();
   }
 }
 
 function toggleSolo(group, id) {
   if (group === 'speaker') {
-    speakerSoloId = speakerSoloId === id ? null : id;
+    const wasSolo = speakerSoloId === id;
+    speakerSoloId = wasSolo ? null : id;
+    if (wasSolo) {
+      clearSoloMute('speaker');
+    } else {
+      applySoloMute('speaker');
+    }
   } else {
-    objectSoloId = objectSoloId === id ? null : id;
+    const wasSolo = objectSoloId === id;
+    objectSoloId = wasSolo ? null : id;
+    if (wasSolo) {
+      clearSoloMute('object');
+    } else {
+      applySoloMute('object');
+    }
   }
-  applyGroupGains(group);
   if (group === 'speaker') {
     updateSpeakerControlsUI();
   } else {
@@ -711,6 +817,8 @@ function removeSource(id) {
     objectSoloId = null;
   }
   objectMuted.delete(String(id));
+  objectSoloMuted.delete(String(id));
+  objectManualMuted.delete(String(id));
   objectBaseGains.delete(String(id));
   const entry = objectItems.get(String(id));
   if (entry) {
@@ -755,6 +863,16 @@ function renderLayout(key) {
   speakerMuted.forEach((id) => {
     if (!speakerIds.includes(id)) {
       speakerMuted.delete(id);
+    }
+  });
+  speakerSoloMuted.forEach((id) => {
+    if (!speakerIds.includes(id)) {
+      speakerSoloMuted.delete(id);
+    }
+  });
+  speakerManualMuted.forEach((id) => {
+    if (!speakerIds.includes(id)) {
+      speakerManualMuted.delete(id);
     }
   });
   speakerBaseGains.forEach((_, id) => {
@@ -886,6 +1004,13 @@ ws.onmessage = (event) => {
   const payload = JSON.parse(event.data);
 
   if (payload.type === 'state:init') {
+    speakerMuted.clear();
+    objectMuted.clear();
+    speakerManualMuted.clear();
+    objectManualMuted.clear();
+    speakerSoloMuted.clear();
+    objectSoloMuted.clear();
+
     Object.entries(payload.sources).forEach(([id, position]) => {
       updateSource(id, position);
     });
@@ -903,6 +1028,18 @@ ws.onmessage = (event) => {
     });
     Object.entries(payload.speakerGains || {}).forEach(([id, gain]) => {
       speakerGainCache.set(String(id), Number(gain));
+    });
+    Object.entries(payload.objectMutes || {}).forEach(([id, muted]) => {
+      const key = String(id);
+      if (Number(muted)) {
+        objectMuted.add(key);
+      }
+    });
+    Object.entries(payload.speakerMutes || {}).forEach(([id, muted]) => {
+      const key = String(id);
+      if (Number(muted)) {
+        speakerMuted.add(key);
+      }
     });
 
     hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
@@ -943,6 +1080,38 @@ ws.onmessage = (event) => {
 
   if (payload.type === 'speaker:gain') {
     speakerGainCache.set(String(payload.id), Number(payload.gain));
+    updateSpeakerControlsUI();
+  }
+
+  if (payload.type === 'object:mute') {
+    const key = String(payload.id);
+    if (Number(payload.muted)) {
+      objectMuted.add(key);
+    } else {
+      objectMuted.delete(key);
+      if (objectSoloMuted.has(key)) {
+        objectSoloMuted.delete(key);
+      }
+      if (!objectSoloId) {
+        objectManualMuted.delete(key);
+      }
+    }
+    updateObjectControlsUI();
+  }
+
+  if (payload.type === 'speaker:mute') {
+    const key = String(payload.id);
+    if (Number(payload.muted)) {
+      speakerMuted.add(key);
+    } else {
+      speakerMuted.delete(key);
+      if (speakerSoloMuted.has(key)) {
+        speakerSoloMuted.delete(key);
+      }
+      if (!speakerSoloId) {
+        speakerManualMuted.delete(key);
+      }
+    }
     updateSpeakerControlsUI();
   }
 

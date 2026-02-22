@@ -131,6 +131,29 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
+  if (parts.length === 5 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[4] === 'mute') {
+    const kind = parts[2];
+    if (!['object', 'speaker'].includes(kind)) {
+      return null;
+    }
+
+    const index = toNumber(parts[3]);
+    if (index === null || index < 0) {
+      return null;
+    }
+
+    const mutedRaw = toNumber(args[0]);
+    if (mutedRaw === null) {
+      return null;
+    }
+
+    return {
+      type: kind === 'speaker' ? 'state:speaker:mute' : 'state:object:mute',
+      id: String(Math.floor(index)),
+      muted: mutedRaw !== 0
+    };
+  }
+
   return null;
 }
 

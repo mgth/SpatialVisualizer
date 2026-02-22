@@ -160,6 +160,52 @@
       .info-item.is-muted {
         opacity: 0.35;
       }
+
+      .object-item {
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 0.45rem;
+        align-items: stretch;
+      }
+
+      .speaker-item {
+        display: grid;
+        grid-template-columns: 1fr 18px;
+        gap: 0.45rem;
+        align-items: stretch;
+      }
+
+      .id-strip {
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.2rem 0.1rem;
+      }
+
+      .id-strip span {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        font-weight: 600;
+        font-size: 11px;
+        letter-spacing: 0.02em;
+        color: #d9ecff;
+      }
+
+      .id-strip.flip span {
+        transform: rotate(180deg);
+      }
+
+      .object-content {
+        display: grid;
+        gap: 0.2rem;
+      }
+
+      .speaker-content {
+        display: grid;
+        gap: 0.2rem;
+      }
     </style>
   </head>
   <body>

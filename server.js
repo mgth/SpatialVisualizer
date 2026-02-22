@@ -74,6 +74,8 @@ const state = {
   objectSpeakerGains: {},
   objectGains: {},
   speakerGains: {},
+  objectMutes: {},
+  speakerMutes: {},
   layouts,
   selectedLayoutKey: layouts[0]?.key || null
 };
@@ -202,6 +204,32 @@ function handleParsedOsc(parsed) {
       gain: parsed.gain
     });
   }
+
+  if (parsed.type === 'state:object:mute') {
+    if (parsed.muted) {
+      state.objectMutes[parsed.id] = 1;
+    } else {
+      delete state.objectMutes[parsed.id];
+    }
+    broadcast({
+      type: 'object:mute',
+      id: parsed.id,
+      muted: parsed.muted ? 1 : 0
+    });
+  }
+
+  if (parsed.type === 'state:speaker:mute') {
+    if (parsed.muted) {
+      state.speakerMutes[parsed.id] = 1;
+    } else {
+      delete state.speakerMutes[parsed.id];
+    }
+    broadcast({
+      type: 'speaker:mute',
+      id: parsed.id,
+      muted: parsed.muted ? 1 : 0
+    });
+  }
 }
 
 function handleOscMessage(oscMsg) {
@@ -281,6 +309,17 @@ function sendTruehddFloatControl(address, value) {
     {
       address,
       args: [{ type: 'f', value }]
+    },
+    OSC_HOST,
+    OSC_RX_PORT
+  );
+}
+
+function sendTruehddIntControl(address, value) {
+  oscUdpPort.send(
+    {
+      address,
+      args: [{ type: 'i', value }]
     },
     OSC_HOST,
     OSC_RX_PORT
@@ -386,6 +425,24 @@ wss.on('connection', (ws) => {
         const clampedGain = Math.min(2, Math.max(0, gain));
         sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/gain`, clampedGain);
       }
+
+      if (payload?.type === 'control:object:mute') {
+        const id = Number(payload.id);
+        const muted = Number(payload.muted);
+        if (!Number.isFinite(id) || id < 0 || !Number.isFinite(muted)) {
+          return;
+        }
+        sendTruehddIntControl(`/truehdd/control/object/${Math.floor(id)}/mute`, muted ? 1 : 0);
+      }
+
+      if (payload?.type === 'control:speaker:mute') {
+        const id = Number(payload.id);
+        const muted = Number(payload.muted);
+        if (!Number.isFinite(id) || id < 0 || !Number.isFinite(muted)) {
+          return;
+        }
+        sendTruehddIntControl(`/truehdd/control/speaker/${Math.floor(id)}/mute`, muted ? 1 : 0);
+      }
     } catch {
       // Ignore invalid client payloads.
     }
@@ -400,6 +457,8 @@ wss.on('connection', (ws) => {
       objectSpeakerGains: state.objectSpeakerGains,
       objectGains: state.objectGains,
       speakerGains: state.speakerGains,
+      objectMutes: state.objectMutes,
+      speakerMutes: state.speakerMutes,
       layouts: state.layouts,
       selectedLayoutKey: state.selectedLayoutKey
     })
