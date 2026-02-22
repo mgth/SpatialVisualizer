@@ -44,10 +44,15 @@ function toPort(value, fallback) {
   return Number.isInteger(parsed) && parsed > 0 && parsed <= 65535 ? parsed : fallback;
 }
 
+function toListenPort(value, fallback) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 && parsed <= 65535 ? parsed : fallback;
+}
+
 const args = parseCliArgs(process.argv.slice(2));
 
 const HTTP_PORT = toPort(args.httpPort ?? args['http-port'] ?? process.env.PORT, 3000);
-const OSC_PORT = toPort(args.oscPort ?? args['osc-port'] ?? process.env.OSC_PORT, 9000);
+const OSC_PORT = toListenPort(args.oscPort ?? args['osc-port'] ?? process.env.OSC_PORT, 0);
 const OSC_HOST = String(args.host ?? args.oscHost ?? args['osc-host'] ?? process.env.OSC_HOST ?? '127.0.0.1');
 const OSC_RX_PORT = toPort(args.oscRxPort ?? args['osc-rx-port'] ?? process.env.OSC_RX_PORT, 9000);
 
@@ -226,18 +231,19 @@ const oscUdpPort = new osc.UDPPort({
 });
 
 oscUdpPort.on('ready', () => {
-  console.log(`[osc] listening on udp://0.0.0.0:${OSC_PORT}`);
+  const listenPort = oscUdpPort.socket?.address?.().port || OSC_PORT;
+  console.log(`[osc] listening on udp://0.0.0.0:${listenPort}`);
 
   oscUdpPort.send(
     {
       address: '/truehdd/register',
-      args: [{ type: 'i', value: OSC_PORT }]
+      args: [{ type: 'i', value: listenPort }]
     },
     OSC_HOST,
     OSC_RX_PORT
   );
 
-  console.log(`[osc] register sent to udp://${OSC_HOST}:${OSC_RX_PORT} with listen_port=${OSC_PORT}`);
+  console.log(`[osc] register sent to udp://${OSC_HOST}:${OSC_RX_PORT} with listen_port=${listenPort}`);
 });
 
 oscUdpPort.on('message', handleOscMessage);

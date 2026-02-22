@@ -4,7 +4,7 @@ Prototype d'application de visualisation 3D des objets d'un flux audio spatialis
 
 ## Principe
 
-- Le serveur écoute des messages OSC en UDP (port `9000` par défaut).
+- Le serveur écoute des messages OSC en UDP (port dynamique par défaut pour éviter les conflits avec truehdd sur `9000`).
 - Au démarrage, le viewer envoie `/truehdd/register [listen_port]` vers `<host>:9000` (port configurable via `--osc-rx-port`) pour s’enregistrer auprès de truehdd.
 - Les positions reçues sont diffusées en WebSocket au front web.
 - Le front affiche chaque source comme une sphère dans un volume 3D normalisé `[-1, 1]`.
@@ -47,10 +47,10 @@ Le serveur accepte le format historique du prototype **et** des variantes de typ
 ## Options CLI
 
 ```bash
-node server.js --host 127.0.0.1 --osc-port 9000 --osc-rx-port 9000 --http-port 3000
+node server.js --host 127.0.0.1 --osc-port 0 --osc-rx-port 9000 --http-port 3000
 ```
 
-- `--osc-port` : port UDP local d'écoute OSC (utilisé aussi comme `listen_port` dans `/truehdd/register`).
+- `--osc-port` : port UDP local d'écoute OSC (utilisé aussi comme `listen_port` dans `/truehdd/register`). Défaut `0` (= port dynamique attribué par l'OS).
 - `--host` / `--osc-host` : hôte truehdd cible pour l'enregistrement.
 - `--osc-rx-port` : port UDP côté truehdd recevant `/truehdd/register` (défaut `9000`).
 - `--http-port` : port HTTP du viewer.
