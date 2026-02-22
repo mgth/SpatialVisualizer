@@ -55,6 +55,8 @@ const HTTP_PORT = toPort(args.httpPort ?? args['http-port'] ?? process.env.PORT,
 const OSC_PORT = toListenPort(args.oscPort ?? args['osc-port'] ?? process.env.OSC_PORT, 0);
 const OSC_HOST = String(args.host ?? args.oscHost ?? args['osc-host'] ?? process.env.OSC_HOST ?? '127.0.0.1');
 const OSC_RX_PORT = toPort(args.oscRxPort ?? args['osc-rx-port'] ?? process.env.OSC_RX_PORT, 9000);
+const HEARTBEAT_INTERVAL_MS = 5000;
+
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
@@ -230,20 +232,45 @@ const oscUdpPort = new osc.UDPPort({
   metadata: true
 });
 
-oscUdpPort.on('ready', () => {
-  const listenPort = oscUdpPort.socket?.address?.().port || OSC_PORT;
-  console.log(`[osc] listening on udp://0.0.0.0:${listenPort}`);
+let heartbeatInterval = null;
 
+function sendTruehddControlMessage(address, listenPort) {
   oscUdpPort.send(
     {
-      address: '/truehdd/register',
+      address,
       args: [{ type: 'i', value: listenPort }]
     },
     OSC_HOST,
     OSC_RX_PORT
   );
+}
 
+function stopHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+}
+
+function startHeartbeat(listenPort) {
+  stopHeartbeat();
+  heartbeatInterval = setInterval(() => {
+    sendTruehddControlMessage('/truehdd/heartbeat', listenPort);
+  }, HEARTBEAT_INTERVAL_MS);
+  if (typeof heartbeatInterval.unref === 'function') {
+    heartbeatInterval.unref();
+  }
+}
+
+oscUdpPort.on('ready', () => {
+  const listenPort = oscUdpPort.socket?.address?.().port || OSC_PORT;
+  console.log(`[osc] listening on udp://0.0.0.0:${listenPort}`);
+
+  sendTruehddControlMessage('/truehdd/register', listenPort);
   console.log(`[osc] register sent to udp://${OSC_HOST}:${OSC_RX_PORT} with listen_port=${listenPort}`);
+
+  startHeartbeat(listenPort);
+  console.log(`[osc] heartbeat started: /truehdd/heartbeat every ${HEARTBEAT_INTERVAL_MS / 1000}s`);
 });
 
 oscUdpPort.on('message', handleOscMessage);
@@ -286,5 +313,14 @@ wss.on('connection', (ws) => {
 server.listen(HTTP_PORT, () => {
   console.log(`[http] http://localhost:${HTTP_PORT}`);
 });
+
+
+function shutdown() {
+  stopHeartbeat();
+}
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+process.on('exit', shutdown);
 
 oscUdpPort.open();

@@ -6,6 +6,7 @@ Prototype d'application de visualisation 3D des objets d'un flux audio spatialis
 
 - Le serveur écoute des messages OSC en UDP (port dynamique par défaut pour éviter les conflits avec truehdd sur `9000`).
 - Au démarrage, le viewer envoie `/truehdd/register [listen_port]` vers `<host>:9000` (port configurable via `--osc-rx-port`) pour s’enregistrer auprès de truehdd.
+- Tant qu’il est actif, le viewer envoie `/truehdd/heartbeat [listen_port]` toutes les 5 secondes vers la même destination pour maintenir l’inscription côté truehdd.
 - Les positions reçues sont diffusées en WebSocket au front web.
 - Le front affiche chaque source comme une sphère dans un volume 3D normalisé `[-1, 1]`.
 - Le menu **Layout** permet de choisir la configuration d’enceintes chargée depuis `layouts/*.json` et affichée dans la scène.
@@ -69,3 +70,11 @@ Puis ouvrir: [http://localhost:3000](http://localhost:3000)
 ```bash
 node --test
 ```
+
+
+## Messages envoyés par le viewer vers truehdd
+
+| Message OSC | Fréquence | Args |
+|---|---|---|
+| `/truehdd/register` | une fois au démarrage | `[int listen_port]` |
+| `/truehdd/heartbeat` | toutes les 5 s | `[int listen_port]` |
