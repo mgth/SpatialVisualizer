@@ -78,3 +78,12 @@ node --test
 |---|---|---|
 | `/truehdd/register` | une fois au démarrage | `[int listen_port]` |
 | `/truehdd/heartbeat` | toutes les 5 s | `[int listen_port]` |
+
+
+## Heartbeat truehdd (réponses attendues)
+
+Le viewer envoie `/truehdd/heartbeat [listen_port]` toutes les 5 secondes.
+
+- `/truehdd/heartbeat/ack` : rien à faire, la session est valide.
+- `/truehdd/heartbeat/unknown` : le viewer se ré-enregistre automatiquement avec `/truehdd/register`.
+- timeout d'ACK (> ~10 s) : le viewer tente périodiquement un `/truehdd/register` jusqu'au retour des réponses.

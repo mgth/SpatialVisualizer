@@ -56,6 +56,7 @@ const OSC_PORT = toListenPort(args.oscPort ?? args['osc-port'] ?? process.env.OS
 const OSC_HOST = String(args.host ?? args.oscHost ?? args['osc-host'] ?? process.env.OSC_HOST ?? '127.0.0.1');
 const OSC_RX_PORT = toPort(args.oscRxPort ?? args['osc-rx-port'] ?? process.env.OSC_RX_PORT, 9000);
 const HEARTBEAT_INTERVAL_MS = 5000;
+const HEARTBEAT_ACK_TIMEOUT_MS = 10000;
 
 
 const app = express();
@@ -184,6 +185,10 @@ function handleParsedOsc(parsed) {
 }
 
 function handleOscMessage(oscMsg) {
+  if (handleHeartbeatResponseAddress(oscMsg?.address)) {
+    return;
+  }
+
   handleParsedOsc(parseOscMessage(oscMsg));
 }
 
@@ -193,6 +198,10 @@ function handleOscBundle(bundle) {
 
   packets.forEach((packet) => {
     if (!packet?.address) {
+      return;
+    }
+
+    if (handleHeartbeatResponseAddress(packet.address)) {
       return;
     }
 
@@ -233,6 +242,8 @@ const oscUdpPort = new osc.UDPPort({
 });
 
 let heartbeatInterval = null;
+let activeListenPort = null;
+let lastHeartbeatAckAt = 0;
 
 function sendTruehddControlMessage(address, listenPort) {
   oscUdpPort.send(
@@ -245,6 +256,30 @@ function sendTruehddControlMessage(address, listenPort) {
   );
 }
 
+function registerToTruehdd(listenPort, reason = 'startup') {
+  activeListenPort = listenPort;
+  sendTruehddControlMessage('/truehdd/register', listenPort);
+  lastHeartbeatAckAt = Date.now();
+  console.log(`[osc] register sent to udp://${OSC_HOST}:${OSC_RX_PORT} with listen_port=${listenPort} (${reason})`);
+}
+
+function handleHeartbeatResponseAddress(address) {
+  const normalized = String(address || '').toLowerCase();
+  if (normalized === '/truehdd/heartbeat/ack') {
+    lastHeartbeatAckAt = Date.now();
+    return true;
+  }
+
+  if (normalized === '/truehdd/heartbeat/unknown') {
+    if (activeListenPort !== null) {
+      registerToTruehdd(activeListenPort, 'heartbeat unknown');
+    }
+    return true;
+  }
+
+  return false;
+}
+
 function stopHeartbeat() {
   if (heartbeatInterval) {
     clearInterval(heartbeatInterval);
@@ -254,9 +289,18 @@ function stopHeartbeat() {
 
 function startHeartbeat(listenPort) {
   stopHeartbeat();
+  activeListenPort = listenPort;
+  lastHeartbeatAckAt = Date.now();
+
   heartbeatInterval = setInterval(() => {
     sendTruehddControlMessage('/truehdd/heartbeat', listenPort);
+
+    const ackAgeMs = Date.now() - lastHeartbeatAckAt;
+    if (ackAgeMs > HEARTBEAT_ACK_TIMEOUT_MS) {
+      registerToTruehdd(listenPort, `heartbeat timeout ${Math.round(ackAgeMs)}ms`);
+    }
   }, HEARTBEAT_INTERVAL_MS);
+
   if (typeof heartbeatInterval.unref === 'function') {
     heartbeatInterval.unref();
   }
@@ -266,8 +310,7 @@ oscUdpPort.on('ready', () => {
   const listenPort = oscUdpPort.socket?.address?.().port || OSC_PORT;
   console.log(`[osc] listening on udp://0.0.0.0:${listenPort}`);
 
-  sendTruehddControlMessage('/truehdd/register', listenPort);
-  console.log(`[osc] register sent to udp://${OSC_HOST}:${OSC_RX_PORT} with listen_port=${listenPort}`);
+  registerToTruehdd(listenPort);
 
   startHeartbeat(listenPort);
   console.log(`[osc] heartbeat started: /truehdd/heartbeat every ${HEARTBEAT_INTERVAL_MS / 1000}s`);
