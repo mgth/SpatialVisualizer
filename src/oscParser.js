@@ -34,7 +34,7 @@ function truehddSpeakerToSceneCartesian(azimuthDeg, elevationDeg, distance) {
     // truehdd convention: 0 front, +90 left, +elevation up
     x: d * Math.cos(el) * Math.cos(az),
     y: d * Math.sin(el),
-    z: -d * Math.cos(el) * Math.sin(az)
+    z: d * Math.cos(el) * Math.sin(az)
   };
 }
 

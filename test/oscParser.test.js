@@ -115,5 +115,5 @@ test('parse truehdd speaker config with left-handed azimuth convention', () => {
   assert.equal(out.name, 'FL');
   assert.equal(out.spatialize, 1);
   assert.ok(Math.abs(out.position.x) < 1e-6);
-  assert.ok(Math.abs(out.position.z + 1) < 1e-6);
+  assert.ok(Math.abs(out.position.z - 1) < 1e-6);
 });
