@@ -39,6 +39,7 @@ scene.add(axes);
 
 const sourceMeshes = new Map();
 const sourceLabels = new Map();
+const sourceOutlines = new Map();
 const speakerMeshes = [];
 const speakerLabels = [];
 const sourceLevels = new Map();
@@ -95,29 +96,45 @@ function createLabelSprite(text) {
 }
 
 function createSourceOutline() {
-  const geometry = sourceGeometry.clone();
-  const material = new THREE.MeshBasicMaterial({
+  const points = [];
+  const segments = 64;
+  for (let i = 0; i < segments; i += 1) {
+    const a = (i / segments) * Math.PI * 2;
+    points.push(new THREE.Vector3(Math.cos(a), Math.sin(a), 0));
+  }
+
+  const geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const material = new THREE.LineBasicMaterial({
     color: sourceOutlineColor.clone(),
-    wireframe: true,
     transparent: true,
     opacity: 0.98,
     depthTest: false,
     depthWrite: false
   });
 
-  const outline = new THREE.Mesh(geometry, material);
-  outline.renderOrder = 10;
+  const outline = new THREE.LineLoop(geometry, material);
+  outline.renderOrder = 20;
   return outline;
 }
 
-function updateSourceLabelPosition(id) {
+function updateSourceDecorations(id) {
   const mesh = sourceMeshes.get(id);
   const label = sourceLabels.get(id);
-  if (!mesh || !label) {
+  const outline = sourceOutlines.get(id);
+
+  if (!mesh) {
     return;
   }
 
-  label.position.set(mesh.position.x, mesh.position.y, mesh.position.z);
+  if (label) {
+    label.position.set(mesh.position.x, mesh.position.y, mesh.position.z);
+  }
+
+  if (outline) {
+    const radius = 0.07 * mesh.scale.x * 1.08;
+    outline.position.set(mesh.position.x, mesh.position.y, mesh.position.z);
+    outline.scale.setScalar(radius);
+  }
 }
 
 function dbfsToScale(dbfs, minScale, maxScale) {
@@ -133,7 +150,7 @@ function gainToMix(gain) {
 function applySourceLevel(id, mesh, meter) {
   const scale = dbfsToScale(meter?.rmsDbfs, 0.5, 2.4);
   mesh.scale.setScalar(scale);
-  updateSourceLabelPosition(id);
+  updateSourceDecorations(id);
 }
 
 function applySpeakerLevel(mesh, meter) {
@@ -153,7 +170,7 @@ function updateSourceSelectionStyles() {
     const isSelected = id === selectedSourceId;
     mesh.material.emissive.copy(isSelected ? sourceSelectedEmissive : sourceDefaultEmissive);
 
-    const outline = mesh.userData.outline;
+    const outline = sourceOutlines.get(id);
     if (outline) {
       outline.material.color.copy(isSelected ? sourceOutlineSelectedColor : sourceOutlineColor);
       outline.material.opacity = isSelected ? 1 : 0.98;
@@ -194,9 +211,8 @@ function getSourceMesh(id) {
     mesh.userData.sourceId = id;
 
     const outline = createSourceOutline();
-    mesh.add(outline);
-    mesh.userData.outline = outline;
     scene.add(mesh);
+    scene.add(outline);
 
     const label = createLabelSprite(String(id));
     label.userData.sourceId = id;
@@ -204,6 +220,7 @@ function getSourceMesh(id) {
 
     sourceMeshes.set(id, mesh);
     sourceLabels.set(id, label);
+    sourceOutlines.set(id, outline);
     applySourceLevel(id, mesh, sourceLevels.get(id));
     updateSourceSelectionStyles();
   }
@@ -213,7 +230,7 @@ function getSourceMesh(id) {
 function updateSource(id, position) {
   const mesh = getSourceMesh(id);
   mesh.position.set(position.x, position.y, position.z);
-  updateSourceLabelPosition(id);
+  updateSourceDecorations(id);
 }
 
 function updateSourceLevel(id, meter) {
@@ -251,8 +268,9 @@ function removeSource(id) {
     label.material.map.dispose();
     label.material.dispose();
   }
-  const outline = mesh.userData.outline;
+  const outline = sourceOutlines.get(id);
   if (outline) {
+    scene.remove(outline);
     outline.geometry.dispose();
     outline.material.dispose();
   }
@@ -262,6 +280,7 @@ function removeSource(id) {
   sourceLabels.delete(id);
   sourceLevels.delete(id);
   sourceGains.delete(id);
+  sourceOutlines.delete(id);
 
   if (selectedSourceId === id) {
     setSelectedSource(null);
@@ -458,6 +477,11 @@ ws.onmessage = (event) => {
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+
+  sourceOutlines.forEach((outline) => {
+    outline.quaternion.copy(camera.quaternion);
+  });
+
   renderer.render(scene, camera);
 }
 
