@@ -66,6 +66,8 @@ const speakerBaseColor = new THREE.Color(0x8ec8ff);
 const speakerHotColor = new THREE.Color(0xff3030);
 const sourceDefaultEmissive = new THREE.Color(0x64210c);
 const sourceSelectedEmissive = new THREE.Color(0x9b7f22);
+const sourceOutlineColor = new THREE.Color(0xd9ecff);
+const sourceOutlineSelectedColor = new THREE.Color(0xffde8a);
 
 const layoutsByKey = new Map();
 const raycaster = new THREE.Raycaster();
@@ -90,6 +92,12 @@ function createLabelSprite(text) {
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(0.42, 0.16, 1);
   return sprite;
+}
+
+function createSourceOutline() {
+  const geometry = new THREE.EdgesGeometry(sourceGeometry, 24);
+  const material = new THREE.LineBasicMaterial({ color: sourceOutlineColor.clone(), transparent: true, opacity: 0.95 });
+  return new THREE.LineSegments(geometry, material);
 }
 
 function updateSourceLabelPosition(id) {
@@ -132,7 +140,14 @@ function getSelectedSourceGains() {
 
 function updateSourceSelectionStyles() {
   sourceMeshes.forEach((mesh, id) => {
-    mesh.material.emissive.copy(id === selectedSourceId ? sourceSelectedEmissive : sourceDefaultEmissive);
+    const isSelected = id === selectedSourceId;
+    mesh.material.emissive.copy(isSelected ? sourceSelectedEmissive : sourceDefaultEmissive);
+
+    const outline = mesh.userData.outline;
+    if (outline) {
+      outline.material.color.copy(isSelected ? sourceOutlineSelectedColor : sourceOutlineColor);
+      outline.material.opacity = isSelected ? 1 : 0.9;
+    }
   });
 }
 
@@ -164,7 +179,12 @@ function getSourceMesh(id) {
     const mesh = new THREE.Mesh(sourceGeometry, sourceMaterial.clone());
     mesh.material.color.setHSL(Math.random(), 0.8, 0.6);
     mesh.material.emissive.copy(sourceDefaultEmissive);
+    mesh.material.opacity = 0.02;
     mesh.userData.sourceId = id;
+
+    const outline = createSourceOutline();
+    mesh.add(outline);
+    mesh.userData.outline = outline;
     scene.add(mesh);
 
     const label = createLabelSprite(String(id));
@@ -219,6 +239,11 @@ function removeSource(id) {
     scene.remove(label);
     label.material.map.dispose();
     label.material.dispose();
+  }
+  const outline = mesh.userData.outline;
+  if (outline) {
+    outline.geometry.dispose();
+    outline.material.dispose();
   }
   mesh.geometry.dispose();
   mesh.material.dispose();
