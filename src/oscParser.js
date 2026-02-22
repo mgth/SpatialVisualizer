@@ -41,10 +41,84 @@ function findIdInAddress(parts) {
   return null;
 }
 
+
+function parseObjectGainsMessage(parts, args) {
+  const meterIndex = parts.indexOf('meter');
+  if (meterIndex === -1 || parts.length <= meterIndex + 3) {
+    return null;
+  }
+
+  const meterKind = parts[meterIndex + 1];
+  const meterId = parts[meterIndex + 2];
+  const suffix = parts[meterIndex + 3];
+
+  if (meterKind !== 'object' || suffix !== 'gains' || !meterId) {
+    return null;
+  }
+
+  const gains = args
+    .map((value) => clamp(toNumber(value) ?? 0, 0, 1));
+
+  return {
+    type: 'meter:object:gains',
+    id: String(meterId),
+    gains
+  };
+}
+
+function parseMeterMessage(parts, args) {
+  const meterIndex = parts.indexOf('meter');
+  if (meterIndex === -1 || parts.length <= meterIndex + 2) {
+    return null;
+  }
+
+  const meterKind = parts[meterIndex + 1];
+  const meterId = parts[meterIndex + 2];
+  const [peakRaw, rmsRaw] = args;
+  const peakDbfs = clamp(toNumber(peakRaw) ?? -100, -100, 0);
+  const rmsDbfs = clamp(toNumber(rmsRaw) ?? -100, -100, 0);
+
+  if (!['object', 'speaker'].includes(meterKind) || !meterId) {
+    return null;
+  }
+
+  return {
+    type: meterKind === 'object' ? 'meter:object' : 'meter:speaker',
+    id: String(meterId),
+    peakDbfs,
+    rmsDbfs
+  };
+}
+
+
+function mapCartesianByAddress(parts, position) {
+  const isTruehddObjectXyz = parts.includes('truehdd') && parts.includes('object') && parts.includes('xyz');
+  if (!isTruehddObjectXyz) {
+    return position;
+  }
+
+  // truehdd/object/{id}/xyz uses x=right, y=front, z=up.
+  // Our scene convention is x=front, y=up, z=right.
+  return {
+    x: position.y,
+    y: position.z,
+    z: position.x
+  };
+}
+
 function parseOscMessage(oscMsg) {
   const address = String(oscMsg.address || '');
   const parts = address.split('/').filter(Boolean).map((p) => p.toLowerCase());
   const args = (oscMsg.args || []).map(unwrapArg);
+
+  if (parts.includes('meter')) {
+    const parsedGains = parseObjectGainsMessage(parts, args);
+    if (parsedGains) {
+      return parsedGains;
+    }
+
+    return parseMeterMessage(parts, args);
+  }
 
   const isRemove = parts.some((p) => ['remove', 'delete', 'off'].includes(p));
   if (isRemove) {
@@ -84,13 +158,15 @@ function parseOscMessage(oscMsg) {
     return null;
   }
 
+  const mappedPosition = mapCartesianByAddress(parts, position);
+
   return {
     type: 'update',
     id,
     position: {
-      x: clamp(position.x, -1, 1),
-      y: clamp(position.y, -1, 1),
-      z: clamp(position.z, -1, 1)
+      x: clamp(mappedPosition.x, -1, 1),
+      y: clamp(mappedPosition.y, -1, 1),
+      z: clamp(mappedPosition.z, -1, 1)
     }
   };
 }

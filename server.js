@@ -19,6 +19,9 @@ const layouts = loadLayouts();
 
 const state = {
   sources: {},
+  sourceLevels: {},
+  speakerLevels: {},
+  objectSpeakerGains: {},
   layouts,
   selectedLayoutKey: layouts[0]?.key || null
 };
@@ -32,8 +35,7 @@ function broadcast(payload) {
   });
 }
 
-function handleOscMessage(oscMsg) {
-  const parsed = parseOscMessage(oscMsg);
+function handleParsedOsc(parsed) {
   if (!parsed) {
     return;
   }
@@ -53,8 +55,65 @@ function handleOscMessage(oscMsg) {
 
   if (parsed.type === 'remove') {
     delete state.sources[parsed.id];
+    delete state.sourceLevels[parsed.id];
+    delete state.objectSpeakerGains[parsed.id];
     broadcast({ type: 'source:remove', id: parsed.id });
   }
+
+  if (parsed.type === 'meter:object') {
+    state.sourceLevels[parsed.id] = {
+      peakDbfs: parsed.peakDbfs,
+      rmsDbfs: parsed.rmsDbfs,
+      updatedAt: Date.now()
+    };
+
+    broadcast({
+      type: 'source:meter',
+      id: parsed.id,
+      meter: state.sourceLevels[parsed.id]
+    });
+  }
+
+
+  if (parsed.type === 'meter:object:gains') {
+    state.objectSpeakerGains[parsed.id] = {
+      gains: parsed.gains,
+      updatedAt: Date.now()
+    };
+
+    broadcast({
+      type: 'source:gains',
+      id: parsed.id,
+      gains: parsed.gains
+    });
+  }
+
+  if (parsed.type === 'meter:speaker') {
+    state.speakerLevels[parsed.id] = {
+      peakDbfs: parsed.peakDbfs,
+      rmsDbfs: parsed.rmsDbfs,
+      updatedAt: Date.now()
+    };
+
+    broadcast({
+      type: 'speaker:meter',
+      id: parsed.id,
+      meter: state.speakerLevels[parsed.id]
+    });
+  }
+}
+
+function handleOscMessage(oscMsg) {
+  handleParsedOsc(parseOscMessage(oscMsg));
+}
+
+function handleOscBundle(bundle) {
+  const packets = Array.isArray(bundle?.packets) ? bundle.packets : [];
+  packets.forEach((packet) => {
+    if (packet?.address) {
+      handleParsedOsc(parseOscMessage(packet));
+    }
+  });
 }
 
 const oscUdpPort = new osc.UDPPort({
@@ -68,6 +127,7 @@ oscUdpPort.on('ready', () => {
 });
 
 oscUdpPort.on('message', handleOscMessage);
+oscUdpPort.on('bundle', handleOscBundle);
 
 oscUdpPort.on('error', (err) => {
   console.error('[osc] error:', err.message);
@@ -94,6 +154,9 @@ wss.on('connection', (ws) => {
     JSON.stringify({
       type: 'state:init',
       sources: state.sources,
+      sourceLevels: state.sourceLevels,
+      speakerLevels: state.speakerLevels,
+      objectSpeakerGains: state.objectSpeakerGains,
       layouts: state.layouts,
       selectedLayoutKey: state.selectedLayoutKey
     })
