@@ -55,14 +55,11 @@ const speakerBaseGains = new Map();
 const objectBaseGains = new Map();
 const speakerMuted = new Set();
 const objectMuted = new Set();
-let speakerSoloId = null;
-let objectSoloId = null;
 const speakerItems = new Map();
 const objectItems = new Map();
-const speakerSoloMuted = new Set();
-const objectSoloMuted = new Set();
 const speakerManualMuted = new Set();
 const objectManualMuted = new Set();
+const sourceNames = new Map();
 
 let selectedSourceId = null;
 
@@ -151,21 +148,50 @@ function updateObjectPositionUI(id, position) {
   entry.position.textContent = `pos ${formatPosition(position)}`;
 }
 
+function updateObjectLabelUI(id) {
+  const entry = objectItems.get(id);
+  if (!entry) return;
+  entry.label.textContent = getObjectDisplayName(id);
+}
+
+function getObjectDisplayName(id) {
+  const raw = sourceNames.get(id);
+  if (raw && typeof raw === 'string' && raw.trim()) {
+    return raw.trim();
+  }
+  return String(id);
+}
+
+function formatObjectLabel(id) {
+  const raw = sourceNames.get(id);
+  if (raw && typeof raw === 'string') {
+    const trimmed = raw.trim();
+    const underscoreIndex = trimmed.indexOf('_');
+    const cleaned = underscoreIndex >= 0 ? trimmed.slice(underscoreIndex + 1) : trimmed;
+    if (cleaned) {
+      return cleaned;
+    }
+  }
+  return String(id);
+}
+
 function updateSpeakerControlsUI() {
+  const soloTarget = getSoloTarget('speaker');
   speakerItems.forEach((entry, id) => {
     entry.gainSlider.value = String(getBaseGain(speakerBaseGains, speakerGainCache, id));
     entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
-    entry.soloBtn.classList.toggle('active', speakerSoloId === id);
-    updateItemClasses(entry, speakerMuted.has(id), speakerSoloId && speakerSoloId !== id);
+    entry.soloBtn.classList.toggle('active', soloTarget === id);
+    updateItemClasses(entry, speakerMuted.has(id), soloTarget && soloTarget !== id);
   });
 }
 
 function updateObjectControlsUI() {
+  const soloTarget = getSoloTarget('object');
   objectItems.forEach((entry, id) => {
     entry.gainSlider.value = String(getBaseGain(objectBaseGains, objectGainCache, id));
     entry.muteBtn.classList.toggle('active', objectMuted.has(id));
-    entry.soloBtn.classList.toggle('active', objectSoloId === id);
-    updateItemClasses(entry, objectMuted.has(id), objectSoloId && objectSoloId !== id);
+    entry.soloBtn.classList.toggle('active', soloTarget === id);
+    updateItemClasses(entry, objectMuted.has(id), soloTarget && soloTarget !== id);
   });
 }
 
@@ -241,12 +267,13 @@ function createSpeakerItem(id, speaker) {
 }
 
 function updateSpeakerItem(entry, id, speaker) {
+  const soloTarget = getSoloTarget('speaker');
   entry.label.textContent = String(speaker.id ?? id);
   entry.position.textContent = `pos ${formatPosition(speaker)}`;
   entry.gainSlider.value = String(getBaseGain(speakerBaseGains, speakerGainCache, id));
   entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
-  entry.soloBtn.classList.toggle('active', speakerSoloId === id);
-  updateItemClasses(entry, speakerMuted.has(id), speakerSoloId && speakerSoloId !== id);
+  entry.soloBtn.classList.toggle('active', soloTarget === id);
+  updateItemClasses(entry, speakerMuted.has(id), soloTarget && soloTarget !== id);
   updateMeterUI(entry, speakerLevels.get(id));
 }
 
@@ -322,12 +349,17 @@ function createObjectItem(id) {
   return { root, label: idText, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
 }
 
-function updateObjectItem(entry, id, position) {
+function updateObjectItem(entry, id, position, name) {
+  const soloTarget = getSoloTarget('object');
+  if (name) {
+    sourceNames.set(id, name);
+  }
+  entry.label.textContent = getObjectDisplayName(id);
   entry.position.textContent = `pos ${formatPosition(position)}`;
   entry.gainSlider.value = String(getBaseGain(objectBaseGains, objectGainCache, id));
   entry.muteBtn.classList.toggle('active', objectMuted.has(id));
-  entry.soloBtn.classList.toggle('active', objectSoloId === id);
-  updateItemClasses(entry, objectMuted.has(id), objectSoloId && objectSoloId !== id);
+  entry.soloBtn.classList.toggle('active', soloTarget === id);
+  updateItemClasses(entry, objectMuted.has(id), soloTarget && soloTarget !== id);
   updateMeterUI(entry, sourceLevels.get(id));
 }
 
@@ -366,7 +398,22 @@ function renderSpeakersList() {
 function renderObjectsList() {
   if (!objectsListEl) return;
 
-  const ids = [...sourceMeshes.keys()].sort((a, b) => String(a).localeCompare(String(b)));
+  const ids = [...sourceMeshes.keys()].sort((a, b) => {
+    const aNum = Number(a);
+    const bNum = Number(b);
+    const aIsNum = Number.isFinite(aNum);
+    const bIsNum = Number.isFinite(bNum);
+    if (aIsNum && bIsNum) {
+      return aNum - bNum;
+    }
+    if (aIsNum) {
+      return -1;
+    }
+    if (bIsNum) {
+      return 1;
+    }
+    return String(a).localeCompare(String(b));
+  });
   if (!ids.length) {
     objectsListEl.textContent = 'Aucun objet.';
     objectItems.clear();
@@ -386,7 +433,7 @@ function renderObjectsList() {
       entry = createObjectItem(key);
       objectItems.set(key, entry);
     }
-    updateObjectItem(entry, key, mesh.position);
+    updateObjectItem(entry, key, mesh.position, sourceNames.get(key));
     objectsListEl.appendChild(entry.root);
   });
   objectItems.forEach((entry, id) => {
@@ -448,6 +495,29 @@ function sendSpeakerGain(id, gain) {
   );
 }
 
+function getSoloTarget(group) {
+  const ids = group === 'speaker' ? getSpeakerIds() : getObjectIds();
+  const mutedSet = group === 'speaker' ? speakerMuted : objectMuted;
+  if (ids.length <= 1) {
+    return null;
+  }
+
+  const unmuted = ids.filter((id) => !mutedSet.has(id));
+  if (unmuted.length !== 1) {
+    return null;
+  }
+
+  const target = unmuted[0];
+  const othersMuted = ids.every((id) => id === target || mutedSet.has(id));
+  return othersMuted ? target : null;
+}
+
+function areAllOthersMuted(group, id) {
+  const ids = group === 'speaker' ? getSpeakerIds() : getObjectIds();
+  const mutedSet = group === 'speaker' ? speakerMuted : objectMuted;
+  return ids.every((other) => other === id || mutedSet.has(other));
+}
+
 function sendObjectMute(id, muted) {
   if (ws.readyState !== WebSocket.OPEN) {
     return;
@@ -480,67 +550,17 @@ function applyGroupGains(group) {
   const baseMap = isSpeaker ? speakerBaseGains : objectBaseGains;
   const cache = isSpeaker ? speakerGainCache : objectGainCache;
   const mutedSet = isSpeaker ? speakerMuted : objectMuted;
-  const soloId = isSpeaker ? speakerSoloId : objectSoloId;
 
   ids.forEach((id) => {
     const baseGain = getBaseGain(baseMap, cache, id);
     const muted = mutedSet.has(id);
-    const soloActive = soloId !== null;
-    const soloMatch = soloId === id;
-    const effectiveGain = soloActive ? (soloMatch ? baseGain : 0) : muted ? 0 : baseGain;
+    const effectiveGain = muted ? 0 : baseGain;
     if (isSpeaker) {
       sendSpeakerGain(id, effectiveGain);
     } else {
       sendObjectGain(id, effectiveGain);
     }
   });
-}
-
-function applySoloMute(group) {
-  const isSpeaker = group === 'speaker';
-  const ids = isSpeaker ? getSpeakerIds() : getObjectIds();
-  const soloId = isSpeaker ? speakerSoloId : objectSoloId;
-  const mutedSet = isSpeaker ? speakerMuted : objectMuted;
-  const soloMutedSet = isSpeaker ? speakerSoloMuted : objectSoloMuted;
-
-  soloMutedSet.clear();
-  if (!soloId) {
-    return;
-  }
-
-  ids.forEach((id) => {
-    if (id === soloId) {
-      return;
-    }
-    if (!mutedSet.has(id)) {
-      soloMutedSet.add(id);
-      mutedSet.add(id);
-      if (isSpeaker) {
-        sendSpeakerMute(id, true);
-      } else {
-        sendObjectMute(id, true);
-      }
-    }
-  });
-}
-
-function clearSoloMute(group) {
-  const isSpeaker = group === 'speaker';
-  const soloMutedSet = isSpeaker ? speakerSoloMuted : objectSoloMuted;
-  const manualMutedSet = isSpeaker ? speakerManualMuted : objectManualMuted;
-  const mutedSet = isSpeaker ? speakerMuted : objectMuted;
-
-  soloMutedSet.forEach((id) => {
-    if (!manualMutedSet.has(id)) {
-      mutedSet.delete(id);
-      if (isSpeaker) {
-        sendSpeakerMute(id, false);
-      } else {
-        sendObjectMute(id, false);
-      }
-    }
-  });
-  soloMutedSet.clear();
 }
 
 function toggleMute(group, id) {
@@ -563,24 +583,47 @@ function toggleMute(group, id) {
 }
 
 function toggleSolo(group, id) {
-  if (group === 'speaker') {
-    const wasSolo = speakerSoloId === id;
-    speakerSoloId = wasSolo ? null : id;
-    if (wasSolo) {
-      clearSoloMute('speaker');
+  const isSpeaker = group === 'speaker';
+  const ids = isSpeaker ? getSpeakerIds() : getObjectIds();
+  const mutedSet = isSpeaker ? speakerMuted : objectMuted;
+  const manualMutedSet = isSpeaker ? speakerManualMuted : objectManualMuted;
+
+  if (areAllOthersMuted(group, id)) {
+    ids.forEach((other) => {
+      if (other === id) {
+        return;
+      }
+      mutedSet.delete(other);
+      manualMutedSet.delete(other);
+      if (isSpeaker) {
+        sendSpeakerMute(other, false);
+      } else {
+        sendObjectMute(other, false);
+      }
+    });
+    if (isSpeaker) {
+      updateSpeakerControlsUI();
     } else {
-      applySoloMute('speaker');
+      updateObjectControlsUI();
     }
-  } else {
-    const wasSolo = objectSoloId === id;
-    objectSoloId = wasSolo ? null : id;
-    if (wasSolo) {
-      clearSoloMute('object');
-    } else {
-      applySoloMute('object');
-    }
+    return;
   }
-  if (group === 'speaker') {
+
+  ids.forEach((other) => {
+    if (other === id) {
+      return;
+    }
+    if (!mutedSet.has(other)) {
+      mutedSet.add(other);
+      if (isSpeaker) {
+        sendSpeakerMute(other, true);
+      } else {
+        sendObjectMute(other, true);
+      }
+    }
+  });
+
+  if (isSpeaker) {
     updateSpeakerControlsUI();
   } else {
     updateObjectControlsUI();
@@ -601,19 +644,40 @@ function createLabelSprite(text) {
   canvas.width = 256;
   canvas.height = 96;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = 'bold 36px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-
   const texture = new THREE.CanvasTexture(canvas);
   texture.minFilter = THREE.LinearFilter;
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
   const sprite = new THREE.Sprite(material);
   sprite.scale.set(0.42, 0.16, 1);
+  sprite.userData.labelCanvas = canvas;
+  sprite.userData.labelCtx = ctx;
+  sprite.userData.labelTexture = texture;
+  sprite.userData.labelText = '';
+  setLabelSpriteText(sprite, text);
   return sprite;
+}
+
+function setLabelSpriteText(sprite, text) {
+  if (!sprite?.userData?.labelCanvas || !sprite.userData.labelCtx) {
+    return;
+  }
+  const nextText = String(text ?? '');
+  if (sprite.userData.labelText === nextText) {
+    return;
+  }
+
+  const canvas = sprite.userData.labelCanvas;
+  const ctx = sprite.userData.labelCtx;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(nextText, canvas.width / 2, canvas.height / 2);
+  sprite.userData.labelText = nextText;
+  if (sprite.userData.labelTexture) {
+    sprite.userData.labelTexture.needsUpdate = true;
+  }
 }
 
 function createSourceOutline() {
@@ -735,7 +799,7 @@ function getSourceMesh(id) {
     scene.add(mesh);
     scene.add(outline);
 
-    const label = createLabelSprite(String(id));
+    const label = createLabelSprite(formatObjectLabel(id));
     label.userData.sourceId = id;
     scene.add(label);
 
@@ -752,11 +816,19 @@ function updateSource(id, position) {
   const mesh = getSourceMesh(id);
   mesh.position.set(position.x, position.y, position.z);
   updateSourceDecorations(id);
+  if (position && typeof position.name === 'string' && position.name.trim()) {
+    sourceNames.set(String(id), position.name.trim());
+  }
+  const label = sourceLabels.get(id);
+  if (label) {
+    setLabelSpriteText(label, formatObjectLabel(String(id)));
+  }
   const key = String(id);
   if (!objectItems.has(key)) {
     renderObjectsList();
   } else {
     updateObjectPositionUI(key, mesh.position);
+    updateObjectLabelUI(key);
   }
 }
 
@@ -809,15 +881,12 @@ function removeSource(id) {
   sourceLevels.delete(id);
   sourceGains.delete(id);
   sourceOutlines.delete(id);
+  sourceNames.delete(String(id));
 
   if (selectedSourceId === id) {
     setSelectedSource(null);
   }
-  if (objectSoloId === String(id)) {
-    objectSoloId = null;
-  }
   objectMuted.delete(String(id));
-  objectSoloMuted.delete(String(id));
   objectManualMuted.delete(String(id));
   objectBaseGains.delete(String(id));
   const entry = objectItems.get(String(id));
@@ -857,17 +926,9 @@ function renderLayout(key) {
   currentLayoutKey = key;
   currentLayoutSpeakers = Array.isArray(layout.speakers) ? layout.speakers : [];
   const speakerIds = getSpeakerIds();
-  if (speakerSoloId && !speakerIds.includes(speakerSoloId)) {
-    speakerSoloId = null;
-  }
   speakerMuted.forEach((id) => {
     if (!speakerIds.includes(id)) {
       speakerMuted.delete(id);
-    }
-  });
-  speakerSoloMuted.forEach((id) => {
-    if (!speakerIds.includes(id)) {
-      speakerSoloMuted.delete(id);
     }
   });
   speakerManualMuted.forEach((id) => {
@@ -1008,8 +1069,6 @@ ws.onmessage = (event) => {
     objectMuted.clear();
     speakerManualMuted.clear();
     objectManualMuted.clear();
-    speakerSoloMuted.clear();
-    objectSoloMuted.clear();
 
     Object.entries(payload.sources).forEach(([id, position]) => {
       updateSource(id, position);
@@ -1089,12 +1148,7 @@ ws.onmessage = (event) => {
       objectMuted.add(key);
     } else {
       objectMuted.delete(key);
-      if (objectSoloMuted.has(key)) {
-        objectSoloMuted.delete(key);
-      }
-      if (!objectSoloId) {
-        objectManualMuted.delete(key);
-      }
+      objectManualMuted.delete(key);
     }
     updateObjectControlsUI();
   }
@@ -1105,12 +1159,7 @@ ws.onmessage = (event) => {
       speakerMuted.add(key);
     } else {
       speakerMuted.delete(key);
-      if (speakerSoloMuted.has(key)) {
-        speakerSoloMuted.delete(key);
-      }
-      if (!speakerSoloId) {
-        speakerManualMuted.delete(key);
-      }
+      speakerManualMuted.delete(key);
     }
     updateSpeakerControlsUI();
   }

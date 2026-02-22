@@ -128,6 +128,7 @@ function handleParsedOsc(parsed) {
   if (parsed.type === 'update') {
     state.sources[parsed.id] = {
       ...parsed.position,
+      ...(parsed.name ? { name: parsed.name } : {}),
       updatedAt: Date.now()
     };
 

@@ -107,6 +107,40 @@ function parseTruehddConfigMessage(parts, args) {
   return null;
 }
 
+function parseTruehddObjectXyz(parts, args) {
+  if (!parts.includes('truehdd') || !parts.includes('object') || !parts.includes('xyz')) {
+    return null;
+  }
+
+  const idFromAddress = findIdInAddress(parts);
+  if (!idFromAddress) {
+    return null;
+  }
+
+  const x = toNumber(args[0]);
+  const y = toNumber(args[1]);
+  const z = toNumber(args[2]);
+  if (x === null || y === null || z === null) {
+    return null;
+  }
+
+  const nameRaw = args[7];
+  const name = typeof nameRaw === 'string' && nameRaw.trim() ? nameRaw.trim() : null;
+
+  const mappedPosition = mapCartesianByAddress(parts, { x, y, z });
+
+  return {
+    type: 'update',
+    id: String(idFromAddress),
+    position: {
+      x: clamp(mappedPosition.x, -1, 1),
+      y: clamp(mappedPosition.y, -1, 1),
+      z: clamp(mappedPosition.z, -1, 1)
+    },
+    name
+  };
+}
+
 function parseTruehddStateMessage(parts, args) {
   if (parts.length === 5 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[4] === 'gain') {
     const kind = parts[2];
@@ -230,6 +264,11 @@ function parseOscMessage(oscMsg) {
   const parsedTruehddConfig = parseTruehddConfigMessage(parts, args);
   if (parsedTruehddConfig) {
     return parsedTruehddConfig;
+  }
+
+  const parsedTruehddObjectXyz = parseTruehddObjectXyz(parts, args);
+  if (parsedTruehddObjectXyz) {
+    return parsedTruehddObjectXyz;
   }
 
   const parsedTruehddState = parseTruehddStateMessage(parts, args);
