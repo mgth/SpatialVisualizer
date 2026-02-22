@@ -242,6 +242,9 @@ function renderLayout(key) {
   layout.speakers.forEach((speaker, index) => {
     const mesh = new THREE.Mesh(speakerGeometry.clone(), speakerMaterial.clone());
     mesh.position.set(speaker.x, speaker.y, speaker.z);
+    if (speaker.spatialize === 0) {
+      mesh.material.opacity = 0.3;
+    }
     scene.add(mesh);
     speakerMeshes.push(mesh);
     applySpeakerLevel(mesh, speakerLevels.get(String(index)));
@@ -360,6 +363,10 @@ ws.onmessage = (event) => {
       updateSourceGains(id, gains);
     });
 
+    hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
+  }
+
+  if (payload.type === 'layouts:update') {
     hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
   }
 

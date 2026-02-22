@@ -32,7 +32,6 @@ test('parse spherical /source/kick/aed', () => {
 });
 
 
-
 test('map truehdd object xyz orientation to scene convention', () => {
   const out = parseOscMessage({
     address: '/truehdd/object/10/xyz',
@@ -91,4 +90,30 @@ test('parse speaker meter message', () => {
     peakDbfs: 0,
     rmsDbfs: -100
   });
+});
+
+test('parse truehdd speakers count config', () => {
+  const out = parseOscMessage({
+    address: '/truehdd/config/speakers',
+    args: [4]
+  });
+
+  assert.deepEqual(out, {
+    type: 'config:speakers:count',
+    count: 4
+  });
+});
+
+test('parse truehdd speaker config with left-handed azimuth convention', () => {
+  const out = parseOscMessage({
+    address: '/truehdd/config/speaker/1',
+    args: ['FL', 90, 0, 1, 1]
+  });
+
+  assert.equal(out.type, 'config:speaker');
+  assert.equal(out.index, 1);
+  assert.equal(out.name, 'FL');
+  assert.equal(out.spatialize, 1);
+  assert.ok(Math.abs(out.position.x) < 1e-6);
+  assert.ok(Math.abs(out.position.z + 1) < 1e-6);
 });

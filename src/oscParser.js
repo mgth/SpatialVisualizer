@@ -25,6 +25,19 @@ function sphericalToCartesian(azimuthDeg, elevationDeg, distance) {
   return { x, y, z };
 }
 
+function truehddSpeakerToSceneCartesian(azimuthDeg, elevationDeg, distance) {
+  const az = (azimuthDeg * Math.PI) / 180;
+  const el = (elevationDeg * Math.PI) / 180;
+  const d = distance;
+
+  return {
+    // truehdd convention: 0 front, +90 left, +elevation up
+    x: d * Math.cos(el) * Math.cos(az),
+    y: d * Math.sin(el),
+    z: -d * Math.cos(el) * Math.sin(az)
+  };
+}
+
 function findIdInAddress(parts) {
   const anchors = ['source', 'sources', 'object', 'obj', 'track', 'channel'];
   const reserved = new Set(['position', 'pos', 'xyz', 'aed', 'spherical', 'polar', 'angles', 'remove', 'delete', 'off']);
@@ -36,6 +49,59 @@ function findIdInAddress(parts) {
         return candidate;
       }
     }
+  }
+
+  return null;
+}
+
+function parseTruehddConfigMessage(parts, args) {
+  if (!parts.includes('truehdd') || !parts.includes('config')) {
+    return null;
+  }
+
+  if (parts.length === 3 && parts[2] === 'speakers') {
+    const count = toNumber(args[0]);
+    if (count === null) {
+      return null;
+    }
+
+    return {
+      type: 'config:speakers:count',
+      count: Math.max(0, Math.floor(count))
+    };
+  }
+
+  if (parts.length === 4 && parts[2] === 'speaker') {
+    const index = toNumber(parts[3]);
+    if (index === null || index < 0) {
+      return null;
+    }
+
+    const [nameRaw, azRaw, elRaw, distanceRaw, spatializeRaw] = args;
+    const azimuth = toNumber(azRaw);
+    const elevation = toNumber(elRaw);
+    const distance = toNumber(distanceRaw);
+    if (azimuth === null || elevation === null || distance === null) {
+      return null;
+    }
+
+    const position = truehddSpeakerToSceneCartesian(azimuth, elevation, distance);
+    const spatialize = toNumber(spatializeRaw);
+
+    return {
+      type: 'config:speaker',
+      index: Math.floor(index),
+      name: String(nameRaw ?? `spk-${index}`),
+      azimuthDeg: azimuth,
+      elevationDeg: elevation,
+      distanceM: distance,
+      spatialize: spatialize === null ? 1 : spatialize !== 0 ? 1 : 0,
+      position: {
+        x: clamp(position.x, -1, 1),
+        y: clamp(position.y, -1, 1),
+        z: clamp(position.z, -1, 1)
+      }
+    };
   }
 
   return null;
@@ -110,6 +176,11 @@ function parseOscMessage(oscMsg) {
   const address = String(oscMsg.address || '');
   const parts = address.split('/').filter(Boolean).map((p) => p.toLowerCase());
   const args = (oscMsg.args || []).map(unwrapArg);
+
+  const parsedTruehddConfig = parseTruehddConfigMessage(parts, args);
+  if (parsedTruehddConfig) {
+    return parsedTruehddConfig;
+  }
 
   if (parts.includes('meter')) {
     const parsedGains = parseObjectGainsMessage(parts, args);

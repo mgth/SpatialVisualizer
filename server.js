@@ -6,8 +6,50 @@ const osc = require('osc');
 const { parseOscMessage } = require('./src/oscParser');
 const { loadLayouts } = require('./src/layouts');
 
-const HTTP_PORT = Number(process.env.PORT || 3000);
-const OSC_PORT = Number(process.env.OSC_PORT || 9000);
+function parseCliArgs(argv) {
+  const out = {};
+
+  for (let i = 0; i < argv.length; i += 1) {
+    const token = argv[i];
+    if (!token.startsWith('--')) {
+      continue;
+    }
+
+    const [rawKey, inlineValue] = token.slice(2).split('=');
+    const key = rawKey.trim();
+    if (!key) {
+      continue;
+    }
+
+    if (inlineValue !== undefined) {
+      out[key] = inlineValue;
+      continue;
+    }
+
+    const next = argv[i + 1];
+    if (next && !next.startsWith('--')) {
+      out[key] = next;
+      i += 1;
+      continue;
+    }
+
+    out[key] = true;
+  }
+
+  return out;
+}
+
+function toPort(value, fallback) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= 65535 ? parsed : fallback;
+}
+
+const args = parseCliArgs(process.argv.slice(2));
+
+const HTTP_PORT = toPort(args.httpPort ?? args['http-port'] ?? process.env.PORT, 3000);
+const OSC_PORT = toPort(args.oscPort ?? args['osc-port'] ?? process.env.OSC_PORT, 9000);
+const OSC_HOST = String(args.host ?? args.oscHost ?? args['osc-host'] ?? process.env.OSC_HOST ?? '127.0.0.1');
+const OSC_RX_PORT = toPort(args.oscRxPort ?? args['osc-rx-port'] ?? process.env.OSC_RX_PORT, 9000);
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
@@ -32,6 +74,37 @@ function broadcast(payload) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);
     }
+  });
+}
+
+function buildLiveLayoutFromSpeakers(speakers) {
+  return {
+    key: 'truehdd-live',
+    name: 'truehdd (live)',
+    speakers: speakers.map((speaker) => ({
+      id: speaker.name || `spk-${speaker.index}`,
+      x: speaker.position.x,
+      y: speaker.position.y,
+      z: speaker.position.z,
+      spatialize: speaker.spatialize
+    }))
+  };
+}
+
+function applyTruehddSpeakerConfig(speakers) {
+  if (!Array.isArray(speakers) || speakers.length === 0) {
+    return;
+  }
+
+  const liveLayout = buildLiveLayoutFromSpeakers(speakers);
+  const withoutLive = state.layouts.filter((layout) => layout.key !== liveLayout.key);
+  state.layouts = [liveLayout, ...withoutLive];
+  state.selectedLayoutKey = liveLayout.key;
+
+  broadcast({
+    type: 'layouts:update',
+    layouts: state.layouts,
+    selectedLayoutKey: state.selectedLayoutKey
   });
 }
 
@@ -109,11 +182,41 @@ function handleOscMessage(oscMsg) {
 
 function handleOscBundle(bundle) {
   const packets = Array.isArray(bundle?.packets) ? bundle.packets : [];
+  const configPackets = [];
+
   packets.forEach((packet) => {
-    if (packet?.address) {
-      handleParsedOsc(parseOscMessage(packet));
+    if (!packet?.address) {
+      return;
     }
+
+    const parsed = parseOscMessage(packet);
+    if (!parsed) {
+      return;
+    }
+
+    if (parsed.type.startsWith('config:')) {
+      configPackets.push(parsed);
+      return;
+    }
+
+    handleParsedOsc(parsed);
   });
+
+  if (configPackets.length === 0) {
+    return;
+  }
+
+  const countMessage = configPackets.find((packet) => packet.type === 'config:speakers:count');
+  const speakerPackets = configPackets
+    .filter((packet) => packet.type === 'config:speaker')
+    .sort((a, b) => a.index - b.index);
+
+  const count = countMessage?.count;
+  if (typeof count === 'number' && speakerPackets.length !== count) {
+    console.warn(`[osc] truehdd speaker config count mismatch: expected ${count}, got ${speakerPackets.length}`);
+  }
+
+  applyTruehddSpeakerConfig(speakerPackets);
 }
 
 const oscUdpPort = new osc.UDPPort({
@@ -124,6 +227,17 @@ const oscUdpPort = new osc.UDPPort({
 
 oscUdpPort.on('ready', () => {
   console.log(`[osc] listening on udp://0.0.0.0:${OSC_PORT}`);
+
+  oscUdpPort.send(
+    {
+      address: '/truehdd/register',
+      args: [{ type: 'i', value: OSC_PORT }]
+    },
+    OSC_HOST,
+    OSC_RX_PORT
+  );
+
+  console.log(`[osc] register sent to udp://${OSC_HOST}:${OSC_RX_PORT} with listen_port=${OSC_PORT}`);
 });
 
 oscUdpPort.on('message', handleOscMessage);
