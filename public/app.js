@@ -40,6 +40,7 @@ scene.add(axes);
 const sourceMeshes = new Map();
 const sourceLabels = new Map();
 const speakerMeshes = [];
+const speakerLabels = [];
 const sourceLevels = new Map();
 const speakerLevels = new Map();
 const sourceGains = new Map();
@@ -229,7 +230,13 @@ function clearSpeakers() {
     mesh.geometry.dispose();
     mesh.material.dispose();
   });
+  speakerLabels.forEach((label) => {
+    scene.remove(label);
+    label.material.map.dispose();
+    label.material.dispose();
+  });
   speakerMeshes.length = 0;
+  speakerLabels.length = 0;
 }
 
 function renderLayout(key) {
@@ -247,6 +254,12 @@ function renderLayout(key) {
     }
     scene.add(mesh);
     speakerMeshes.push(mesh);
+
+    const label = createLabelSprite(String(speaker.id || index));
+    label.position.set(speaker.x, speaker.y + 0.12, speaker.z);
+    scene.add(label);
+    speakerLabels.push(label);
+
     applySpeakerLevel(mesh, speakerLevels.get(String(index)));
   });
 
