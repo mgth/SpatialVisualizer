@@ -315,12 +315,50 @@ server.listen(HTTP_PORT, () => {
 });
 
 
-function shutdown() {
+let isShuttingDown = false;
+
+function shutdown(signal) {
+  if (isShuttingDown) {
+    return;
+  }
+  isShuttingDown = true;
+
+  if (signal) {
+    console.log(`[shutdown] received ${signal}, stopping services...`);
+  }
+
   stopHeartbeat();
+
+  wss.clients.forEach((client) => {
+    try {
+      client.close();
+    } catch {
+      // Ignore close errors during shutdown.
+    }
+  });
+
+  try {
+    wss.close();
+  } catch {
+    // Ignore close errors during shutdown.
+  }
+
+  try {
+    oscUdpPort.close();
+  } catch {
+    // Ignore close errors during shutdown.
+  }
+
+  server.close(() => {
+    process.exit(0);
+  });
+
+  setTimeout(() => {
+    process.exit(0);
+  }, 1000).unref();
 }
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-process.on('exit', shutdown);
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 oscUdpPort.open();
