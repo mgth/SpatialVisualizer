@@ -95,9 +95,19 @@ function createLabelSprite(text) {
 }
 
 function createSourceOutline() {
-  const geometry = new THREE.EdgesGeometry(sourceGeometry, 24);
-  const material = new THREE.LineBasicMaterial({ color: sourceOutlineColor.clone(), transparent: true, opacity: 0.95 });
-  return new THREE.LineSegments(geometry, material);
+  const geometry = sourceGeometry.clone();
+  const material = new THREE.MeshBasicMaterial({
+    color: sourceOutlineColor.clone(),
+    wireframe: true,
+    transparent: true,
+    opacity: 0.98,
+    depthTest: false,
+    depthWrite: false
+  });
+
+  const outline = new THREE.Mesh(geometry, material);
+  outline.renderOrder = 10;
+  return outline;
 }
 
 function updateSourceLabelPosition(id) {
@@ -146,7 +156,7 @@ function updateSourceSelectionStyles() {
     const outline = mesh.userData.outline;
     if (outline) {
       outline.material.color.copy(isSelected ? sourceOutlineSelectedColor : sourceOutlineColor);
-      outline.material.opacity = isSelected ? 1 : 0.9;
+      outline.material.opacity = isSelected ? 1 : 0.98;
     }
   });
 }
@@ -179,7 +189,8 @@ function getSourceMesh(id) {
     const mesh = new THREE.Mesh(sourceGeometry, sourceMaterial.clone());
     mesh.material.color.setHSL(Math.random(), 0.8, 0.6);
     mesh.material.emissive.copy(sourceDefaultEmissive);
-    mesh.material.opacity = 0.02;
+    mesh.material.opacity = 0.0;
+    mesh.material.depthWrite = false;
     mesh.userData.sourceId = id;
 
     const outline = createSourceOutline();
