@@ -67,9 +67,9 @@ const wss = new WebSocket.Server({ server });
 
 const layouts = loadLayouts();
 
-// Latency smoothing: EMA with α=0.08 → τ≈0.6 s at 20 Hz metering rate.
+// Latency smoothing: EMA with α=0.03 → τ≈1.7 s at 20 Hz metering rate.
 // Absorbs mpv burst-fill oscillations without hiding real latency drift.
-const LATENCY_EMA_ALPHA = 0.08;
+const LATENCY_EMA_ALPHA = 0.03;
 let latencyEma = null;
 
 const state = {
