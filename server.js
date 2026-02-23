@@ -76,6 +76,13 @@ const state = {
   speakerGains: {},
   objectMutes: {},
   speakerMutes: {},
+  roomRatio: { width: 1, length: 2, height: 1 },
+  spread: { min: null, max: null },
+  dialogNorm: null,
+  dialogNormLevel: null,
+  dialogNormGain: null,
+  masterGain: null,
+  latencyMs: null,
   layouts,
   selectedLayoutKey: layouts[0]?.key || null
 };
@@ -229,6 +236,74 @@ function handleParsedOsc(parsed) {
       type: 'speaker:mute',
       id: parsed.id,
       muted: parsed.muted ? 1 : 0
+    });
+  }
+
+  if (parsed.type === 'state:room_ratio') {
+    state.roomRatio = {
+      width: parsed.width,
+      length: parsed.length,
+      height: parsed.height
+    };
+    broadcast({
+      type: 'room_ratio',
+      roomRatio: state.roomRatio
+    });
+  }
+
+  if (parsed.type === 'state:spread:min') {
+    state.spread.min = parsed.value;
+    broadcast({
+      type: 'spread:min',
+      value: parsed.value
+    });
+  }
+
+  if (parsed.type === 'state:spread:max') {
+    state.spread.max = parsed.value;
+    broadcast({
+      type: 'spread:max',
+      value: parsed.value
+    });
+  }
+
+  if (parsed.type === 'state:dialog_norm') {
+    state.dialogNorm = parsed.enabled ? 1 : 0;
+    broadcast({
+      type: 'dialog_norm',
+      enabled: state.dialogNorm
+    });
+  }
+
+  if (parsed.type === 'state:dialog_norm:level') {
+    state.dialogNormLevel = parsed.value;
+    broadcast({
+      type: 'dialog_norm:level',
+      value: parsed.value
+    });
+  }
+
+  if (parsed.type === 'state:dialog_norm:gain') {
+    state.dialogNormGain = parsed.value;
+    broadcast({
+      type: 'dialog_norm:gain',
+      value: parsed.value
+    });
+  }
+
+  if (parsed.type === 'state:master:gain') {
+    state.masterGain = parsed.value;
+    broadcast({
+      type: 'master:gain',
+      value: parsed.value
+    });
+  }
+
+  if (parsed.type === 'state:latency') {
+    state.latencyMs = parsed.value;
+    broadcast({
+      type: 'latency',
+      value: parsed.value
     });
   }
 }
@@ -444,6 +519,23 @@ wss.on('connection', (ws) => {
         }
         sendTruehddIntControl(`/truehdd/control/speaker/${Math.floor(id)}/mute`, muted ? 1 : 0);
       }
+
+      if (payload?.type === 'control:master:gain') {
+        const gain = Number(payload.gain);
+        if (!Number.isFinite(gain)) {
+          return;
+        }
+        const clampedGain = Math.min(2, Math.max(0, gain));
+        sendTruehddFloatControl('/truehdd/control/gain', clampedGain);
+      }
+
+      if (payload?.type === 'control:dialog_norm') {
+        const enable = Number(payload.enable);
+        if (!Number.isFinite(enable)) {
+          return;
+        }
+        sendTruehddIntControl('/truehdd/control/dialog_norm', enable ? 1 : 0);
+      }
     } catch {
       // Ignore invalid client payloads.
     }
@@ -460,6 +552,13 @@ wss.on('connection', (ws) => {
       speakerGains: state.speakerGains,
       objectMutes: state.objectMutes,
       speakerMutes: state.speakerMutes,
+      roomRatio: state.roomRatio,
+      spread: state.spread,
+      dialogNorm: state.dialogNorm,
+      dialogNormLevel: state.dialogNormLevel,
+      dialogNormGain: state.dialogNormGain,
+      masterGain: state.masterGain,
+      latencyMs: state.latencyMs,
       layouts: state.layouts,
       selectedLayoutKey: state.selectedLayoutKey
     })

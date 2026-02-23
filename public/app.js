@@ -7,6 +7,16 @@ const speakersListEl = document.getElementById('speakersList');
 const objectsListEl = document.getElementById('objectsList');
 const speakersSectionEl = document.getElementById('speakersSection');
 const objectsSectionEl = document.getElementById('objectsSection');
+const roomRatioEl = document.getElementById('roomRatio');
+const spreadInfoEl = document.getElementById('spreadInfo');
+const dialogNormInfoEl = document.getElementById('dialogNormInfo');
+const latencyInfoEl = document.getElementById('latencyInfo');
+const dialogNormToggleEl = document.getElementById('dialogNormToggle');
+const latencyMeterFillEl = document.getElementById('latencyMeterFill');
+const masterGainSliderEl = document.getElementById('masterGainSlider');
+const masterGainBoxEl = document.getElementById('masterGainBox');
+const masterMeterTextEl = document.getElementById('masterMeterText');
+const masterMeterFillEl = document.getElementById('masterMeterFill');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -38,6 +48,14 @@ const room = new THREE.Mesh(
 );
 scene.add(room);
 
+const roomRatio = { width: 1, length: 2, height: 1 };
+const spreadState = { min: null, max: null };
+let dialogNormEnabled = null;
+let dialogNormLevel = null;
+let dialogNormGain = null;
+let latencyMs = null;
+let masterGain = 1;
+
 const axes = new THREE.AxesHelper(1.2);
 scene.add(axes);
 
@@ -60,6 +78,7 @@ const objectItems = new Map();
 const speakerManualMuted = new Set();
 const objectManualMuted = new Set();
 const sourceNames = new Map();
+const sourcePositionsRaw = new Map();
 
 let selectedSourceId = null;
 
@@ -103,7 +122,19 @@ function formatPosition(position) {
   if (!position) {
     return 'x:— y:— z:—';
   }
-  return `x:${formatNumber(position.x)} y:${formatNumber(position.y)} z:${formatNumber(position.z)}`;
+  const x = Number(position.x);
+  const y = Number(position.y);
+  const z = Number(position.z);
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
+    return 'x:— y:— z:—';
+  }
+
+  const az = (Math.atan2(z, x) * 180) / Math.PI;
+  const planar = Math.sqrt(x * x + z * z);
+  const el = (Math.atan2(y, planar) * 180) / Math.PI;
+  const dist = Math.sqrt(x * x + y * y + z * z);
+
+  return `x:${formatNumber(x)} y:${formatNumber(y)} z:${formatNumber(z)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(dist, 2)}`;
 }
 
 function formatLevel(meter) {
@@ -119,9 +150,25 @@ function meterToPercent(meter) {
   return ((clamped + 100) / 100) * 100;
 }
 
+function linearToDb(value) {
+  const v = Number(value);
+  if (!Number.isFinite(v) || v <= 0) {
+    return '-∞ dB';
+  }
+  return `${(20 * Math.log10(v)).toFixed(1)} dB`;
+}
+
+function dbToLinear(db) {
+  const v = Number(db);
+  if (!Number.isFinite(v)) {
+    return 0;
+  }
+  return Math.pow(10, v / 20);
+}
+
 function updateMeterUI(entry, meter) {
   if (!entry) return;
-  entry.levelText.textContent = `niveau ${formatLevel(meter)}`;
+  entry.levelText.textContent = formatLevel(meter);
   entry.meterFill.style.setProperty('--level', `${meterToPercent(meter).toFixed(1)}%`);
 }
 
@@ -145,7 +192,7 @@ function updateObjectMeterUI(id) {
 function updateObjectPositionUI(id, position) {
   const entry = objectItems.get(id);
   if (!entry) return;
-  entry.position.textContent = `pos ${formatPosition(position)}`;
+  entry.position.textContent = formatPosition(position);
 }
 
 function updateObjectLabelUI(id) {
@@ -178,7 +225,9 @@ function formatObjectLabel(id) {
 function updateSpeakerControlsUI() {
   const soloTarget = getSoloTarget('speaker');
   speakerItems.forEach((entry, id) => {
-    entry.gainSlider.value = String(getBaseGain(speakerBaseGains, speakerGainCache, id));
+    const gainValue = getBaseGain(speakerBaseGains, speakerGainCache, id);
+    entry.gainSlider.value = String(gainValue);
+    entry.gainBox.textContent = linearToDb(gainValue);
     entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
     entry.soloBtn.classList.toggle('active', soloTarget === id);
     updateItemClasses(entry, speakerMuted.has(id), soloTarget && soloTarget !== id);
@@ -188,10 +237,13 @@ function updateSpeakerControlsUI() {
 function updateObjectControlsUI() {
   const soloTarget = getSoloTarget('object');
   objectItems.forEach((entry, id) => {
-    entry.gainSlider.value = String(getBaseGain(objectBaseGains, objectGainCache, id));
+    const gainValue = getBaseGain(objectBaseGains, objectGainCache, id);
+    entry.gainSlider.value = String(gainValue);
+    entry.gainBox.textContent = linearToDb(gainValue);
     entry.muteBtn.classList.toggle('active', objectMuted.has(id));
     entry.soloBtn.classList.toggle('active', soloTarget === id);
     updateItemClasses(entry, objectMuted.has(id), soloTarget && soloTarget !== id);
+    entry.root.classList.toggle('is-selected', selectedSourceId === id);
   });
 }
 
@@ -237,7 +289,18 @@ function createSpeakerItem(id, speaker) {
     speakerBaseGains.set(id, Number(gainSlider.value));
     applyGroupGains('speaker');
   });
+  gainSlider.addEventListener('dblclick', () => {
+    gainSlider.value = '1';
+    speakerBaseGains.set(id, 1);
+    applyGroupGains('speaker');
+    updateSpeakerControlsUI();
+  });
   controls.appendChild(gainSlider);
+
+  const gainBox = document.createElement('div');
+  gainBox.className = 'gain-box';
+  gainBox.textContent = '0.0 dB';
+  controls.appendChild(gainBox);
 
   const muteBtn = document.createElement('button');
   muteBtn.type = 'button';
@@ -263,14 +326,16 @@ function createSpeakerItem(id, speaker) {
   root.appendChild(content);
   root.appendChild(idStrip);
 
-  return { root, label: idText, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
+  return { root, label: idText, position, levelText, meterFill, gainSlider, gainBox, muteBtn, soloBtn };
 }
 
 function updateSpeakerItem(entry, id, speaker) {
   const soloTarget = getSoloTarget('speaker');
   entry.label.textContent = String(speaker.id ?? id);
-  entry.position.textContent = `pos ${formatPosition(speaker)}`;
-  entry.gainSlider.value = String(getBaseGain(speakerBaseGains, speakerGainCache, id));
+  entry.position.textContent = formatPosition(speaker);
+  const gainValue = getBaseGain(speakerBaseGains, speakerGainCache, id);
+  entry.gainSlider.value = String(gainValue);
+  entry.gainBox.textContent = linearToDb(gainValue);
   entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
   entry.soloBtn.classList.toggle('active', soloTarget === id);
   updateItemClasses(entry, speakerMuted.has(id), soloTarget && soloTarget !== id);
@@ -280,6 +345,9 @@ function updateSpeakerItem(entry, id, speaker) {
 function createObjectItem(id) {
   const root = document.createElement('div');
   root.className = 'info-item object-item';
+  root.addEventListener('click', () => {
+    setSelectedSource(id);
+  });
 
   const idStrip = document.createElement('div');
   idStrip.className = 'id-strip flip';
@@ -321,7 +389,18 @@ function createObjectItem(id) {
     objectBaseGains.set(id, Number(gainSlider.value));
     applyGroupGains('object');
   });
+  gainSlider.addEventListener('dblclick', () => {
+    gainSlider.value = '1';
+    objectBaseGains.set(id, 1);
+    applyGroupGains('object');
+    updateObjectControlsUI();
+  });
   controls.appendChild(gainSlider);
+
+  const gainBox = document.createElement('div');
+  gainBox.className = 'gain-box';
+  gainBox.textContent = '0.0 dB';
+  controls.appendChild(gainBox);
 
   const muteBtn = document.createElement('button');
   muteBtn.type = 'button';
@@ -346,7 +425,7 @@ function createObjectItem(id) {
   content.appendChild(controls);
   root.appendChild(content);
 
-  return { root, label: idText, position, levelText, meterFill, gainSlider, muteBtn, soloBtn };
+  return { root, label: idText, position, levelText, meterFill, gainSlider, gainBox, muteBtn, soloBtn };
 }
 
 function updateObjectItem(entry, id, position, name) {
@@ -355,11 +434,14 @@ function updateObjectItem(entry, id, position, name) {
     sourceNames.set(id, name);
   }
   entry.label.textContent = getObjectDisplayName(id);
-  entry.position.textContent = `pos ${formatPosition(position)}`;
-  entry.gainSlider.value = String(getBaseGain(objectBaseGains, objectGainCache, id));
+  entry.position.textContent = formatPosition(position);
+  const gainValue = getBaseGain(objectBaseGains, objectGainCache, id);
+  entry.gainSlider.value = String(gainValue);
+  entry.gainBox.textContent = linearToDb(gainValue);
   entry.muteBtn.classList.toggle('active', objectMuted.has(id));
   entry.soloBtn.classList.toggle('active', soloTarget === id);
   updateItemClasses(entry, objectMuted.has(id), soloTarget && soloTarget !== id);
+  entry.root.classList.toggle('is-selected', selectedSourceId === id);
   updateMeterUI(entry, sourceLevels.get(id));
 }
 
@@ -433,7 +515,8 @@ function renderObjectsList() {
       entry = createObjectItem(key);
       objectItems.set(key, entry);
     }
-    updateObjectItem(entry, key, mesh.position, sourceNames.get(key));
+    const raw = sourcePositionsRaw.get(key) || mesh.position;
+    updateObjectItem(entry, key, raw, sourceNames.get(key));
     objectsListEl.appendChild(entry.root);
   });
   objectItems.forEach((entry, id) => {
@@ -563,6 +646,95 @@ function applyGroupGains(group) {
   });
 }
 
+function updateRoomRatioDisplay() {
+  if (!roomRatioEl) return;
+  roomRatioEl.textContent = `room_ratio: ${formatNumber(roomRatio.width, 2)} ${formatNumber(roomRatio.length, 2)} ${formatNumber(roomRatio.height, 2)}`;
+}
+
+function updateSpreadDisplay() {
+  if (!spreadInfoEl) return;
+  const minText = spreadState.min === null ? '—' : formatNumber(spreadState.min, 2);
+  const maxText = spreadState.max === null ? '—' : formatNumber(spreadState.max, 2);
+  spreadInfoEl.textContent = `spread: ${minText} / ${maxText}`;
+}
+
+function updateDialogNormDisplay() {
+  if (!dialogNormInfoEl) return;
+  const enabledText = dialogNormEnabled === null ? '—' : dialogNormEnabled ? 'on' : 'off';
+  const levelText = dialogNormLevel === null ? '—' : `${formatNumber(dialogNormLevel, 0)} dBFS`;
+  const gainText =
+    dialogNormGain === null
+      ? '—'
+      : `${formatNumber(dialogNormGain, 2)} (${linearToDb(dialogNormGain)})`;
+  dialogNormInfoEl.textContent = `dialog_norm: ${enabledText} | level: ${levelText} | gain: ${gainText}`;
+  if (dialogNormToggleEl) {
+    dialogNormToggleEl.checked = dialogNormEnabled === true;
+  }
+}
+
+function updateLatencyDisplay() {
+  if (!latencyInfoEl) return;
+  latencyInfoEl.textContent = latencyMs === null
+    ? 'latency: —'
+    : `latency: ${formatNumber(latencyMs, 0)} ms`;
+}
+
+function updateLatencyMeterUI() {
+  if (!latencyMeterFillEl) return;
+  if (latencyMs === null) {
+    latencyMeterFillEl.style.setProperty('--level', '0%');
+    return;
+  }
+  const value = Math.max(0, Number(latencyMs));
+  const maxMs = 2000;
+  const percent = Math.min(100, (value / maxMs) * 100);
+  latencyMeterFillEl.style.setProperty('--level', `${percent.toFixed(1)}%`);
+}
+
+function updateMasterGainUI() {
+  if (masterGainSliderEl) {
+    masterGainSliderEl.value = String(masterGain);
+  }
+  if (masterGainBoxEl) {
+    masterGainBoxEl.textContent = linearToDb(masterGain);
+  }
+}
+
+function getAverageSpeakerRmsDb() {
+  const levels = speakerMeshes.length
+    ? speakerMeshes.map((_, index) => speakerLevels.get(String(index)))
+    : [];
+  const valid = levels.filter((meter) => meter && typeof meter.rmsDbfs === 'number');
+  if (valid.length === 0) {
+    return null;
+  }
+  const sumLinear = valid.reduce((acc, meter) => acc + dbToLinear(meter.rmsDbfs), 0);
+  const avgLinear = sumLinear / valid.length;
+  const avgDb = 20 * Math.log10(Math.max(avgLinear, 1e-6));
+  return Math.max(-100, Math.min(0, avgDb));
+}
+
+function updateMasterMeterUI() {
+  if (!masterMeterTextEl || !masterMeterFillEl) return;
+  const avgDb = getAverageSpeakerRmsDb();
+  if (avgDb === null) {
+    masterMeterTextEl.textContent = '— dB';
+    masterMeterFillEl.style.setProperty('--level', '0%');
+    return;
+  }
+  masterMeterTextEl.textContent = `${formatNumber(avgDb, 1)} dB`;
+  const percent = ((avgDb + 100) / 100) * 100;
+  masterMeterFillEl.style.setProperty('--level', `${percent.toFixed(1)}%`);
+}
+
+function applyRoomRatioToScene() {
+  const maxDim = Math.max(roomRatio.width, roomRatio.length, roomRatio.height, 1e-6);
+  const sx = (roomRatio.length / maxDim) * 2;
+  const sy = (roomRatio.height / maxDim) * 2;
+  const sz = (roomRatio.width / maxDim) * 2;
+  room.scale.set(sx, sy, sz);
+}
+
 function toggleMute(group, id) {
   const mutedSet = group === 'speaker' ? speakerMuted : objectMuted;
   const manualMutedSet = group === 'speaker' ? speakerManualMuted : objectManualMuted;
@@ -587,8 +759,27 @@ function toggleSolo(group, id) {
   const ids = isSpeaker ? getSpeakerIds() : getObjectIds();
   const mutedSet = isSpeaker ? speakerMuted : objectMuted;
   const manualMutedSet = isSpeaker ? speakerManualMuted : objectManualMuted;
+  const currentSolo = getSoloTarget(group);
 
-  if (areAllOthersMuted(group, id)) {
+  if (currentSolo && currentSolo !== id) {
+    mutedSet.add(currentSolo);
+    manualMutedSet.add(currentSolo);
+    mutedSet.delete(id);
+    manualMutedSet.delete(id);
+    if (isSpeaker) {
+      sendSpeakerMute(currentSolo, true);
+      sendSpeakerMute(id, false);
+      updateSpeakerControlsUI();
+    } else {
+      sendObjectMute(currentSolo, true);
+      sendObjectMute(id, false);
+      updateObjectControlsUI();
+      setSelectedSource(id);
+    }
+    return;
+  }
+
+  if (currentSolo === id) {
     ids.forEach((other) => {
       if (other === id) {
         return;
@@ -622,6 +813,10 @@ function toggleSolo(group, id) {
       }
     }
   });
+
+  if (!isSpeaker) {
+    setSelectedSource(id);
+  }
 
   if (isSpeaker) {
     updateSpeakerControlsUI();
@@ -784,6 +979,7 @@ function setSelectedSource(id) {
   selectedSourceId = id;
   updateSourceSelectionStyles();
   updateSpeakerColorsFromSelection();
+  updateObjectControlsUI();
 }
 
 function getSourceMesh(id) {
@@ -814,7 +1010,18 @@ function getSourceMesh(id) {
 
 function updateSource(id, position) {
   const mesh = getSourceMesh(id);
-  mesh.position.set(position.x, position.y, position.z);
+  const raw = {
+    x: Number(position.x) || 0,
+    y: Number(position.y) || 0,
+    z: Number(position.z) || 0
+  };
+  sourcePositionsRaw.set(String(id), raw);
+  const scaled = {
+    x: raw.x * roomRatio.length,
+    y: raw.y * roomRatio.height,
+    z: raw.z * roomRatio.width
+  };
+  mesh.position.set(scaled.x, scaled.y, scaled.z);
   updateSourceDecorations(id);
   if (position && typeof position.name === 'string' && position.name.trim()) {
     sourceNames.set(String(id), position.name.trim());
@@ -827,7 +1034,7 @@ function updateSource(id, position) {
   if (!objectItems.has(key)) {
     renderObjectsList();
   } else {
-    updateObjectPositionUI(key, mesh.position);
+    updateObjectPositionUI(key, raw);
     updateObjectLabelUI(key);
   }
 }
@@ -970,6 +1177,32 @@ function updateSpeakerLevel(index, meter) {
     applySpeakerLevel(mesh, meter);
   }
   updateSpeakerMeterUI(String(index));
+  updateMasterMeterUI();
+}
+
+function applyRoomRatio(nextRatio) {
+  roomRatio.width = Number(nextRatio.width) || 1;
+  roomRatio.length = Number(nextRatio.length) || 1;
+  roomRatio.height = Number(nextRatio.height) || 1;
+  updateRoomRatioDisplay();
+  applyRoomRatioToScene();
+
+  sourceMeshes.forEach((mesh, id) => {
+    const raw = sourcePositionsRaw.get(String(id));
+    if (!raw) return;
+    mesh.position.set(raw.x * roomRatio.length, raw.y * roomRatio.height, raw.z * roomRatio.width);
+    updateSourceDecorations(id);
+  });
+
+  speakerMeshes.forEach((mesh, index) => {
+    const speaker = currentLayoutSpeakers[index];
+    if (!speaker) return;
+    mesh.position.set(speaker.x, speaker.y, speaker.z);
+    const label = speakerLabels[index];
+    if (label) {
+      label.position.set(speaker.x, speaker.y + 0.12, speaker.z);
+    }
+  });
 }
 
 function hydrateLayoutSelect(layouts, selectedLayoutKey) {
@@ -1040,6 +1273,54 @@ renderer.domElement.addEventListener('pointerup', (event) => {
 const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
 const ws = new WebSocket(`${wsProtocol}://${location.host}`);
 
+if (masterGainSliderEl) {
+  masterGainSliderEl.addEventListener('input', () => {
+    const value = Number(masterGainSliderEl.value);
+    if (!Number.isFinite(value)) {
+      return;
+    }
+    masterGain = value;
+    updateMasterGainUI();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          type: 'control:master:gain',
+          gain: masterGain
+        })
+      );
+    }
+  });
+
+  masterGainSliderEl.addEventListener('dblclick', () => {
+    masterGain = 1;
+    updateMasterGainUI();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          type: 'control:master:gain',
+          gain: masterGain
+        })
+      );
+    }
+  });
+}
+
+if (dialogNormToggleEl) {
+  dialogNormToggleEl.addEventListener('change', () => {
+    const enabled = dialogNormToggleEl.checked ? 1 : 0;
+    dialogNormEnabled = enabled === 1;
+    updateDialogNormDisplay();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          type: 'control:dialog_norm',
+          enable: enabled
+        })
+      );
+    }
+  });
+}
+
 ws.onopen = () => {
   statusEl.textContent = 'connecté';
 };
@@ -1100,6 +1381,42 @@ ws.onmessage = (event) => {
         speakerMuted.add(key);
       }
     });
+
+    if (payload.roomRatio) {
+      applyRoomRatio(payload.roomRatio);
+    } else {
+      updateRoomRatioDisplay();
+      applyRoomRatioToScene();
+    }
+    if (payload.spread) {
+      if (typeof payload.spread.min === 'number') {
+        spreadState.min = payload.spread.min;
+      }
+      if (typeof payload.spread.max === 'number') {
+        spreadState.max = payload.spread.max;
+      }
+    }
+    updateSpreadDisplay();
+    if (typeof payload.dialogNorm === 'number') {
+      dialogNormEnabled = payload.dialogNorm !== 0;
+    }
+    if (typeof payload.dialogNormLevel === 'number') {
+      dialogNormLevel = payload.dialogNormLevel;
+    }
+    if (typeof payload.dialogNormGain === 'number') {
+      dialogNormGain = payload.dialogNormGain;
+    }
+    updateDialogNormDisplay();
+    if (typeof payload.masterGain === 'number') {
+      masterGain = payload.masterGain;
+    }
+    updateMasterGainUI();
+    if (typeof payload.latencyMs === 'number') {
+      latencyMs = payload.latencyMs;
+    }
+    updateLatencyDisplay();
+    updateLatencyMeterUI();
+    updateMasterMeterUI();
 
     hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
     refreshOverlayLists();
@@ -1162,6 +1479,48 @@ ws.onmessage = (event) => {
       speakerManualMuted.delete(key);
     }
     updateSpeakerControlsUI();
+  }
+
+  if (payload.type === 'room_ratio') {
+    if (payload.roomRatio) {
+      applyRoomRatio(payload.roomRatio);
+    }
+  }
+
+  if (payload.type === 'spread:min') {
+    spreadState.min = Number(payload.value);
+    updateSpreadDisplay();
+  }
+
+  if (payload.type === 'spread:max') {
+    spreadState.max = Number(payload.value);
+    updateSpreadDisplay();
+  }
+
+  if (payload.type === 'dialog_norm') {
+    dialogNormEnabled = Number(payload.enabled) !== 0;
+    updateDialogNormDisplay();
+  }
+
+  if (payload.type === 'dialog_norm:level') {
+    dialogNormLevel = Number(payload.value);
+    updateDialogNormDisplay();
+  }
+
+  if (payload.type === 'dialog_norm:gain') {
+    dialogNormGain = Number(payload.value);
+    updateDialogNormDisplay();
+  }
+
+  if (payload.type === 'master:gain') {
+    masterGain = Number(payload.value);
+    updateMasterGainUI();
+  }
+
+  if (payload.type === 'latency') {
+    latencyMs = Number(payload.value);
+    updateLatencyDisplay();
+    updateLatencyMeterUI();
   }
 
   if (payload.type === 'source:remove') {

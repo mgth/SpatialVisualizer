@@ -28,7 +28,7 @@
         font-size: 14px;
         line-height: 1.45;
         z-index: 2;
-        width: min(360px, 90vw);
+        width: min(440px, 92vw);
         height: calc(100vh - 2rem);
         display: flex;
         flex-direction: column;
@@ -47,7 +47,7 @@
         font-size: 14px;
         line-height: 1.45;
         z-index: 2;
-        width: min(360px, 90vw);
+        width: min(440px, 92vw);
         height: calc(100vh - 2rem);
         display: flex;
         flex-direction: column;
@@ -61,6 +61,69 @@
       #layoutSelect {
         margin-top: 0.35rem;
         width: 100%;
+      }
+
+      #roomRatio {
+        margin-top: 0.35rem;
+        font-size: 12px;
+        color: #d9ecff;
+      }
+
+      #spreadInfo {
+        margin-top: 0.25rem;
+        font-size: 12px;
+        color: #d9ecff;
+      }
+
+      #dialogNormInfo {
+        margin-top: 0.2rem;
+        font-size: 12px;
+        color: #d9ecff;
+      }
+
+      .meter-fill.latency {
+        background: linear-gradient(90deg, #52e2a2 0%, #ffd56a 60%, #ff8a5c 82%, #ff4d4d 100%);
+        box-shadow: 0 0 6px rgba(255, 160, 90, 0.35);
+      }
+
+      .switch-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+      }
+
+      .switch-row input[type="checkbox"] {
+        width: 34px;
+        height: 18px;
+        appearance: none;
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        position: relative;
+        outline: none;
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .switch-row input[type="checkbox"]::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #d9ecff;
+        transition: transform 0.2s ease;
+      }
+
+      .switch-row input[type="checkbox"]:checked {
+        background: rgba(80, 200, 120, 0.45);
+      }
+
+      .switch-row input[type="checkbox"]:checked::after {
+        transform: translateX(16px);
       }
 
       .info-section {
@@ -128,10 +191,14 @@
 
       .control-row {
         display: grid;
-        grid-template-columns: 1fr auto auto;
+        grid-template-columns: 1fr auto auto auto;
         gap: 0.35rem;
         align-items: center;
         margin-top: 0.2rem;
+      }
+
+      #masterSection .control-row {
+        grid-template-columns: 1fr auto;
       }
 
       .gain-slider {
@@ -153,12 +220,27 @@
         color: #ffffff;
       }
 
+      .gain-box {
+        min-width: 54px;
+        text-align: right;
+        padding: 0.1rem 0.3rem;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 11px;
+        color: #d9ecff;
+      }
+
       .info-item.is-dimmed {
         opacity: 0.45;
       }
 
       .info-item.is-muted {
         opacity: 0.35;
+      }
+
+      .info-item.is-selected {
+        background: rgba(46, 110, 64, 0.45);
+        border: 1px solid rgba(90, 200, 120, 0.35);
       }
 
       .object-item {
@@ -213,10 +295,19 @@
       <div><strong>Spatial Visualizer</strong></div>
       <div>WS: <span id="status">connexion...</span></div>
       <div>OSC attendu: <code>/source/position id x y z</code></div>
-      <label for="layoutSelect">Layout:</label>
-      <select id="layoutSelect" disabled>
-        <option>Chargement...</option>
-      </select>
+      <div id="roomRatio">room_ratio: —</div>
+      <div id="spreadInfo">spread: — / —</div>
+      <div id="dialogNormInfo">dialog_norm: —</div>
+      <div class="meter-row">
+        <div id="latencyInfo">latency: —</div>
+        <div class="meter-bar">
+          <div id="latencyMeterFill" class="meter-fill latency"></div>
+        </div>
+      </div>
+      <div class="switch-row">
+        <label for="dialogNormToggle">dialog_norm</label>
+        <input id="dialogNormToggle" type="checkbox" />
+      </div>
 
       <div class="info-section" id="objectsSection">
         <div class="info-title">Objets</div>
@@ -224,6 +315,23 @@
       </div>
     </div>
     <div id="speakersOverlay">
+      <label for="layoutSelect">Layout:</label>
+      <select id="layoutSelect" disabled>
+        <option>Chargement...</option>
+      </select>
+      <div class="info-section" id="masterSection">
+        <div class="info-title">Master</div>
+        <div class="meter-row">
+          <div id="masterMeterText">— dB</div>
+          <div class="meter-bar">
+            <div id="masterMeterFill" class="meter-fill"></div>
+          </div>
+        </div>
+        <div class="control-row">
+          <input id="masterGainSlider" class="gain-slider" type="range" min="0" max="2" step="0.01" value="1" />
+          <div id="masterGainBox" class="gain-box">0.0 dB</div>
+        </div>
+      </div>
       <div class="info-section" id="speakersSection">
         <div class="info-title">Speakers</div>
         <div id="speakersList" class="info-list">Aucun speaker.</div>

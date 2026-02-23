@@ -142,6 +142,69 @@ function parseTruehddObjectXyz(parts, args) {
 }
 
 function parseTruehddStateMessage(parts, args) {
+  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'latency') {
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: 'state:latency',
+      value
+    };
+  }
+
+  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'gain') {
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: 'state:master:gain',
+      value
+    };
+  }
+
+  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'dialog_norm') {
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: 'state:dialog_norm',
+      enabled: value !== 0
+    };
+  }
+
+  if (parts.length === 4 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'dialog_norm') {
+    const kind = parts[3];
+    if (!['level', 'gain'].includes(kind)) {
+      return null;
+    }
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: kind === 'level' ? 'state:dialog_norm:level' : 'state:dialog_norm:gain',
+      value
+    };
+  }
+
+  if (parts.length === 4 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'spread') {
+    const kind = parts[3];
+    if (!['min', 'max'].includes(kind)) {
+      return null;
+    }
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: kind === 'min' ? 'state:spread:min' : 'state:spread:max',
+      value
+    };
+  }
+
   if (parts.length === 5 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[4] === 'gain') {
     const kind = parts[2];
     if (!['object', 'speaker'].includes(kind)) {
@@ -162,6 +225,22 @@ function parseTruehddStateMessage(parts, args) {
       type: kind === 'speaker' ? 'state:speaker:gain' : 'state:object:gain',
       id: String(Math.floor(index)),
       gain: clamp(gain, 0, 2)
+    };
+  }
+
+  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'room_ratio') {
+    const width = toNumber(args[0]);
+    const length = toNumber(args[1]);
+    const height = toNumber(args[2]);
+    if (width === null || length === null || height === null) {
+      return null;
+    }
+
+    return {
+      type: 'state:room_ratio',
+      width,
+      length,
+      height
     };
   }
 
