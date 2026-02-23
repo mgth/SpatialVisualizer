@@ -17,9 +17,9 @@ test('loadLayouts returns available layouts', () => {
   assert.ok(stereo);
   assert.equal(stereo.speakers.length, 2);
 
-  const atmos = layouts.find((l) => l.key === '7.1.4');
-  assert.ok(atmos);
-  assert.ok(atmos.speakers.length >= 10);
+  const immersive = layouts.find((l) => l.key === '7.1.4');
+  assert.ok(immersive);
+  assert.ok(immersive.speakers.length >= 10);
 
   const json51 = layouts.find((l) => l.key === '5.1-json');
   const yaml51 = layouts.find((l) => l.key === '5.1-yaml');

@@ -10,15 +10,15 @@ Standard 5.1 surround sound configuration (ITU-R BS.775)
 - **Use case**: Basic surround sound systems
 
 ### 7.1.4.yaml
-Dolby Atmos 7.1.4 configuration (ITU-R BS.2051-3 Config 4+5+0)
+Immersive audio 7.1.4 configuration (ITU-R BS.2051-3 Config 4+5+0)
 - **Speakers**: 12 (including LFE)
-- **Use case**: Most common Dolby Atmos home theater setup
+- **Use case**: Common immersive home theater setup
 - **Height speakers**: 4 at 45° elevation
 
 ### 9.1.6.yaml
-Dolby Atmos 9.1.6 configuration (ITU-R BS.2051-3 Config 6+4+0)
+Immersive audio 9.1.6 configuration (ITU-R BS.2051-3 Config 6+4+0)
 - **Speakers**: 16 (including LFE)
-- **Use case**: High-end Dolby Atmos home theater
+- **Use case**: High-end immersive home theater
 - **Height speakers**: 6 at 45° elevation
 
 ## Usage
@@ -129,4 +129,4 @@ If there are errors in the YAML format or speaker positions, truehdd will report
 
 - **ITU-R BS.775**: Multichannel stereophonic sound system with and without accompanying picture
 - **ITU-R BS.2051-3**: Advanced sound system for programme production
-- **SMPTE ST 2098-2**: Immersive Audio Bitstream Specification (Dolby Atmos ADM)
+- **SMPTE ST 2098-2**: Immersive Audio Bitstream Specification (ADM)

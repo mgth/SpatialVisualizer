@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 OSC Bridge: truehdd → Carla/SPARTA Panner
-Maps Atmos object positions to Carla plugin parameters via OSC
+Maps immersive object positions to Carla plugin parameters via OSC
 
 Usage:
     python osc_to_carla_bridge.py [--config mapping.yaml]
@@ -171,7 +171,7 @@ class OSCBridge:
             except (ValueError, KeyError) as e:
                 print(f"Error mapping object: {e}")
 
-    def atmos_frame_handler(self, address, *args):
+    def frame_handler(self, address, *args):
         """Handle /truehdd/atmos/frame messages"""
         if len(args) >= 2:
             sample_pos, object_count = args
@@ -307,7 +307,7 @@ def main():
     # Create OSC dispatcher for truehdd messages
     dispatcher = Dispatcher()
     dispatcher.map("/truehdd/object/*/xyz", bridge.object_position_handler)
-    dispatcher.map("/truehdd/atmos/frame", bridge.atmos_frame_handler)
+    dispatcher.map("/truehdd/atmos/frame", bridge.frame_handler)
     dispatcher.map("/truehdd/source/config", bridge.source_config_handler)
 
     # Create and start OSC server
