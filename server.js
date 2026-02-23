@@ -88,6 +88,7 @@ const state = {
   dialogNormGain: null,
   masterGain: null,
   latencyMs: null,
+  resampleRatio: null,
   layouts,
   selectedLayoutKey: layouts[0]?.key || null
 };
@@ -312,6 +313,14 @@ function handleParsedOsc(parsed) {
     broadcast({
       type: 'latency',
       value: state.latencyMs
+    });
+  }
+
+  if (parsed.type === 'state:resample_ratio') {
+    state.resampleRatio = parsed.value;
+    broadcast({
+      type: 'resample_ratio',
+      value: parsed.value
     });
   }
 }
@@ -568,6 +577,7 @@ wss.on('connection', (ws) => {
       dialogNormGain: state.dialogNormGain,
       masterGain: state.masterGain,
       latencyMs: state.latencyMs,
+      resampleRatio: state.resampleRatio,
       layouts: state.layouts,
       selectedLayoutKey: state.selectedLayoutKey
     })

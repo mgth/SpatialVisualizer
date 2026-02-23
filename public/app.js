@@ -11,6 +11,7 @@ const roomRatioEl = document.getElementById('roomRatio');
 const spreadInfoEl = document.getElementById('spreadInfo');
 const dialogNormInfoEl = document.getElementById('dialogNormInfo');
 const latencyInfoEl = document.getElementById('latencyInfo');
+const resampleRatioInfoEl = document.getElementById('resampleRatioInfo');
 const dialogNormToggleEl = document.getElementById('dialogNormToggle');
 const latencyMeterFillEl = document.getElementById('latencyMeterFill');
 const masterGainSliderEl = document.getElementById('masterGainSlider');
@@ -54,6 +55,7 @@ let dialogNormEnabled = null;
 let dialogNormLevel = null;
 let dialogNormGain = null;
 let latencyMs = null;
+let resampleRatio = null;
 let masterGain = 1;
 
 const axes = new THREE.AxesHelper(1.2);
@@ -677,6 +679,18 @@ function updateLatencyDisplay() {
   latencyInfoEl.textContent = latencyMs === null
     ? 'latency: —'
     : `latency: ${formatNumber(latencyMs, 0)} ms`;
+}
+
+function updateResampleRatioDisplay() {
+  if (!resampleRatioInfoEl) return;
+  if (resampleRatio === null) {
+    resampleRatioInfoEl.textContent = 'resample: —';
+    return;
+  }
+  // Express as ppm deviation from nominal (1.0)
+  const ppm = Math.round((resampleRatio - 1.0) * 1e6);
+  const sign = ppm >= 0 ? '+' : '';
+  resampleRatioInfoEl.textContent = `resample: ${sign}${ppm} ppm`;
 }
 
 function updateLatencyMeterUI() {
@@ -1414,8 +1428,12 @@ ws.onmessage = (event) => {
     if (typeof payload.latencyMs === 'number') {
       latencyMs = payload.latencyMs;
     }
+    if (typeof payload.resampleRatio === 'number') {
+      resampleRatio = payload.resampleRatio;
+    }
     updateLatencyDisplay();
     updateLatencyMeterUI();
+    updateResampleRatioDisplay();
     updateMasterMeterUI();
 
     hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
@@ -1521,6 +1539,11 @@ ws.onmessage = (event) => {
     latencyMs = Number(payload.value);
     updateLatencyDisplay();
     updateLatencyMeterUI();
+  }
+
+  if (payload.type === 'resample_ratio') {
+    resampleRatio = Number(payload.value);
+    updateResampleRatioDisplay();
   }
 
   if (payload.type === 'source:remove') {

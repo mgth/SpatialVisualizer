@@ -153,6 +153,17 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
+  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'resample_ratio') {
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: 'state:resample_ratio',
+      value
+    };
+  }
+
   if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'gain') {
     const value = toNumber(args[0]);
     if (value === null) {
