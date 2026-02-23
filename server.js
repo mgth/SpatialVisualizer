@@ -67,6 +67,11 @@ const wss = new WebSocket.Server({ server });
 
 const layouts = loadLayouts();
 
+// Latency smoothing: EMA with α=0.08 → τ≈0.6 s at 20 Hz metering rate.
+// Absorbs mpv burst-fill oscillations without hiding real latency drift.
+const LATENCY_EMA_ALPHA = 0.08;
+let latencyEma = null;
+
 const state = {
   sources: {},
   sourceLevels: {},
@@ -300,10 +305,13 @@ function handleParsedOsc(parsed) {
   }
 
   if (parsed.type === 'state:latency') {
-    state.latencyMs = parsed.value;
+    latencyEma = latencyEma === null
+      ? parsed.value
+      : LATENCY_EMA_ALPHA * parsed.value + (1 - LATENCY_EMA_ALPHA) * latencyEma;
+    state.latencyMs = Math.round(latencyEma);
     broadcast({
       type: 'latency',
-      value: parsed.value
+      value: state.latencyMs
     });
   }
 }
@@ -404,6 +412,7 @@ function sendTruehddIntControl(address, value) {
 
 function registerToTruehdd(listenPort, reason = 'startup') {
   activeListenPort = listenPort;
+  latencyEma = null;
   sendTruehddControlMessage('/truehdd/register', listenPort);
   lastHeartbeatAckAt = Date.now();
   console.log(`[osc] register sent to udp://${OSC_HOST}:${OSC_RX_PORT} with listen_port=${listenPort} (${reason})`);
