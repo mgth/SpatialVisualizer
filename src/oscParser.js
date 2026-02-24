@@ -97,9 +97,9 @@ function parseTruehddConfigMessage(parts, args) {
       distanceM: distance,
       spatialize: spatialize === null ? 1 : spatialize !== 0 ? 1 : 0,
       position: {
-        x: clamp(position.x, -1, 1),
-        y: clamp(position.y, -1, 1),
-        z: clamp(position.z, -1, 1)
+        x: position.x,
+        y: position.y,
+        z: position.z
       }
     };
   }

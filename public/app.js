@@ -130,6 +130,10 @@ const roomFaceDefs = [
   { key: 'negZ', mesh: roomFaces.negZ, inward: new THREE.Vector3(0, 0, 1) }
 ];
 
+const tempCameraLocal = new THREE.Vector3();
+const tempToCamera = new THREE.Vector3();
+const tempToCenter = new THREE.Vector3();
+
 const screenGeometry = new THREE.PlaneGeometry(2, 2 * (9 / 16));
 const screenMesh = new THREE.Mesh(screenGeometry, screenMaterial);
 screenMesh.rotation.y = -Math.PI / 2;
@@ -217,6 +221,16 @@ function formatPosition(position) {
   const z = Number(position.z);
   if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
     return 'x:— y:— z:—';
+  }
+
+  // Speaker config objects carry raw az/el/dist (physical metres).
+  // Use them directly to avoid distortion from the scene Cartesian coordinates,
+  // which may be scaled for display purposes.
+  if (typeof position.azimuthDeg === 'number') {
+    const az = position.azimuthDeg;
+    const el = position.elevationDeg;
+    const r = position.distanceM;
+    return `x:${formatNumber(x)} y:${formatNumber(y)} z:${formatNumber(z)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(r, 2)}`;
   }
 
   const az = (Math.atan2(z, x) * 180) / Math.PI;
@@ -846,31 +860,32 @@ function applyRoomRatioToScene() {
 }
 
 function updateRoomFaceVisibility() {
-  const localCamera = roomGroup.worldToLocal(camera.position.clone());
+  tempCameraLocal.copy(camera.position);
+  roomGroup.worldToLocal(tempCameraLocal);
   roomFaceDefs.forEach((entry) => {
     const facePos = entry.mesh.position;
-    const toCamera = new THREE.Vector3(
-      localCamera.x - facePos.x,
-      localCamera.y - facePos.y,
-      localCamera.z - facePos.z
+    tempToCamera.set(
+      tempCameraLocal.x - facePos.x,
+      tempCameraLocal.y - facePos.y,
+      tempCameraLocal.z - facePos.z
     );
-    const toCenter = new THREE.Vector3(-facePos.x, -facePos.y, -facePos.z);
-    const camSide = entry.inward.dot(toCamera);
-    const centerSide = entry.inward.dot(toCenter);
+    tempToCenter.set(-facePos.x, -facePos.y, -facePos.z);
+    const camSide = entry.inward.dot(tempToCamera);
+    const centerSide = entry.inward.dot(tempToCenter);
     entry.mesh.visible = camSide * centerSide > 0;
   });
 
   const screenFace = roomFaceDefs.find((entry) => entry.key === 'posX');
   if (screenFace) {
     const facePos = screenFace.mesh.position;
-    const toCamera = new THREE.Vector3(
-      localCamera.x - facePos.x,
-      localCamera.y - facePos.y,
-      localCamera.z - facePos.z
+    tempToCamera.set(
+      tempCameraLocal.x - facePos.x,
+      tempCameraLocal.y - facePos.y,
+      tempCameraLocal.z - facePos.z
     );
-    const toCenter = new THREE.Vector3(-facePos.x, -facePos.y, -facePos.z);
-    const camSide = screenFace.inward.dot(toCamera);
-    const centerSide = screenFace.inward.dot(toCenter);
+    tempToCenter.set(-facePos.x, -facePos.y, -facePos.z);
+    const camSide = screenFace.inward.dot(tempToCamera);
+    const centerSide = screenFace.inward.dot(tempToCenter);
     const isInside = camSide * centerSide > 0;
     screenMaterial.opacity = isInside ? 0.18 : 0.18;
   }
