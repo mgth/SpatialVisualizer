@@ -13,6 +13,8 @@ const dialogNormInfoEl = document.getElementById('dialogNormInfo');
 const latencyInfoEl = document.getElementById('latencyInfo');
 const resampleRatioInfoEl = document.getElementById('resampleRatioInfo');
 const dialogNormToggleEl = document.getElementById('dialogNormToggle');
+const spreadMinSliderEl = document.getElementById('spreadMinSlider');
+const spreadMinBoxEl = document.getElementById('spreadMinBox');
 const latencyMeterFillEl = document.getElementById('latencyMeterFill');
 const masterGainSliderEl = document.getElementById('masterGainSlider');
 const masterGainBoxEl = document.getElementById('masterGainBox');
@@ -658,6 +660,13 @@ function updateSpreadDisplay() {
   const minText = spreadState.min === null ? '—' : formatNumber(spreadState.min, 2);
   const maxText = spreadState.max === null ? '—' : formatNumber(spreadState.max, 2);
   spreadInfoEl.textContent = `spread: ${minText} / ${maxText}`;
+  if (spreadMinSliderEl) {
+    const value = spreadState.min === null ? 0 : spreadState.min;
+    spreadMinSliderEl.value = String(value);
+  }
+  if (spreadMinBoxEl) {
+    spreadMinBoxEl.textContent = `min: ${spreadState.min === null ? '—' : formatNumber(spreadState.min, 2)}`;
+  }
 }
 
 function updateDialogNormDisplay() {
@@ -1329,6 +1338,25 @@ if (dialogNormToggleEl) {
         JSON.stringify({
           type: 'control:dialog_norm',
           enable: enabled
+        })
+      );
+    }
+  });
+}
+
+if (spreadMinSliderEl) {
+  spreadMinSliderEl.addEventListener('input', () => {
+    const value = Number(spreadMinSliderEl.value);
+    if (!Number.isFinite(value)) {
+      return;
+    }
+    spreadState.min = value;
+    updateSpreadDisplay();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          type: 'control:spread:min',
+          value
         })
       );
     }

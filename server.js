@@ -554,6 +554,15 @@ wss.on('connection', (ws) => {
         }
         sendTruehddIntControl('/truehdd/control/dialog_norm', enable ? 1 : 0);
       }
+
+      if (payload?.type === 'control:spread:min') {
+        const value = Number(payload.value);
+        if (!Number.isFinite(value)) {
+          return;
+        }
+        const clamped = Math.min(1, Math.max(0, value));
+        sendTruehddFloatControl('/truehdd/control/spread/min', clamped);
+      }
     } catch {
       // Ignore invalid client payloads.
     }
