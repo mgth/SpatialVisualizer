@@ -20,6 +20,7 @@ const masterGainSliderEl = document.getElementById('masterGainSlider');
 const masterGainBoxEl = document.getElementById('masterGainBox');
 const masterMeterTextEl = document.getElementById('masterMeterText');
 const masterMeterFillEl = document.getElementById('masterMeterFill');
+const editModeSelectEl = document.getElementById('editModeSelect');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -153,6 +154,144 @@ let masterGain = 1;
 const axes = new THREE.AxesHelper(1.2);
 scene.add(axes);
 
+const ringPoints = Array.from({ length: 64 }, (_, i) => {
+  const a = (i / 64) * Math.PI * 2;
+  return new THREE.Vector3(Math.cos(a), 0, Math.sin(a));
+});
+const arcPoints = Array.from({ length: 48 }, (_, i) => {
+  const t = (i / 47) * Math.PI - Math.PI / 2;
+  return new THREE.Vector3(Math.cos(t), Math.sin(t), 0);
+});
+
+const ringTickPoints = [];
+for (let i = 0; i < 72; i += 1) {
+  const a = (i / 72) * Math.PI * 2;
+  const inner = 1.0;
+  const outer = 1.08;
+  ringTickPoints.push(new THREE.Vector3(Math.cos(a) * inner, 0, Math.sin(a) * inner));
+  ringTickPoints.push(new THREE.Vector3(Math.cos(a) * outer, 0, Math.sin(a) * outer));
+}
+
+const ringMinorTickPoints = [];
+for (let i = 0; i < 360; i += 1) {
+  const a = (i / 360) * Math.PI * 2;
+  const inner = 1.01;
+  const outer = 1.05;
+  ringMinorTickPoints.push(new THREE.Vector3(Math.cos(a) * inner, 0, Math.sin(a) * inner));
+  ringMinorTickPoints.push(new THREE.Vector3(Math.cos(a) * outer, 0, Math.sin(a) * outer));
+}
+
+const arcTickPoints = [];
+for (let angle = -90; angle <= 90; angle += 5) {
+  const t = (angle * Math.PI) / 180;
+  const inner = 1.0;
+  const outer = 1.08;
+  arcTickPoints.push(new THREE.Vector3(Math.cos(t) * inner, Math.sin(t) * inner, 0));
+  arcTickPoints.push(new THREE.Vector3(Math.cos(t) * outer, Math.sin(t) * outer, 0));
+}
+
+const arcMinorTickPoints = [];
+for (let i = 0; i <= 180; i += 1) {
+  const t = (i / 180) * Math.PI - Math.PI / 2;
+  const inner = 1.01;
+  const outer = 1.05;
+  arcMinorTickPoints.push(new THREE.Vector3(Math.cos(t) * inner, Math.sin(t) * inner, 0));
+  arcMinorTickPoints.push(new THREE.Vector3(Math.cos(t) * outer, Math.sin(t) * outer, 0));
+}
+
+const speakerGizmo = {
+  ring: new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(ringPoints),
+    new THREE.LineBasicMaterial({ color: 0x9ef7ff, transparent: true, opacity: 0.6 })
+  ),
+  ringTicks: new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(ringTickPoints),
+    new THREE.LineBasicMaterial({ color: 0x9ef7ff, transparent: true, opacity: 0.5 })
+  ),
+  ringMinorTicks: new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(ringMinorTickPoints),
+    new THREE.LineBasicMaterial({ color: 0x9ef7ff, transparent: true, opacity: 0.35 })
+  ),
+  arc: new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(arcPoints),
+    new THREE.LineBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.75 })
+  ),
+  arcTicks: new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(arcTickPoints),
+    new THREE.LineBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.55 })
+  ),
+  arcMinorTicks: new THREE.LineSegments(
+    new THREE.BufferGeometry().setFromPoints(arcMinorTickPoints),
+    new THREE.LineBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.38 })
+  ),
+  ringLabels: new THREE.Group(),
+  arcLabels: new THREE.Group(),
+  ringCurrent: new THREE.Group(),
+  arcCurrent: new THREE.Group()
+};
+speakerGizmo.ring.visible = false;
+speakerGizmo.ringTicks.visible = false;
+speakerGizmo.ringMinorTicks.visible = false;
+speakerGizmo.arc.visible = false;
+speakerGizmo.arcTicks.visible = false;
+speakerGizmo.arcMinorTicks.visible = false;
+scene.add(speakerGizmo.ring);
+scene.add(speakerGizmo.ringTicks);
+scene.add(speakerGizmo.ringMinorTicks);
+scene.add(speakerGizmo.arc);
+scene.add(speakerGizmo.arcTicks);
+scene.add(speakerGizmo.arcMinorTicks);
+scene.add(speakerGizmo.ringLabels);
+scene.add(speakerGizmo.arcLabels);
+scene.add(speakerGizmo.ringCurrent);
+scene.add(speakerGizmo.arcCurrent);
+
+speakerGizmo.ringCurrentLabel = createSmallLabelSprite('0', '#9ef7ff');
+speakerGizmo.arcCurrentLabel = createSmallLabelSprite('0', '#ffd27a');
+speakerGizmo.ringCurrentLabel.renderOrder = 5;
+speakerGizmo.arcCurrentLabel.renderOrder = 5;
+speakerGizmo.ringCurrent.add(speakerGizmo.ringCurrentLabel);
+speakerGizmo.arcCurrent.add(speakerGizmo.arcCurrentLabel);
+
+const distanceGizmo = {
+  group: new THREE.Group(),
+  line: new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+    new THREE.LineBasicMaterial({ color: 0xa8ffbf, transparent: true, opacity: 0.7 })
+  ),
+  arrowA: new THREE.Mesh(
+    new THREE.ConeGeometry(0.02, 0.06, 8),
+    new THREE.MeshBasicMaterial({ color: 0xa8ffbf, transparent: true, opacity: 0.7 })
+  ),
+  arrowB: new THREE.Mesh(
+    new THREE.ConeGeometry(0.02, 0.06, 8),
+    new THREE.MeshBasicMaterial({ color: 0xa8ffbf, transparent: true, opacity: 0.7 })
+  ),
+  label: createSmallLabelSprite('0.00', '#7bff6a')
+};
+distanceGizmo.arrowA.renderOrder = 5;
+distanceGizmo.arrowB.renderOrder = 5;
+distanceGizmo.label.renderOrder = 5;
+distanceGizmo.group.add(distanceGizmo.line);
+distanceGizmo.group.add(distanceGizmo.arrowA);
+distanceGizmo.group.add(distanceGizmo.arrowB);
+distanceGizmo.group.add(distanceGizmo.label);
+distanceGizmo.group.visible = false;
+scene.add(distanceGizmo.group);
+
+  const ringLabelAngles = Array.from({ length: 24 }, (_, i) => -180 + i * 15);
+  const arcLabelAngles = Array.from({ length: 13 }, (_, i) => -90 + i * 15);
+
+ringLabelAngles.forEach((angle) => {
+  const sprite = createSmallLabelSprite(`${angle}`);
+  speakerGizmo.ringLabels.add(sprite);
+});
+
+arcLabelAngles.forEach((angle) => {
+  const sprite = createSmallLabelSprite(`${angle}`);
+  speakerGizmo.arcLabels.add(sprite);
+});
+
 const sourceMeshes = new Map();
 const sourceLabels = new Map();
 const sourceOutlines = new Map();
@@ -175,6 +314,15 @@ const sourceNames = new Map();
 const sourcePositionsRaw = new Map();
 
 let selectedSourceId = null;
+let selectedSpeakerIndex = null;
+let activeEditMode = 'polar';
+let isDraggingSpeaker = false;
+let dragMode = null;
+let dragAzimuthDeg = 0;
+let dragElevationDeg = 0;
+let dragDistance = 1;
+let dragAzimuthDelta = 1;
+let dragElevationDelta = 1;
 
 const sourceMaterial = new THREE.MeshStandardMaterial({
   color: 0xff7c4d,
@@ -200,8 +348,10 @@ const sourceOutlineSelectedColor = new THREE.Color(0xffde8a);
 
 const layoutsByKey = new Map();
 const raycaster = new THREE.Raycaster();
+raycaster.params.Line.threshold = 0.08;
 const pointer = new THREE.Vector2();
 let pointerDownPosition = null;
+let draggingPointerId = null;
 let currentLayoutKey = null;
 let currentLayoutSpeakers = [];
 
@@ -230,7 +380,7 @@ function formatPosition(position) {
     const az = position.azimuthDeg;
     const el = position.elevationDeg;
     const r = position.distanceM;
-    return `x:${formatNumber(x)} y:${formatNumber(y)} z:${formatNumber(z)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(r, 2)}`;
+    return `x:${formatNumber(x, 1)} y:${formatNumber(y, 1)} z:${formatNumber(z, 1)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(r, 2)}`;
   }
 
   const az = (Math.atan2(z, x) * 180) / Math.PI;
@@ -238,7 +388,7 @@ function formatPosition(position) {
   const el = (Math.atan2(y, planar) * 180) / Math.PI;
   const dist = Math.sqrt(x * x + y * y + z * z);
 
-  return `x:${formatNumber(x)} y:${formatNumber(y)} z:${formatNumber(z)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(dist, 2)}`;
+  return `x:${formatNumber(x, 1)} y:${formatNumber(y, 1)} z:${formatNumber(z, 1)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(dist, 2)}`;
 }
 
 function formatLevel(meter) {
@@ -335,6 +485,7 @@ function updateSpeakerControlsUI() {
     entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
     entry.soloBtn.classList.toggle('active', soloTarget === id);
     updateItemClasses(entry, speakerMuted.has(id), soloTarget && soloTarget !== id);
+    entry.root.classList.toggle('is-selected', selectedSpeakerIndex !== null && Number(id) === selectedSpeakerIndex);
   });
 }
 
@@ -354,6 +505,10 @@ function updateObjectControlsUI() {
 function createSpeakerItem(id, speaker) {
   const root = document.createElement('div');
   root.className = 'info-item speaker-item';
+  root.addEventListener('click', () => {
+    setSelectedSource(null);
+    setSelectedSpeaker(Number(id));
+  });
 
   const idStrip = document.createElement('div');
   idStrip.className = 'id-strip';
@@ -443,6 +598,7 @@ function updateSpeakerItem(entry, id, speaker) {
   entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
   entry.soloBtn.classList.toggle('active', soloTarget === id);
   updateItemClasses(entry, speakerMuted.has(id), soloTarget && soloTarget !== id);
+  entry.root.classList.toggle('is-selected', selectedSpeakerIndex !== null && Number(id) === selectedSpeakerIndex);
   updateMeterUI(entry, speakerLevels.get(id));
 }
 
@@ -859,6 +1015,170 @@ function applyRoomRatioToScene() {
   roomGroup.scale.set(sx, sy, sz);
 }
 
+function cartesianToSpherical(position) {
+  const x = Number(position.x) || 0;
+  const y = Number(position.y) || 0;
+  const z = Number(position.z) || 0;
+  const dist = Math.sqrt(x * x + y * y + z * z);
+  const az = (Math.atan2(z, x) * 180) / Math.PI;
+  const el = dist > 0 ? (Math.atan2(y, Math.sqrt(x * x + z * z)) * 180) / Math.PI : 0;
+  return { az, el, dist };
+}
+
+function sphericalToCartesianDeg(az, el, dist) {
+  const azRad = (az * Math.PI) / 180;
+  const elRad = (el * Math.PI) / 180;
+  const x = dist * Math.cos(elRad) * Math.cos(azRad);
+  const y = dist * Math.sin(elRad);
+  const z = dist * Math.cos(elRad) * Math.sin(azRad);
+  return { x, y, z };
+}
+
+function normalizeAngleDeg(angle) {
+  let a = angle;
+  while (a > 180) a -= 360;
+  while (a < -180) a += 360;
+  return a;
+}
+
+function snapAngleDeg(angle, step, threshold) {
+  const snapped = Math.round(angle / step) * step;
+  return Math.abs(angle - snapped) <= threshold ? snapped : angle;
+}
+
+function updateSpeakerGizmo() {
+  if (activeEditMode !== 'polar' || selectedSpeakerIndex === null) {
+    speakerGizmo.ring.visible = false;
+    speakerGizmo.ringTicks.visible = false;
+    speakerGizmo.ringMinorTicks.visible = false;
+    speakerGizmo.arc.visible = false;
+    speakerGizmo.arcTicks.visible = false;
+    speakerGizmo.arcMinorTicks.visible = false;
+    speakerGizmo.ringLabels.visible = false;
+    speakerGizmo.arcLabels.visible = false;
+    speakerGizmo.ringCurrent.visible = false;
+    speakerGizmo.arcCurrent.visible = false;
+    distanceGizmo.group.visible = false;
+    return;
+  }
+
+  const mesh = speakerMeshes[selectedSpeakerIndex];
+  if (!mesh) {
+    speakerGizmo.ring.visible = false;
+    speakerGizmo.ringTicks.visible = false;
+    speakerGizmo.ringMinorTicks.visible = false;
+    speakerGizmo.arc.visible = false;
+    speakerGizmo.arcTicks.visible = false;
+    speakerGizmo.arcMinorTicks.visible = false;
+    speakerGizmo.ringLabels.visible = false;
+    speakerGizmo.arcLabels.visible = false;
+    speakerGizmo.ringCurrent.visible = false;
+    speakerGizmo.arcCurrent.visible = false;
+    distanceGizmo.group.visible = false;
+    return;
+  }
+
+  const { az, el, dist } = cartesianToSpherical(mesh.position);
+  dragAzimuthDeg = az;
+  dragElevationDeg = el;
+  dragDistance = Math.max(0.01, dist);
+
+  speakerGizmo.ring.visible = true;
+  speakerGizmo.ringTicks.visible = !isDraggingSpeaker || dragAzimuthDelta > 0.1;
+  speakerGizmo.ringMinorTicks.visible = isDraggingSpeaker && dragAzimuthDelta >= 0 && dragAzimuthDelta <= 0.1;
+  speakerGizmo.arc.visible = true;
+  speakerGizmo.arcTicks.visible = !isDraggingSpeaker || dragElevationDelta > 0.1;
+  speakerGizmo.arcMinorTicks.visible = isDraggingSpeaker && dragElevationDelta >= 0 && dragElevationDelta <= 0.1;
+  speakerGizmo.ringLabels.visible = true;
+  speakerGizmo.arcLabels.visible = true;
+  speakerGizmo.ringCurrent.visible = true;
+  speakerGizmo.arcCurrent.visible = true;
+  distanceGizmo.group.visible = true;
+
+  speakerGizmo.ring.position.set(0, 0, 0);
+  speakerGizmo.ring.scale.set(dragDistance, 1, dragDistance);
+  speakerGizmo.ringTicks.position.set(0, 0, 0);
+  speakerGizmo.ringTicks.scale.set(dragDistance, 1, dragDistance);
+  speakerGizmo.ringMinorTicks.position.set(0, 0, 0);
+  speakerGizmo.ringMinorTicks.scale.set(dragDistance, 1, dragDistance);
+  speakerGizmo.ringLabels.position.set(0, 0, 0);
+  speakerGizmo.ringLabels.scale.set(dragDistance, 1, dragDistance);
+  speakerGizmo.ringCurrent.position.set(0, 0, 0);
+  speakerGizmo.ringCurrent.scale.set(dragDistance, 1, dragDistance);
+
+  const azRad = (az * Math.PI) / 180;
+  speakerGizmo.arc.position.set(0, 0, 0);
+  speakerGizmo.arc.scale.set(dragDistance, dragDistance, dragDistance);
+  speakerGizmo.arc.rotation.set(0, -azRad, 0);
+  speakerGizmo.arcTicks.position.set(0, 0, 0);
+  speakerGizmo.arcTicks.scale.set(dragDistance, dragDistance, dragDistance);
+  speakerGizmo.arcTicks.rotation.set(0, -azRad, 0);
+  speakerGizmo.arcMinorTicks.position.set(0, 0, 0);
+  speakerGizmo.arcMinorTicks.scale.set(dragDistance, dragDistance, dragDistance);
+  speakerGizmo.arcMinorTicks.rotation.set(0, -azRad, 0);
+  speakerGizmo.arcLabels.position.set(0, 0, 0);
+  speakerGizmo.arcLabels.scale.set(dragDistance, dragDistance, dragDistance);
+  speakerGizmo.arcLabels.rotation.set(0, -azRad, 0);
+  speakerGizmo.arcCurrent.position.set(0, 0, 0);
+  speakerGizmo.arcCurrent.scale.set(dragDistance, dragDistance, dragDistance);
+  speakerGizmo.arcCurrent.rotation.set(0, -azRad, 0);
+
+  ringLabelAngles.forEach((angle, idx) => {
+    const sprite = speakerGizmo.ringLabels.children[idx];
+    const rad = (angle * Math.PI) / 180;
+    const r = 1.1;
+    sprite.position.set(Math.cos(rad) * r, 0.02, Math.sin(rad) * r);
+  });
+
+  arcLabelAngles.forEach((angle, idx) => {
+    const sprite = speakerGizmo.arcLabels.children[idx];
+    const rad = (angle * Math.PI) / 180;
+    const r = 1.1;
+    sprite.position.set(Math.cos(rad) * r, Math.sin(rad) * r, 0);
+  });
+
+  const ringAngle = normalizeAngleDeg(dragAzimuthDeg);
+  const ringRad = (ringAngle * Math.PI) / 180;
+  speakerGizmo.ringCurrentLabel.position.set(Math.cos(ringRad) * 1.24, 0.04, Math.sin(ringRad) * 1.24);
+  setLabelSpriteText(speakerGizmo.ringCurrentLabel, `${ringAngle.toFixed(1)}`);
+
+  const arcAngle = dragElevationDeg;
+  const arcRad = (arcAngle * Math.PI) / 180;
+  speakerGizmo.arcCurrentLabel.position.set(Math.cos(arcRad) * 1.24, Math.sin(arcRad) * 1.24, 0);
+  setLabelSpriteText(speakerGizmo.arcCurrentLabel, `${arcAngle.toFixed(1)}`);
+
+  const speakerPos = mesh.position.clone();
+  const dir = speakerPos.length() > 1e-6 ? speakerPos.clone().normalize() : new THREE.Vector3(1, 0, 0);
+  const lineGeom = distanceGizmo.line.geometry;
+  lineGeom.setFromPoints([new THREE.Vector3(0, 0, 0), speakerPos.clone()]);
+  lineGeom.attributes.position.needsUpdate = true;
+
+  const arrowOffset = 0.1;
+  distanceGizmo.arrowA.position.copy(dir.clone().multiplyScalar(arrowOffset));
+  distanceGizmo.arrowB.position.copy(speakerPos.clone().add(dir.clone().multiplyScalar(-arrowOffset)));
+
+  const up = new THREE.Vector3(0, 1, 0);
+  const quat = new THREE.Quaternion().setFromUnitVectors(up, dir);
+  distanceGizmo.arrowA.quaternion.copy(quat);
+  const quatB = new THREE.Quaternion().setFromUnitVectors(up, dir.clone().negate());
+  distanceGizmo.arrowB.quaternion.copy(quatB);
+
+  const mid = speakerPos.clone().multiplyScalar(0.5);
+  distanceGizmo.label.position.set(mid.x, mid.y + 0.08, mid.z);
+  setLabelSpriteText(distanceGizmo.label, `${speakerPos.length().toFixed(2)}`);
+}
+
+function setSelectedSpeaker(index) {
+  selectedSpeakerIndex = index;
+  updateSpeakerGizmo();
+  updateSpeakerControlsUI();
+  updateControlsForEditMode();
+}
+
+function updateControlsForEditMode() {
+  controls.enableZoom = true;
+}
+
 function updateRoomFaceVisibility() {
   tempCameraLocal.copy(camera.position);
   roomGroup.worldToLocal(tempCameraLocal);
@@ -871,8 +1191,7 @@ function updateRoomFaceVisibility() {
     );
     tempToCenter.set(-facePos.x, -facePos.y, -facePos.z);
     const camSide = entry.inward.dot(tempToCamera);
-    const centerSide = entry.inward.dot(tempToCenter);
-    entry.mesh.visible = camSide * centerSide > 0;
+    entry.mesh.visible = camSide > 0;
   });
 
   const screenFace = roomFaceDefs.find((entry) => entry.key === 'posX');
@@ -883,10 +1202,8 @@ function updateRoomFaceVisibility() {
       tempCameraLocal.y - facePos.y,
       tempCameraLocal.z - facePos.z
     );
-    tempToCenter.set(-facePos.x, -facePos.y, -facePos.z);
     const camSide = screenFace.inward.dot(tempToCamera);
-    const centerSide = screenFace.inward.dot(tempToCenter);
-    const isInside = camSide * centerSide > 0;
+    const isInside = camSide > 0;
     screenMaterial.opacity = isInside ? 0.18 : 0.18;
   }
 }
@@ -1004,6 +1321,27 @@ function createLabelSprite(text) {
   sprite.userData.labelCtx = ctx;
   sprite.userData.labelTexture = texture;
   sprite.userData.labelText = '';
+  sprite.userData.labelColor = '#ffffff';
+  setLabelSpriteText(sprite, text);
+  return sprite;
+}
+
+function createSmallLabelSprite(text, color = '#d9ecff') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(0.25, 0.12, 1);
+  sprite.userData.labelCanvas = canvas;
+  sprite.userData.labelCtx = ctx;
+  sprite.userData.labelTexture = texture;
+  sprite.userData.labelText = '';
+  sprite.userData.labelColor = color;
   setLabelSpriteText(sprite, text);
   return sprite;
 }
@@ -1020,10 +1358,10 @@ function setLabelSpriteText(sprite, text) {
   const canvas = sprite.userData.labelCanvas;
   const ctx = sprite.userData.labelCtx;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = 'bold 36px sans-serif';
+  ctx.font = canvas.width >= 200 ? 'bold 36px sans-serif' : 'bold 28px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#ffffff';
+  ctx.fillStyle = sprite.userData.labelColor || '#ffffff';
   ctx.fillText(nextText, canvas.width / 2, canvas.height / 2);
   sprite.userData.labelText = nextText;
   if (sprite.userData.labelTexture) {
@@ -1283,11 +1621,17 @@ function renderLayout(key) {
     currentLayoutKey = null;
     currentLayoutSpeakers = [];
     renderSpeakersList();
+    selectedSpeakerIndex = null;
+    updateSpeakerGizmo();
+    updateControlsForEditMode();
     return;
   }
 
   currentLayoutKey = key;
   currentLayoutSpeakers = Array.isArray(layout.speakers) ? layout.speakers : [];
+  selectedSpeakerIndex = null;
+  updateSpeakerGizmo();
+  updateControlsForEditMode();
   const speakerIds = getSpeakerIds();
   speakerMuted.forEach((id) => {
     if (!speakerIds.includes(id)) {
@@ -1402,17 +1746,149 @@ function selectSourceFromPointer(event) {
   if (intersects.length > 0) {
     const selectedId = intersects[0].object?.userData?.sourceId || null;
     setSelectedSource(selectedId);
-    return;
+    return true;
   }
 
-  setSelectedSource(null);
+  return false;
+}
+
+function selectSpeakerFromPointer(event) {
+  pointerEventToNdc(event);
+  raycaster.setFromCamera(pointer, camera);
+  const hitTargets = [...speakerMeshes, ...speakerLabels];
+  const intersects = raycaster.intersectObjects(hitTargets, false);
+  if (intersects.length > 0) {
+    const idx = speakerMeshes.indexOf(intersects[0].object);
+    if (idx >= 0) {
+      setSelectedSource(null);
+      setSelectedSpeaker(idx);
+      return true;
+    }
+    const labelIdx = speakerLabels.indexOf(intersects[0].object);
+    if (labelIdx >= 0) {
+      setSelectedSource(null);
+      setSelectedSpeaker(labelIdx);
+      return true;
+    }
+  }
+  return false;
+}
+
+function beginSpeakerDrag(event) {
+  if (activeEditMode !== 'polar' || selectedSpeakerIndex === null) {
+    return false;
+  }
+  pointerEventToNdc(event);
+  raycaster.setFromCamera(pointer, camera);
+  const gizmoHits = raycaster.intersectObjects([speakerGizmo.ring, speakerGizmo.arc], false);
+  if (gizmoHits.length === 0) {
+    return false;
+  }
+  const hit = gizmoHits[0].object;
+  dragMode = hit === speakerGizmo.ring ? 'azimuth' : 'elevation';
+  isDraggingSpeaker = true;
+  draggingPointerId = event.pointerId;
+  dragAzimuthDelta = 1;
+  dragElevationDelta = 1;
+  controls.enabled = false;
+  return true;
+}
+
+function updateSpeakerDrag(event) {
+  if (!isDraggingSpeaker || selectedSpeakerIndex === null) {
+    return;
+  }
+  pointerEventToNdc(event);
+  raycaster.setFromCamera(pointer, camera);
+
+  if (dragMode === 'azimuth') {
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const hitPoint = new THREE.Vector3();
+    if (raycaster.ray.intersectPlane(plane, hitPoint)) {
+      dragAzimuthDeg = (Math.atan2(hitPoint.z, hitPoint.x) * 180) / Math.PI;
+      dragAzimuthDeg = normalizeAngleDeg(dragAzimuthDeg);
+      const radial = Math.sqrt(hitPoint.x * hitPoint.x + hitPoint.z * hitPoint.z);
+      const delta = (radial - dragDistance) / dragDistance;
+      dragAzimuthDelta = delta;
+      if (delta >= 0 && delta <= 0.1) {
+        dragAzimuthDeg = snapAngleDeg(dragAzimuthDeg, 1, 0.5);
+      } else if (delta > 0.1) {
+        dragAzimuthDeg = snapAngleDeg(dragAzimuthDeg, 5, 2.5);
+      }
+    }
+  } else if (dragMode === 'elevation') {
+    const azRad = (dragAzimuthDeg * Math.PI) / 180;
+    const dir = new THREE.Vector3(Math.cos(azRad), 0, Math.sin(azRad));
+    const normal = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, new THREE.Vector3(0, 0, 0));
+    const hitPoint = new THREE.Vector3();
+    if (raycaster.ray.intersectPlane(plane, hitPoint)) {
+      const planar = Math.sqrt(hitPoint.x * hitPoint.x + hitPoint.z * hitPoint.z);
+      dragElevationDeg = (Math.atan2(hitPoint.y, planar) * 180) / Math.PI;
+      dragElevationDeg = Math.max(-90, Math.min(90, dragElevationDeg));
+      const radius = Math.sqrt(hitPoint.x * hitPoint.x + hitPoint.y * hitPoint.y + hitPoint.z * hitPoint.z);
+      const delta = (radius - dragDistance) / dragDistance;
+      dragElevationDelta = delta;
+      if (delta >= 0 && delta <= 0.1) {
+        dragElevationDeg = snapAngleDeg(dragElevationDeg, 1, 0.5);
+      } else if (delta > 0.1) {
+        dragElevationDeg = snapAngleDeg(dragElevationDeg, 5, 2.5);
+      }
+    }
+  }
+
+  const pos = sphericalToCartesianDeg(dragAzimuthDeg, dragElevationDeg, dragDistance);
+  const mesh = speakerMeshes[selectedSpeakerIndex];
+  if (mesh) {
+    mesh.position.set(pos.x, pos.y, pos.z);
+  }
+  const label = speakerLabels[selectedSpeakerIndex];
+  if (label) {
+    label.position.set(pos.x, pos.y + 0.12, pos.z);
+  }
+  const speaker = currentLayoutSpeakers[selectedSpeakerIndex];
+  if (speaker) {
+    speaker.x = pos.x;
+    speaker.y = pos.y;
+    speaker.z = pos.z;
+    const entry = speakerItems.get(String(selectedSpeakerIndex));
+    if (entry) {
+      entry.position.textContent = formatPosition(speaker);
+    }
+  }
+  updateSpeakerGizmo();
+}
+
+function endSpeakerDrag() {
+  if (!isDraggingSpeaker || selectedSpeakerIndex === null) {
+    return;
+  }
+  isDraggingSpeaker = false;
+  dragMode = null;
+  draggingPointerId = null;
+  controls.enabled = true;
+
+  if (ws.readyState === WebSocket.OPEN && selectedSpeakerIndex !== null) {
+    const idx = selectedSpeakerIndex;
+    ws.send(JSON.stringify({ type: 'control:speaker:az', id: idx, value: dragAzimuthDeg }));
+    ws.send(JSON.stringify({ type: 'control:speaker:el', id: idx, value: dragElevationDeg }));
+    ws.send(JSON.stringify({ type: 'control:speaker:distance', id: idx, value: dragDistance }));
+    ws.send(JSON.stringify({ type: 'control:speakers:apply' }));
+  }
 }
 
 renderer.domElement.addEventListener('pointerdown', (event) => {
   pointerDownPosition = { x: event.clientX, y: event.clientY };
+  if (beginSpeakerDrag(event)) {
+    pointerDownPosition = null;
+    return;
+  }
 });
 
 renderer.domElement.addEventListener('pointerup', (event) => {
+  if (isDraggingSpeaker && event.pointerId === draggingPointerId) {
+    endSpeakerDrag();
+  }
   if (!pointerDownPosition) {
     return;
   }
@@ -1422,9 +1898,78 @@ renderer.domElement.addEventListener('pointerup', (event) => {
   pointerDownPosition = null;
 
   if (Math.hypot(dx, dy) <= 6) {
-    selectSourceFromPointer(event);
+    const hitSpeaker = selectSpeakerFromPointer(event);
+    if (hitSpeaker) {
+      return;
+    }
+    const hitSource = selectSourceFromPointer(event);
+    if (hitSource) {
+      setSelectedSpeaker(null);
+      updateControlsForEditMode();
+      return;
+    }
+    setSelectedSource(null);
+    setSelectedSpeaker(null);
+    updateControlsForEditMode();
   }
 });
+
+renderer.domElement.addEventListener('pointermove', (event) => {
+  if (isDraggingSpeaker && event.pointerId === draggingPointerId) {
+    updateSpeakerDrag(event);
+  }
+});
+
+renderer.domElement.addEventListener('pointercancel', () => {
+  endSpeakerDrag();
+});
+
+renderer.domElement.addEventListener('pointerleave', () => {
+  endSpeakerDrag();
+});
+
+renderer.domElement.addEventListener('wheel', (event) => {
+  if (activeEditMode !== 'polar' || selectedSpeakerIndex === null) {
+    return;
+  }
+  if (!event.ctrlKey && !event.shiftKey) {
+    return;
+  }
+  event.preventDefault();
+  event.stopPropagation();
+  const prevZoom = controls.enableZoom;
+  controls.enableZoom = false;
+
+  const delta = -Math.sign(event.deltaY);
+  const step = event.shiftKey ? 0.01 : 0.05;
+  const next = Math.min(2.0, Math.max(0.2, dragDistance + delta * step));
+  if (next === dragDistance) {
+    return;
+  }
+  dragDistance = next;
+  const pos = sphericalToCartesianDeg(dragAzimuthDeg, dragElevationDeg, dragDistance);
+  const mesh = speakerMeshes[selectedSpeakerIndex];
+  if (mesh) {
+    mesh.position.set(pos.x, pos.y, pos.z);
+  }
+  const label = speakerLabels[selectedSpeakerIndex];
+  if (label) {
+    label.position.set(pos.x, pos.y + 0.12, pos.z);
+  }
+  const speaker = currentLayoutSpeakers[selectedSpeakerIndex];
+  if (speaker) {
+    speaker.x = pos.x;
+    speaker.y = pos.y;
+    speaker.z = pos.z;
+    speaker.distanceM = dragDistance;
+    const entry = speakerItems.get(String(selectedSpeakerIndex));
+    if (entry) {
+      entry.position.textContent = formatPosition(speaker);
+    }
+  }
+  updateSpeakerGizmo();
+  controls.enableZoom = prevZoom;
+}, { passive: false, capture: true });
 
 const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
 const ws = new WebSocket(`${wsProtocol}://${location.host}`);
@@ -1516,6 +2061,14 @@ if (spreadMaxSliderEl) {
         })
       );
     }
+  });
+}
+
+if (editModeSelectEl) {
+  editModeSelectEl.addEventListener('change', () => {
+    activeEditMode = editModeSelectEl.value;
+    updateSpeakerGizmo();
+    updateControlsForEditMode();
   });
 }
 

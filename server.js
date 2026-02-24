@@ -419,6 +419,16 @@ function sendTruehddIntControl(address, value) {
   );
 }
 
+function sendTruehddNoArgs(address) {
+  oscUdpPort.send(
+    {
+      address
+    },
+    OSC_HOST,
+    OSC_RX_PORT
+  );
+}
+
 function registerToTruehdd(listenPort, reason = 'startup') {
   activeListenPort = listenPort;
   latencyEma = null;
@@ -571,6 +581,37 @@ wss.on('connection', (ws) => {
         }
         const clamped = Math.min(1, Math.max(0, value));
         sendTruehddFloatControl('/truehdd/control/spread/max', clamped);
+      }
+
+      if (payload?.type === 'control:speaker:az') {
+        const id = Number(payload.id);
+        const value = Number(payload.value);
+        if (!Number.isFinite(id) || id < 0 || !Number.isFinite(value)) {
+          return;
+        }
+        sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/az`, value);
+      }
+
+      if (payload?.type === 'control:speaker:el') {
+        const id = Number(payload.id);
+        const value = Number(payload.value);
+        if (!Number.isFinite(id) || id < 0 || !Number.isFinite(value)) {
+          return;
+        }
+        sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/el`, value);
+      }
+
+      if (payload?.type === 'control:speaker:distance') {
+        const id = Number(payload.id);
+        const value = Number(payload.value);
+        if (!Number.isFinite(id) || id < 0 || !Number.isFinite(value)) {
+          return;
+        }
+        sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/distance`, value);
+      }
+
+      if (payload?.type === 'control:speakers:apply') {
+        sendTruehddNoArgs('/truehdd/control/speakers/apply');
       }
     } catch {
       // Ignore invalid client payloads.
