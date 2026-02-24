@@ -1,0 +1,1 @@
+- [ ] Clean up stale sources when switching content (objects linger if `/source:remove` is not sent).
