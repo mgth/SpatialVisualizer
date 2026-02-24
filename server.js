@@ -563,6 +563,15 @@ wss.on('connection', (ws) => {
         const clamped = Math.min(1, Math.max(0, value));
         sendTruehddFloatControl('/truehdd/control/spread/min', clamped);
       }
+
+      if (payload?.type === 'control:spread:max') {
+        const value = Number(payload.value);
+        if (!Number.isFinite(value)) {
+          return;
+        }
+        const clamped = Math.min(1, Math.max(0, value));
+        sendTruehddFloatControl('/truehdd/control/spread/max', clamped);
+      }
     } catch {
       // Ignore invalid client payloads.
     }

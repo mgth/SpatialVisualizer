@@ -14,7 +14,7 @@ const latencyInfoEl = document.getElementById('latencyInfo');
 const resampleRatioInfoEl = document.getElementById('resampleRatioInfo');
 const dialogNormToggleEl = document.getElementById('dialogNormToggle');
 const spreadMinSliderEl = document.getElementById('spreadMinSlider');
-const spreadMinBoxEl = document.getElementById('spreadMinBox');
+const spreadMaxSliderEl = document.getElementById('spreadMaxSlider');
 const latencyMeterFillEl = document.getElementById('latencyMeterFill');
 const masterGainSliderEl = document.getElementById('masterGainSlider');
 const masterGainBoxEl = document.getElementById('masterGainBox');
@@ -25,15 +25,15 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
 
 const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 100);
-camera.position.set(2.5, 1.8, 3.6);
-camera.lookAt(0, 0, 0);
+camera.position.set(-3.8, 1.1, 0.0);
+camera.lookAt(0, 0.25, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0, 0, 0);
+controls.target.set(0, 0.25, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
 controls.update();
@@ -45,11 +45,97 @@ const directional = new THREE.DirectionalLight(0xffffff, 1);
 directional.position.set(3, 4, 2);
 scene.add(directional);
 
+const roomGroup = new THREE.Group();
+scene.add(roomGroup);
+
+const roomGeometry = new THREE.BoxGeometry(2, 2, 2);
 const room = new THREE.Mesh(
-  new THREE.BoxGeometry(2, 2, 2),
-  new THREE.MeshBasicMaterial({ color: 0x4d6eff, wireframe: true, transparent: true, opacity: 0.2 })
+  roomGeometry,
+  new THREE.MeshBasicMaterial({ color: 0x4d6eff, transparent: true, opacity: 0.08, depthWrite: false })
 );
-scene.add(room);
+roomGroup.add(room);
+
+const roomEdges = new THREE.LineSegments(
+  new THREE.EdgesGeometry(roomGeometry),
+  new THREE.LineBasicMaterial({ color: 0x6f8dff, linewidth: 2, transparent: true, opacity: 0.45, depthTest: false })
+);
+roomGroup.add(roomEdges);
+
+const roomFaceMaterial = new THREE.MeshBasicMaterial({
+  color: 0x233047,
+  transparent: true,
+  opacity: 0.18,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  depthTest: false,
+  polygonOffset: true,
+  polygonOffsetFactor: 1,
+  polygonOffsetUnits: 1
+});
+
+const screenMaterial = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  transparent: true,
+  opacity: 0.18,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  depthTest: false
+});
+
+const roomFaceGeometry = new THREE.PlaneGeometry(2, 2);
+const roomFaces = {
+  posX: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
+  negX: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
+  posY: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
+  negY: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
+  posZ: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
+  negZ: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial)
+};
+
+roomFaces.posX.rotation.y = -Math.PI / 2;
+roomFaces.posX.position.set(1, 0, 0);
+roomFaces.posX.renderOrder = 1;
+roomGroup.add(roomFaces.posX);
+
+roomFaces.negX.rotation.y = Math.PI / 2;
+roomFaces.negX.position.set(-1, 0, 0);
+roomFaces.negX.renderOrder = 1;
+roomGroup.add(roomFaces.negX);
+
+roomFaces.posY.rotation.x = -Math.PI / 2;
+roomFaces.posY.position.set(0, 1, 0);
+roomFaces.posY.renderOrder = 1;
+roomGroup.add(roomFaces.posY);
+
+roomFaces.negY.rotation.x = Math.PI / 2;
+roomFaces.negY.position.set(0, -1, 0);
+roomFaces.negY.renderOrder = 1;
+roomGroup.add(roomFaces.negY);
+
+roomFaces.posZ.position.set(0, 0, 1);
+roomFaces.posZ.renderOrder = 1;
+roomGroup.add(roomFaces.posZ);
+
+roomFaces.negZ.rotation.y = Math.PI;
+roomFaces.negZ.position.set(0, 0, -1);
+roomFaces.negZ.renderOrder = 1;
+roomGroup.add(roomFaces.negZ);
+
+const roomFaceDefs = [
+  { key: 'posX', mesh: roomFaces.posX, inward: new THREE.Vector3(-1, 0, 0) },
+  { key: 'negX', mesh: roomFaces.negX, inward: new THREE.Vector3(1, 0, 0) },
+  { key: 'posY', mesh: roomFaces.posY, inward: new THREE.Vector3(0, -1, 0) },
+  { key: 'negY', mesh: roomFaces.negY, inward: new THREE.Vector3(0, 1, 0) },
+  { key: 'posZ', mesh: roomFaces.posZ, inward: new THREE.Vector3(0, 0, -1) },
+  { key: 'negZ', mesh: roomFaces.negZ, inward: new THREE.Vector3(0, 0, 1) }
+];
+
+const screenGeometry = new THREE.PlaneGeometry(2, 2 * (9 / 16));
+const screenMesh = new THREE.Mesh(screenGeometry, screenMaterial);
+screenMesh.rotation.y = -Math.PI / 2;
+screenMesh.position.set(0.995, 0, 0);
+screenMesh.renderOrder = 5;
+roomGroup.add(screenMesh);
 
 const roomRatio = { width: 1, length: 2, height: 1 };
 const spreadState = { min: null, max: null };
@@ -664,8 +750,9 @@ function updateSpreadDisplay() {
     const value = spreadState.min === null ? 0 : spreadState.min;
     spreadMinSliderEl.value = String(value);
   }
-  if (spreadMinBoxEl) {
-    spreadMinBoxEl.textContent = `min: ${spreadState.min === null ? '—' : formatNumber(spreadState.min, 2)}`;
+  if (spreadMaxSliderEl) {
+    const value = spreadState.max === null ? 1 : spreadState.max;
+    spreadMaxSliderEl.value = String(value);
   }
 }
 
@@ -755,7 +842,38 @@ function applyRoomRatioToScene() {
   const sx = (roomRatio.length / maxDim) * 2;
   const sy = (roomRatio.height / maxDim) * 2;
   const sz = (roomRatio.width / maxDim) * 2;
-  room.scale.set(sx, sy, sz);
+  roomGroup.scale.set(sx, sy, sz);
+}
+
+function updateRoomFaceVisibility() {
+  const localCamera = roomGroup.worldToLocal(camera.position.clone());
+  roomFaceDefs.forEach((entry) => {
+    const facePos = entry.mesh.position;
+    const toCamera = new THREE.Vector3(
+      localCamera.x - facePos.x,
+      localCamera.y - facePos.y,
+      localCamera.z - facePos.z
+    );
+    const toCenter = new THREE.Vector3(-facePos.x, -facePos.y, -facePos.z);
+    const camSide = entry.inward.dot(toCamera);
+    const centerSide = entry.inward.dot(toCenter);
+    entry.mesh.visible = camSide * centerSide > 0;
+  });
+
+  const screenFace = roomFaceDefs.find((entry) => entry.key === 'posX');
+  if (screenFace) {
+    const facePos = screenFace.mesh.position;
+    const toCamera = new THREE.Vector3(
+      localCamera.x - facePos.x,
+      localCamera.y - facePos.y,
+      localCamera.z - facePos.z
+    );
+    const toCenter = new THREE.Vector3(-facePos.x, -facePos.y, -facePos.z);
+    const camSide = screenFace.inward.dot(toCamera);
+    const centerSide = screenFace.inward.dot(toCenter);
+    const isInside = camSide * centerSide > 0;
+    screenMaterial.opacity = isInside ? 0.18 : 0.18;
+  }
 }
 
 function toggleMute(group, id) {
@@ -1350,13 +1468,36 @@ if (spreadMinSliderEl) {
     if (!Number.isFinite(value)) {
       return;
     }
-    spreadState.min = value;
+    const maxValue = spreadState.max === null ? 1 : spreadState.max;
+    spreadState.min = Math.min(value, maxValue);
+    spreadMinSliderEl.value = String(spreadState.min);
     updateSpreadDisplay();
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(
         JSON.stringify({
           type: 'control:spread:min',
-          value
+          value: spreadState.min
+        })
+      );
+    }
+  });
+}
+
+if (spreadMaxSliderEl) {
+  spreadMaxSliderEl.addEventListener('input', () => {
+    const value = Number(spreadMaxSliderEl.value);
+    if (!Number.isFinite(value)) {
+      return;
+    }
+    const minValue = spreadState.min === null ? 0 : spreadState.min;
+    spreadState.max = Math.max(value, minValue);
+    spreadMaxSliderEl.value = String(spreadState.max);
+    updateSpreadDisplay();
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(
+        JSON.stringify({
+          type: 'control:spread:max',
+          value: spreadState.max
         })
       );
     }
@@ -1582,6 +1723,7 @@ ws.onmessage = (event) => {
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
+  updateRoomFaceVisibility();
 
   sourceOutlines.forEach((outline) => {
     outline.quaternion.copy(camera.quaternion);

@@ -94,7 +94,71 @@
         margin-top: 0.25rem;
       }
 
-      .switch-row input[type="checkbox"] {
+      .inline-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.2rem;
+        justify-content: space-between;
+      }
+
+      .spread-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+      }
+
+      .dual-range {
+        position: relative;
+        flex: 1 1 auto;
+        height: 18px;
+      }
+
+      .dual-range input[type="range"] {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 18px;
+        background: transparent;
+        pointer-events: none;
+        -webkit-appearance: none;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #d9ecff;
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        pointer-events: auto;
+      }
+
+      .dual-range input[type="range"]::-moz-range-thumb {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #d9ecff;
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        pointer-events: auto;
+      }
+
+      .dual-range input[type="range"]::-webkit-slider-runnable-track {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+      }
+
+      .dual-range input[type="range"]::-moz-range-track {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+      }
+
+      .switch-row input[type="checkbox"],
+      .inline-toggle input[type="checkbox"] {
         width: 34px;
         height: 18px;
         appearance: none;
@@ -106,7 +170,8 @@
         border: 1px solid rgba(255, 255, 255, 0.2);
       }
 
-      .switch-row input[type="checkbox"]::after {
+      .switch-row input[type="checkbox"]::after,
+      .inline-toggle input[type="checkbox"]::after {
         content: "";
         position: absolute;
         top: 2px;
@@ -118,11 +183,13 @@
         transition: transform 0.2s ease;
       }
 
-      .switch-row input[type="checkbox"]:checked {
+      .switch-row input[type="checkbox"]:checked,
+      .inline-toggle input[type="checkbox"]:checked {
         background: rgba(80, 200, 120, 0.45);
       }
 
-      .switch-row input[type="checkbox"]:checked::after {
+      .switch-row input[type="checkbox"]:checked::after,
+      .inline-toggle input[type="checkbox"]:checked::after {
         transform: translateX(16px);
       }
 
@@ -294,13 +361,17 @@
     <div id="overlay">
       <div><strong>Spatial Visualizer</strong></div>
       <div>WS: <span id="status">connexion...</span></div>
-      <div>OSC attendu: <code>/source/position id x y z</code></div>
       <div id="roomRatio">room_ratio: —</div>
-      <div id="spreadInfo">spread: — / —</div>
-      <div id="dialogNormInfo">dialog_norm: —</div>
-      <div class="control-row">
-        <input id="spreadMinSlider" class="gain-slider" type="range" min="0" max="1" step="0.01" value="0" />
-        <div id="spreadMinBox" class="gain-box">min: —</div>
+      <div class="spread-row">
+        <div id="spreadInfo">spread: — / —</div>
+        <div class="dual-range">
+          <input id="spreadMinSlider" type="range" min="0" max="1" step="0.01" value="0" />
+          <input id="spreadMaxSlider" type="range" min="0" max="1" step="0.01" value="1" />
+        </div>
+      </div>
+      <div class="inline-toggle">
+        <div id="dialogNormInfo">dialog_norm: —</div>
+        <input id="dialogNormToggle" type="checkbox" />
       </div>
       <div class="meter-row">
         <div id="latencyInfo">latency: —</div>
@@ -309,10 +380,6 @@
         </div>
       </div>
       <div id="resampleRatioInfo">resample: —</div>
-      <div class="switch-row">
-        <label for="dialogNormToggle">dialog_norm</label>
-        <input id="dialogNormToggle" type="checkbox" />
-      </div>
 
       <div class="info-section" id="objectsSection">
         <div class="info-title">Objets</div>
