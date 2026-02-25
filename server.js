@@ -88,6 +88,7 @@ const state = {
   dialogNormGain: null,
   masterGain: null,
   distanceDiffuse: { enabled: null, threshold: null, curve: null },
+  configSaved: null,
   latencyMs: null,
   resampleRatio: null,
   layouts,
@@ -319,6 +320,11 @@ function handleParsedOsc(parsed) {
   if (parsed.type === 'state:distance_diffuse:curve') {
     state.distanceDiffuse.curve = parsed.value;
     broadcast({ type: 'distance_diffuse:curve', value: parsed.value });
+  }
+
+  if (parsed.type === 'state:config:saved') {
+    state.configSaved = parsed.saved ? 1 : 0;
+    broadcast({ type: 'config:saved', saved: state.configSaved });
   }
 
   if (parsed.type === 'state:latency') {
@@ -647,6 +653,10 @@ wss.on('connection', (ws) => {
       if (payload?.type === 'control:speakers:apply') {
         sendTruehddNoArgs('/truehdd/control/speakers/apply');
       }
+
+      if (payload?.type === 'control:save_config') {
+        sendTruehddNoArgs('/truehdd/control/save_config');
+      }
     } catch {
       // Ignore invalid client payloads.
     }
@@ -670,6 +680,7 @@ wss.on('connection', (ws) => {
       dialogNormGain: state.dialogNormGain,
       masterGain: state.masterGain,
       distanceDiffuse: state.distanceDiffuse,
+      configSaved: state.configSaved,
       latencyMs: state.latencyMs,
       resampleRatio: state.resampleRatio,
       layouts: state.layouts,

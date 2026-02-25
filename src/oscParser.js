@@ -293,6 +293,12 @@ function parseTruehddStateMessage(parts, args) {
     }
   }
 
+  if (parts.length === 4 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'config' && parts[3] === 'saved') {
+    const value = toNumber(args[0]);
+    if (value === null) return null;
+    return { type: 'state:config:saved', saved: value !== 0 };
+  }
+
   return null;
 }
 

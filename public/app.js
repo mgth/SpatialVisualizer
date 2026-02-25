@@ -26,6 +26,8 @@ const distanceDiffuseThresholdSliderEl = document.getElementById('distanceDiffus
 const distanceDiffuseThresholdValEl = document.getElementById('distanceDiffuseThresholdVal');
 const distanceDiffuseCurveSliderEl = document.getElementById('distanceDiffuseCurveSlider');
 const distanceDiffuseCurveValEl = document.getElementById('distanceDiffuseCurveVal');
+const saveConfigBtnEl = document.getElementById('saveConfigBtn');
+const configSavedIndicatorEl = document.getElementById('configSavedIndicator');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -150,6 +152,7 @@ roomGroup.add(screenMesh);
 const roomRatio = { width: 1, length: 2, height: 1 };
 const spreadState = { min: null, max: null };
 const distanceDiffuseState = { enabled: null, threshold: null, curve: null };
+let configSaved = null;
 let dialogNormEnabled = null;
 let dialogNormLevel = null;
 let dialogNormGain = null;
@@ -963,6 +966,20 @@ function updateDistanceDiffuseUI() {
   if (distanceDiffuseCurveValEl) {
     const v = distanceDiffuseState.curve === null ? '—' : formatNumber(distanceDiffuseState.curve, 2);
     distanceDiffuseCurveValEl.textContent = v;
+  }
+}
+
+function updateConfigSavedUI() {
+  if (!configSavedIndicatorEl) return;
+  if (configSaved === null) {
+    configSavedIndicatorEl.textContent = '—';
+    configSavedIndicatorEl.style.color = '#d9ecff';
+  } else if (configSaved) {
+    configSavedIndicatorEl.textContent = 'Sauvegardé';
+    configSavedIndicatorEl.style.color = '#52e2a2';
+  } else {
+    configSavedIndicatorEl.textContent = 'Modifié (non sauvegardé)';
+    configSavedIndicatorEl.style.color = '#ffd56a';
   }
 }
 
@@ -2124,6 +2141,14 @@ if (distanceDiffuseCurveSliderEl) {
   });
 }
 
+if (saveConfigBtnEl) {
+  saveConfigBtnEl.addEventListener('click', () => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'control:save_config' }));
+    }
+  });
+}
+
 if (editModeSelectEl) {
   editModeSelectEl.addEventListener('change', () => {
     activeEditMode = editModeSelectEl.value;
@@ -2234,6 +2259,10 @@ ws.onmessage = (event) => {
       }
     }
     updateDistanceDiffuseUI();
+    if (typeof payload.configSaved === 'number') {
+      configSaved = payload.configSaved !== 0;
+    }
+    updateConfigSavedUI();
     if (typeof payload.latencyMs === 'number') {
       latencyMs = payload.latencyMs;
     }
@@ -2357,6 +2386,11 @@ ws.onmessage = (event) => {
   if (payload.type === 'distance_diffuse:curve') {
     distanceDiffuseState.curve = Number(payload.value);
     updateDistanceDiffuseUI();
+  }
+
+  if (payload.type === 'config:saved') {
+    configSaved = payload.saved !== 0;
+    updateConfigSavedUI();
   }
 
   if (payload.type === 'latency') {
