@@ -410,6 +410,21 @@
           <div id="masterGainBox" class="gain-box">0.0 dB</div>
         </div>
       </div>
+      <div class="info-section" id="distanceDiffuseSection">
+        <div class="info-title">Distance Diffuse</div>
+        <div class="inline-toggle">
+          <label for="distanceDiffuseToggle">Activer</label>
+          <input id="distanceDiffuseToggle" type="checkbox" />
+        </div>
+        <div class="control-row" style="margin-top:0.3rem">
+          <label style="font-size:12px;white-space:nowrap">Seuil <span id="distanceDiffuseThresholdVal">1.00</span></label>
+          <input id="distanceDiffuseThresholdSlider" type="range" min="0.1" max="2.0" step="0.01" value="1.0" class="gain-slider" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label style="font-size:12px;white-space:nowrap">Courbe <span id="distanceDiffuseCurveVal">1.00</span></label>
+          <input id="distanceDiffuseCurveSlider" type="range" min="0.5" max="2.0" step="0.05" value="1.0" class="gain-slider" />
+        </div>
+      </div>
       <div class="info-section" id="speakersSection">
         <div class="info-title">Speakers</div>
         <div id="speakersList" class="info-list">Aucun speaker.</div>

@@ -21,6 +21,11 @@ const masterGainBoxEl = document.getElementById('masterGainBox');
 const masterMeterTextEl = document.getElementById('masterMeterText');
 const masterMeterFillEl = document.getElementById('masterMeterFill');
 const editModeSelectEl = document.getElementById('editModeSelect');
+const distanceDiffuseToggleEl = document.getElementById('distanceDiffuseToggle');
+const distanceDiffuseThresholdSliderEl = document.getElementById('distanceDiffuseThresholdSlider');
+const distanceDiffuseThresholdValEl = document.getElementById('distanceDiffuseThresholdVal');
+const distanceDiffuseCurveSliderEl = document.getElementById('distanceDiffuseCurveSlider');
+const distanceDiffuseCurveValEl = document.getElementById('distanceDiffuseCurveVal');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -144,6 +149,7 @@ roomGroup.add(screenMesh);
 
 const roomRatio = { width: 1, length: 2, height: 1 };
 const spreadState = { min: null, max: null };
+const distanceDiffuseState = { enabled: null, threshold: null, curve: null };
 let dialogNormEnabled = null;
 let dialogNormLevel = null;
 let dialogNormGain = null;
@@ -937,6 +943,26 @@ function updateDialogNormDisplay() {
   dialogNormInfoEl.textContent = `dialog_norm: ${enabledText} | level: ${levelText} | gain: ${gainText}`;
   if (dialogNormToggleEl) {
     dialogNormToggleEl.checked = dialogNormEnabled === true;
+  }
+}
+
+function updateDistanceDiffuseUI() {
+  if (distanceDiffuseToggleEl) {
+    distanceDiffuseToggleEl.checked = distanceDiffuseState.enabled === true;
+  }
+  if (distanceDiffuseThresholdSliderEl && distanceDiffuseState.threshold !== null) {
+    distanceDiffuseThresholdSliderEl.value = String(distanceDiffuseState.threshold);
+  }
+  if (distanceDiffuseThresholdValEl) {
+    const v = distanceDiffuseState.threshold === null ? '—' : formatNumber(distanceDiffuseState.threshold, 2);
+    distanceDiffuseThresholdValEl.textContent = v;
+  }
+  if (distanceDiffuseCurveSliderEl && distanceDiffuseState.curve !== null) {
+    distanceDiffuseCurveSliderEl.value = String(distanceDiffuseState.curve);
+  }
+  if (distanceDiffuseCurveValEl) {
+    const v = distanceDiffuseState.curve === null ? '—' : formatNumber(distanceDiffuseState.curve, 2);
+    distanceDiffuseCurveValEl.textContent = v;
   }
 }
 
@@ -2064,6 +2090,40 @@ if (spreadMaxSliderEl) {
   });
 }
 
+if (distanceDiffuseToggleEl) {
+  distanceDiffuseToggleEl.addEventListener('change', () => {
+    const enabled = distanceDiffuseToggleEl.checked;
+    distanceDiffuseState.enabled = enabled;
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'control:distance_diffuse:enabled', enable: enabled ? 1 : 0 }));
+    }
+  });
+}
+
+if (distanceDiffuseThresholdSliderEl) {
+  distanceDiffuseThresholdSliderEl.addEventListener('input', () => {
+    const value = Number(distanceDiffuseThresholdSliderEl.value);
+    if (!Number.isFinite(value)) return;
+    distanceDiffuseState.threshold = value;
+    if (distanceDiffuseThresholdValEl) distanceDiffuseThresholdValEl.textContent = formatNumber(value, 2);
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'control:distance_diffuse:threshold', value }));
+    }
+  });
+}
+
+if (distanceDiffuseCurveSliderEl) {
+  distanceDiffuseCurveSliderEl.addEventListener('input', () => {
+    const value = Number(distanceDiffuseCurveSliderEl.value);
+    if (!Number.isFinite(value)) return;
+    distanceDiffuseState.curve = value;
+    if (distanceDiffuseCurveValEl) distanceDiffuseCurveValEl.textContent = formatNumber(value, 2);
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'control:distance_diffuse:curve', value }));
+    }
+  });
+}
+
 if (editModeSelectEl) {
   editModeSelectEl.addEventListener('change', () => {
     activeEditMode = editModeSelectEl.value;
@@ -2162,6 +2222,18 @@ ws.onmessage = (event) => {
       masterGain = payload.masterGain;
     }
     updateMasterGainUI();
+    if (payload.distanceDiffuse) {
+      if (typeof payload.distanceDiffuse.enabled === 'boolean') {
+        distanceDiffuseState.enabled = payload.distanceDiffuse.enabled;
+      }
+      if (typeof payload.distanceDiffuse.threshold === 'number') {
+        distanceDiffuseState.threshold = payload.distanceDiffuse.threshold;
+      }
+      if (typeof payload.distanceDiffuse.curve === 'number') {
+        distanceDiffuseState.curve = payload.distanceDiffuse.curve;
+      }
+    }
+    updateDistanceDiffuseUI();
     if (typeof payload.latencyMs === 'number') {
       latencyMs = payload.latencyMs;
     }
@@ -2270,6 +2342,21 @@ ws.onmessage = (event) => {
   if (payload.type === 'master:gain') {
     masterGain = Number(payload.value);
     updateMasterGainUI();
+  }
+
+  if (payload.type === 'distance_diffuse:enabled') {
+    distanceDiffuseState.enabled = payload.enabled === true;
+    updateDistanceDiffuseUI();
+  }
+
+  if (payload.type === 'distance_diffuse:threshold') {
+    distanceDiffuseState.threshold = Number(payload.value);
+    updateDistanceDiffuseUI();
+  }
+
+  if (payload.type === 'distance_diffuse:curve') {
+    distanceDiffuseState.curve = Number(payload.value);
+    updateDistanceDiffuseUI();
   }
 
   if (payload.type === 'latency') {

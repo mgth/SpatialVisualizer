@@ -87,6 +87,7 @@ const state = {
   dialogNormLevel: null,
   dialogNormGain: null,
   masterGain: null,
+  distanceDiffuse: { enabled: null, threshold: null, curve: null },
   latencyMs: null,
   resampleRatio: null,
   layouts,
@@ -303,6 +304,21 @@ function handleParsedOsc(parsed) {
       type: 'master:gain',
       value: parsed.value
     });
+  }
+
+  if (parsed.type === 'state:distance_diffuse:enabled') {
+    state.distanceDiffuse.enabled = parsed.enabled;
+    broadcast({ type: 'distance_diffuse:enabled', enabled: parsed.enabled });
+  }
+
+  if (parsed.type === 'state:distance_diffuse:threshold') {
+    state.distanceDiffuse.threshold = parsed.value;
+    broadcast({ type: 'distance_diffuse:threshold', value: parsed.value });
+  }
+
+  if (parsed.type === 'state:distance_diffuse:curve') {
+    state.distanceDiffuse.curve = parsed.value;
+    broadcast({ type: 'distance_diffuse:curve', value: parsed.value });
   }
 
   if (parsed.type === 'state:latency') {
@@ -583,6 +599,24 @@ wss.on('connection', (ws) => {
         sendTruehddFloatControl('/truehdd/control/spread/max', clamped);
       }
 
+      if (payload?.type === 'control:distance_diffuse:enabled') {
+        const enable = Number(payload.enable);
+        if (!Number.isFinite(enable)) return;
+        sendTruehddIntControl('/truehdd/control/distance_diffuse/enabled', enable ? 1 : 0);
+      }
+
+      if (payload?.type === 'control:distance_diffuse:threshold') {
+        const value = Number(payload.value);
+        if (!Number.isFinite(value)) return;
+        sendTruehddFloatControl('/truehdd/control/distance_diffuse/threshold', Math.max(0.01, value));
+      }
+
+      if (payload?.type === 'control:distance_diffuse:curve') {
+        const value = Number(payload.value);
+        if (!Number.isFinite(value)) return;
+        sendTruehddFloatControl('/truehdd/control/distance_diffuse/curve', Math.max(0, value));
+      }
+
       if (payload?.type === 'control:speaker:az') {
         const id = Number(payload.id);
         const value = Number(payload.value);
@@ -635,6 +669,7 @@ wss.on('connection', (ws) => {
       dialogNormLevel: state.dialogNormLevel,
       dialogNormGain: state.dialogNormGain,
       masterGain: state.masterGain,
+      distanceDiffuse: state.distanceDiffuse,
       latencyMs: state.latencyMs,
       resampleRatio: state.resampleRatio,
       layouts: state.layouts,

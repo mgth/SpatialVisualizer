@@ -278,6 +278,20 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
+  if (parts.length === 4 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'distance_diffuse') {
+    const key = parts[3];
+    if (key === 'enabled') {
+      const value = toNumber(args[0]);
+      if (value === null) return null;
+      return { type: 'state:distance_diffuse:enabled', enabled: value !== 0 };
+    }
+    if (key === 'threshold' || key === 'curve') {
+      const value = toNumber(args[0]);
+      if (value === null) return null;
+      return { type: `state:distance_diffuse:${key}`, value };
+    }
+  }
+
   return null;
 }
 
