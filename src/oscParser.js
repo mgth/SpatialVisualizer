@@ -129,16 +129,17 @@ function parseTruehddObjectXyz(parts, args) {
 
   const mappedPosition = mapCartesianByAddress(parts, { x, y, z });
 
-  return {
+  const result = {
     type: 'update',
     id: String(idFromAddress),
     position: {
       x: clamp(mappedPosition.x, -1, 1),
       y: clamp(mappedPosition.y, -1, 1),
       z: clamp(mappedPosition.z, -1, 1)
-    },
-    name
+    }
   };
+  if (name !== null) result.name = name;
+  return result;
 }
 
 function parseTruehddStateMessage(parts, args) {
