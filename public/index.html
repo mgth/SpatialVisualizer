@@ -431,6 +431,17 @@
           <input id="distanceDiffuseCurveSlider" type="range" min="0.5" max="2.0" step="0.05" value="1.0" class="gain-slider" />
         </div>
       </div>
+      <div class="info-section" id="trailSection">
+        <div class="info-title">Trajectoires</div>
+        <div class="inline-toggle">
+          <label for="trailToggle">Afficher</label>
+          <input id="trailToggle" type="checkbox" checked />
+        </div>
+        <div class="control-row" style="margin-top:0.3rem">
+          <label style="font-size:12px;white-space:nowrap">Points <span id="trailLengthVal">80</span></label>
+          <input id="trailLengthSlider" type="range" min="10" max="300" step="10" value="80" class="gain-slider" />
+        </div>
+      </div>
       <div class="info-section" id="speakersSection">
         <div class="info-title">Speakers</div>
         <div id="speakersList" class="info-list">Aucun speaker.</div>

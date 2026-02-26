@@ -28,6 +28,9 @@ const distanceDiffuseCurveSliderEl = document.getElementById('distanceDiffuseCur
 const distanceDiffuseCurveValEl = document.getElementById('distanceDiffuseCurveVal');
 const saveConfigBtnEl = document.getElementById('saveConfigBtn');
 const configSavedIndicatorEl = document.getElementById('configSavedIndicator');
+const trailToggleEl = document.getElementById('trailToggle');
+const trailLengthSliderEl = document.getElementById('trailLengthSlider');
+const trailLengthValEl = document.getElementById('trailLengthVal');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -321,6 +324,9 @@ const speakerManualMuted = new Set();
 const objectManualMuted = new Set();
 const sourceNames = new Map();
 const sourcePositionsRaw = new Map();
+const sourceTrails = new Map();
+let trailMaxPoints = 80;
+let trailsEnabled = true;
 
 let selectedSourceId = null;
 let selectedSpeakerIndex = null;
@@ -1412,6 +1418,59 @@ function setLabelSpriteText(sprite, text) {
   }
 }
 
+function createTrailLine() {
+  const posArr = new Float32Array(300 * 3); // pre-allocated for max slider value
+  const colArr = new Float32Array(300 * 3);
+  const geometry = new THREE.BufferGeometry();
+  const posAttr = new THREE.BufferAttribute(posArr, 3);
+  const colAttr = new THREE.BufferAttribute(colArr, 3);
+  posAttr.setUsage(THREE.DynamicDrawUsage);
+  colAttr.setUsage(THREE.DynamicDrawUsage);
+  geometry.setAttribute('position', posAttr);
+  geometry.setAttribute('color', colAttr);
+  geometry.setDrawRange(0, 0);
+  const material = new THREE.LineBasicMaterial({
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.75,
+    depthTest: false,
+    depthWrite: false
+  });
+  const line = new THREE.Line(geometry, material);
+  line.renderOrder = 15;
+  line.frustumCulled = false;
+  return line;
+}
+
+function rebuildTrailGeometry(id) {
+  const trail = sourceTrails.get(id);
+  if (!trail) return;
+  const count = trail.positions.length;
+  if (count < 2) {
+    trail.line.geometry.setDrawRange(0, 0);
+    return;
+  }
+  const mesh = sourceMeshes.get(id);
+  const r = mesh ? mesh.material.color.r : 0.8;
+  const g = mesh ? mesh.material.color.g : 0.4;
+  const b = mesh ? mesh.material.color.b : 0.2;
+  const posAttr = trail.line.geometry.getAttribute('position');
+  const colAttr = trail.line.geometry.getAttribute('color');
+  for (let i = 0; i < count; i++) {
+    const raw = trail.positions[i];
+    posAttr.array[i * 3] = raw.x * roomRatio.length;
+    posAttr.array[i * 3 + 1] = raw.y * roomRatio.height;
+    posAttr.array[i * 3 + 2] = raw.z * roomRatio.width;
+    const t = count > 1 ? i / (count - 1) : 1; // 0=oldest (dark), 1=newest (full colour)
+    colAttr.array[i * 3] = r * t;
+    colAttr.array[i * 3 + 1] = g * t;
+    colAttr.array[i * 3 + 2] = b * t;
+  }
+  posAttr.needsUpdate = true;
+  colAttr.needsUpdate = true;
+  trail.line.geometry.setDrawRange(0, count);
+}
+
 function createSourceOutline() {
   const points = [];
   const segments = 64;
@@ -1529,8 +1588,11 @@ function getSourceMesh(id) {
     mesh.userData.sourceId = id;
 
     const outline = createSourceOutline();
+    const trailLine = createTrailLine();
+    trailLine.visible = trailsEnabled;
     scene.add(mesh);
     scene.add(outline);
+    scene.add(trailLine);
 
     const label = createLabelSprite(formatObjectLabel(id));
     label.userData.sourceId = id;
@@ -1539,6 +1601,7 @@ function getSourceMesh(id) {
     sourceMeshes.set(id, mesh);
     sourceLabels.set(id, label);
     sourceOutlines.set(id, outline);
+    sourceTrails.set(id, { positions: [], line: trailLine });
     applySourceLevel(id, mesh, sourceLevels.get(id));
     updateSourceSelectionStyles();
   }
@@ -1559,6 +1622,18 @@ function updateSource(id, position) {
     z: raw.z * roomRatio.width
   };
   mesh.position.set(scaled.x, scaled.y, scaled.z);
+
+  const trail = sourceTrails.get(id);
+  if (trail) {
+    trail.positions.push(raw);
+    if (trail.positions.length > trailMaxPoints) {
+      trail.positions.shift();
+    }
+    if (trailsEnabled) {
+      rebuildTrailGeometry(id);
+    }
+  }
+
   updateSourceDecorations(id);
   if (position && typeof position.name === 'string' && position.name.trim()) {
     sourceNames.set(String(id), position.name.trim());
@@ -1617,6 +1692,13 @@ function removeSource(id) {
     scene.remove(outline);
     outline.geometry.dispose();
     outline.material.dispose();
+  }
+  const trail = sourceTrails.get(id);
+  if (trail) {
+    scene.remove(trail.line);
+    trail.line.geometry.dispose();
+    trail.line.material.dispose();
+    sourceTrails.delete(id);
   }
   mesh.geometry.dispose();
   mesh.material.dispose();
@@ -1735,6 +1817,7 @@ function applyRoomRatio(nextRatio) {
     if (!raw) return;
     mesh.position.set(raw.x * roomRatio.length, raw.y * roomRatio.height, raw.z * roomRatio.width);
     updateSourceDecorations(id);
+    rebuildTrailGeometry(id);
   });
 
   speakerMeshes.forEach((mesh, index) => {
@@ -2154,6 +2237,31 @@ if (editModeSelectEl) {
     activeEditMode = editModeSelectEl.value;
     updateSpeakerGizmo();
     updateControlsForEditMode();
+  });
+}
+
+if (trailToggleEl) {
+  trailToggleEl.addEventListener('change', () => {
+    trailsEnabled = trailToggleEl.checked;
+    sourceTrails.forEach((trail, id) => {
+      trail.line.visible = trailsEnabled;
+      if (trailsEnabled) {
+        rebuildTrailGeometry(id);
+      }
+    });
+  });
+}
+
+if (trailLengthSliderEl) {
+  trailLengthSliderEl.addEventListener('input', () => {
+    trailMaxPoints = Number(trailLengthSliderEl.value);
+    if (trailLengthValEl) trailLengthValEl.textContent = String(trailMaxPoints);
+    sourceTrails.forEach((trail, id) => {
+      if (trail.positions.length > trailMaxPoints) {
+        trail.positions.splice(0, trail.positions.length - trailMaxPoints);
+      }
+      rebuildTrailGeometry(id);
+    });
   });
 }
 
