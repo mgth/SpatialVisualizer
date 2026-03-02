@@ -375,7 +375,16 @@ fn handle_event(
                         s.object_mutes.remove(id);
                     }
                     removed_ids.extend(stale_ids);
-                    (None, removed_ids)
+                    (
+                        Some((
+                            "spatial:frame",
+                            serde_json::json!({
+                                "samplePos": sample_pos,
+                                "objectCount": object_count
+                            }),
+                        )),
+                        removed_ids,
+                    )
                 }
             }
 
