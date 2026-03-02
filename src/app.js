@@ -2513,7 +2513,18 @@ listen('source:update', ({ payload }) => {
 });
 
 listen('spatial:frame', ({ payload }) => {
+  const isReset = Boolean(payload?.reset);
   const objectCount = Math.max(0, Number(payload?.objectCount ?? 0) | 0);
+
+  if (isReset) {
+    for (const trail of sourceTrails.values()) {
+      trail.positions = [];
+      if (trailsEnabled) {
+        trail.line.geometry.dispose();
+        trail.line.geometry = new THREE.BufferGeometry();
+      }
+    }
+  }
 
   // Ensure IDs [0..objectCount-1] exist, even if gsrd sends only deltas.
   for (let i = 0; i < objectCount; i += 1) {

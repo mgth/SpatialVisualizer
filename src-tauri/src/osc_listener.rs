@@ -347,14 +347,15 @@ fn handle_event(
                 sample_pos,
                 object_count,
             } => {
-                if s.last_spatial_sample_pos
-                    .is_some_and(|prev| sample_pos < prev)
-                {
-                    (None, removed_ids)
+                let is_reset = s
+                    .last_spatial_sample_pos
+                    .is_some_and(|prev| sample_pos < prev);
+                s.last_spatial_sample_pos = Some(sample_pos);
+
+                let stale_ids: Vec<String> = if is_reset {
+                    s.sources.keys().cloned().collect()
                 } else {
-                    s.last_spatial_sample_pos = Some(sample_pos);
-                    let stale_ids: Vec<String> = s
-                        .sources
+                    s.sources
                         .keys()
                         .filter_map(|id| {
                             id.parse::<u32>().ok().and_then(|idx| {
@@ -365,27 +366,28 @@ fn handle_event(
                                 }
                             })
                         })
-                        .collect();
+                        .collect()
+                };
 
-                    for id in &stale_ids {
-                        s.sources.remove(id);
-                        s.source_levels.remove(id);
-                        s.object_speaker_gains.remove(id);
-                        s.object_gains.remove(id);
-                        s.object_mutes.remove(id);
-                    }
-                    removed_ids.extend(stale_ids);
-                    (
-                        Some((
-                            "spatial:frame",
-                            serde_json::json!({
-                                "samplePos": sample_pos,
-                                "objectCount": object_count
-                            }),
-                        )),
-                        removed_ids,
-                    )
+                for id in &stale_ids {
+                    s.sources.remove(id);
+                    s.source_levels.remove(id);
+                    s.object_speaker_gains.remove(id);
+                    s.object_gains.remove(id);
+                    s.object_mutes.remove(id);
                 }
+                removed_ids.extend(stale_ids);
+                (
+                    Some((
+                        "spatial:frame",
+                        serde_json::json!({
+                            "samplePos": sample_pos,
+                            "objectCount": object_count,
+                            "reset": is_reset
+                        }),
+                    )),
+                    removed_ids,
+                )
             }
 
             OscEvent::Update { id, position, name } => {
