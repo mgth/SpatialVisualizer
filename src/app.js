@@ -336,6 +336,8 @@ const sourcePositionsRaw = new Map();
 const sourceTrails = new Map();
 let trailMaxPoints = 80;
 let trailsEnabled = true;
+const TRAIL_POINT_TTL_MS = 7000;
+let lastTrailDecayAt = 0;
 
 let uiFlushScheduled = false;
 const dirtyObjectMeters = new Set();
@@ -1734,10 +1736,12 @@ function getSourceMesh(id) {
 function updateSource(id, position) {
   const mesh = getSourceMesh(id);
   const skipTrail = Boolean(position && position._noTrail);
+  const now = performance.now();
   const raw = {
     x: Number(position.x) || 0,
     y: Number(position.y) || 0,
-    z: Number(position.z) || 0
+    z: Number(position.z) || 0,
+    t: now
   };
   sourcePositionsRaw.set(String(id), raw);
   const scaled = {
@@ -1773,6 +1777,25 @@ function updateSource(id, position) {
     updateObjectPositionUI(key, raw);
     updateObjectLabelUI(key);
   }
+}
+
+function decayTrails(nowMs) {
+  // Decay trails a few times per second; no need to run every frame.
+  if (nowMs - lastTrailDecayAt < 120) return;
+  lastTrailDecayAt = nowMs;
+
+  const cutoff = nowMs - TRAIL_POINT_TTL_MS;
+  sourceTrails.forEach((trail, id) => {
+    const before = trail.positions.length;
+    if (before === 0) return;
+
+    // Keep points with recent timestamps. Legacy points without timestamp are
+    // treated as stale and dropped on first decay pass.
+    trail.positions = trail.positions.filter((p) => typeof p.t === 'number' && p.t >= cutoff);
+    if (trail.positions.length !== before) {
+      rebuildTrailGeometry(id);
+    }
+  });
 }
 
 function updateSourceLevel(id, meter) {
@@ -2661,6 +2684,7 @@ function animate() {
   requestAnimationFrame(animate);
   controls.update();
   updateRoomFaceVisibility();
+  decayTrails(performance.now());
 
   sourceOutlines.forEach((outline) => {
     outline.quaternion.copy(camera.quaternion);
