@@ -322,6 +322,8 @@ const speakerMeshes = [];
 const speakerLabels = [];
 const sourceLevels = new Map();
 const speakerLevels = new Map();
+const sourceLevelLastSeen = new Map();
+const speakerLevelLastSeen = new Map();
 const sourceGains = new Map();
 const speakerGainCache = new Map();
 const objectGainCache = new Map();
@@ -340,6 +342,9 @@ let trailMaxPoints = 80;
 let trailsEnabled = true;
 let trailPointTtlMs = 7000;
 let lastTrailDecayAt = 0;
+const METER_DECAY_START_MS = 250;
+const METER_DECAY_DB_PER_SEC = 45;
+let lastMeterDecayAt = 0;
 
 let uiFlushScheduled = false;
 const dirtyObjectMeters = new Set();
@@ -1801,12 +1806,17 @@ function decayTrails(nowMs) {
 }
 
 function updateSourceLevel(id, meter) {
-  sourceLevels.set(id, meter);
+  const key = String(id);
+  sourceLevels.set(key, {
+    peakDbfs: Number(meter?.peakDbfs ?? -100),
+    rmsDbfs: Number(meter?.rmsDbfs ?? -100)
+  });
+  sourceLevelLastSeen.set(key, performance.now());
   const mesh = sourceMeshes.get(id);
   if (mesh) {
-    applySourceLevel(id, mesh, meter);
+    applySourceLevel(id, mesh, sourceLevels.get(key));
   }
-  updateObjectMeterUI(String(id));
+  updateObjectMeterUI(key);
 }
 
 function normalizeGainsPayload(payload) {
@@ -1854,6 +1864,7 @@ function removeSource(id) {
   sourceMeshes.delete(id);
   sourceLabels.delete(id);
   sourceLevels.delete(id);
+  sourceLevelLastSeen.delete(String(id));
   sourceGains.delete(id);
   sourceOutlines.delete(id);
   sourceNames.delete(String(id));
@@ -1948,14 +1959,72 @@ function renderLayout(key) {
 }
 
 function updateSpeakerLevel(index, meter) {
-  speakerLevels.set(String(index), meter);
+  const key = String(index);
+  speakerLevels.set(key, {
+    peakDbfs: Number(meter?.peakDbfs ?? -100),
+    rmsDbfs: Number(meter?.rmsDbfs ?? -100)
+  });
+  speakerLevelLastSeen.set(key, performance.now());
   const mesh = speakerMeshes[index];
   if (mesh) {
-    applySpeakerLevel(mesh, meter);
+    applySpeakerLevel(mesh, speakerLevels.get(key));
   }
-  updateSpeakerMeterUI(String(index));
+  updateSpeakerMeterUI(key);
   dirtyMasterMeter = true;
   scheduleUIFlush();
+}
+
+function decayMeters(nowMs) {
+  if (lastMeterDecayAt === 0) {
+    lastMeterDecayAt = nowMs;
+    return;
+  }
+  const dtSec = Math.max(0, (nowMs - lastMeterDecayAt) / 1000);
+  lastMeterDecayAt = nowMs;
+  if (dtSec <= 0) return;
+
+  const decayDb = METER_DECAY_DB_PER_SEC * dtSec;
+  let anySpeakerChanged = false;
+
+  sourceLevels.forEach((meter, id) => {
+    const lastSeen = sourceLevelLastSeen.get(id) ?? nowMs;
+    if (nowMs - lastSeen < METER_DECAY_START_MS) return;
+    const prevPeak = Number(meter?.peakDbfs ?? -100);
+    const prevRms = Number(meter?.rmsDbfs ?? -100);
+    const nextPeak = Math.max(-100, prevPeak - decayDb);
+    const nextRms = Math.max(-100, prevRms - decayDb);
+    if (nextPeak === prevPeak && nextRms === prevRms) return;
+    meter.peakDbfs = nextPeak;
+    meter.rmsDbfs = nextRms;
+    const mesh = sourceMeshes.get(id);
+    if (mesh) {
+      applySourceLevel(id, mesh, meter);
+    }
+    updateObjectMeterUI(id);
+  });
+
+  speakerLevels.forEach((meter, id) => {
+    const lastSeen = speakerLevelLastSeen.get(id) ?? nowMs;
+    if (nowMs - lastSeen < METER_DECAY_START_MS) return;
+    const prevPeak = Number(meter?.peakDbfs ?? -100);
+    const prevRms = Number(meter?.rmsDbfs ?? -100);
+    const nextPeak = Math.max(-100, prevPeak - decayDb);
+    const nextRms = Math.max(-100, prevRms - decayDb);
+    if (nextPeak === prevPeak && nextRms === prevRms) return;
+    meter.peakDbfs = nextPeak;
+    meter.rmsDbfs = nextRms;
+    const idx = Number(id);
+    if (Number.isInteger(idx) && speakerMeshes[idx]) {
+      applySpeakerLevel(speakerMeshes[idx], meter);
+    }
+    updateSpeakerMeterUI(id);
+    anySpeakerChanged = true;
+  });
+
+  if (anySpeakerChanged) {
+    dirtyMasterMeter = true;
+    scheduleUIFlush();
+  }
 }
 
 function applyRoomRatio(nextRatio) {
@@ -2694,7 +2763,9 @@ function animate() {
   requestAnimationFrame(animate);
   controls.update();
   updateRoomFaceVisibility();
-  decayTrails(performance.now());
+  const now = performance.now();
+  decayTrails(now);
+  decayMeters(now);
 
   sourceOutlines.forEach((outline) => {
     outline.quaternion.copy(camera.quaternion);
