@@ -1733,6 +1733,7 @@ function getSourceMesh(id) {
 
 function updateSource(id, position) {
   const mesh = getSourceMesh(id);
+  const skipTrail = Boolean(position && position._noTrail);
   const raw = {
     x: Number(position.x) || 0,
     y: Number(position.y) || 0,
@@ -1747,7 +1748,7 @@ function updateSource(id, position) {
   mesh.position.set(scaled.x, scaled.y, scaled.z);
 
   const trail = sourceTrails.get(id);
-  if (trail) {
+  if (trail && !skipTrail) {
     trail.positions.push(raw);
     if (trail.positions.length > trailMaxPoints) {
       trail.positions.shift();
@@ -2518,11 +2519,9 @@ listen('spatial:frame', ({ payload }) => {
 
   if (isReset) {
     for (const trail of sourceTrails.values()) {
-      trail.positions = [];
-      if (trailsEnabled) {
-        trail.line.geometry.dispose();
-        trail.line.geometry = new THREE.BufferGeometry();
-      }
+      trail.positions.length = 0;
+      trail.line.geometry.dispose();
+      trail.line.geometry = new THREE.BufferGeometry();
     }
   }
 
@@ -2530,7 +2529,7 @@ listen('spatial:frame', ({ payload }) => {
   for (let i = 0; i < objectCount; i += 1) {
     const id = String(i);
     if (!sourceMeshes.has(id)) {
-      updateSource(id, { x: 0, y: 0, z: 0, name: `Obj_${i}` });
+      updateSource(id, { x: 0, y: 0, z: 0, name: `Obj_${i}`, _noTrail: true });
     }
   }
 
