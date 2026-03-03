@@ -40,6 +40,8 @@ const oscListenPortInputEl = document.getElementById('oscListenPortInput');
 const oscConfigApplyBtnEl = document.getElementById('oscConfigApplyBtn');
 const trailLengthSliderEl = document.getElementById('trailLengthSlider');
 const trailLengthValEl = document.getElementById('trailLengthVal');
+const trailTtlSliderEl = document.getElementById('trailTtlSlider');
+const trailTtlValEl = document.getElementById('trailTtlVal');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -336,7 +338,7 @@ const sourcePositionsRaw = new Map();
 const sourceTrails = new Map();
 let trailMaxPoints = 80;
 let trailsEnabled = true;
-const TRAIL_POINT_TTL_MS = 7000;
+let trailPointTtlMs = 7000;
 let lastTrailDecayAt = 0;
 
 let uiFlushScheduled = false;
@@ -1784,7 +1786,7 @@ function decayTrails(nowMs) {
   if (nowMs - lastTrailDecayAt < 120) return;
   lastTrailDecayAt = nowMs;
 
-  const cutoff = nowMs - TRAIL_POINT_TTL_MS;
+  const cutoff = nowMs - trailPointTtlMs;
   sourceTrails.forEach((trail, id) => {
     const before = trail.positions.length;
     if (before === 0) return;
@@ -2367,6 +2369,14 @@ if (trailLengthSliderEl) {
       }
       rebuildTrailGeometry(id);
     });
+  });
+}
+
+if (trailTtlSliderEl) {
+  trailTtlSliderEl.addEventListener('input', () => {
+    const seconds = Number(trailTtlSliderEl.value);
+    trailPointTtlMs = Math.max(500, seconds * 1000);
+    if (trailTtlValEl) trailTtlValEl.textContent = `${seconds.toFixed(1)}s`;
   });
 }
 
