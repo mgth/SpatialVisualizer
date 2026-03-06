@@ -5,12 +5,15 @@ const { sphericalToCartesian, clamp } = require('./oscParser');
 const LAYOUTS_DIR = path.join(__dirname, '..', 'layouts');
 
 function normalizeSpeaker(speaker) {
+  const spatialize = Number(speaker?.spatialize) === 0 ? 0 : 1;
+
   if (speaker && typeof speaker.x === 'number' && typeof speaker.y === 'number' && typeof speaker.z === 'number') {
     return {
       id: String(speaker.id || speaker.name || 'spk'),
       x: clamp(speaker.x, -1, 1),
       y: clamp(speaker.y, -1, 1),
-      z: clamp(speaker.z, -1, 1)
+      z: clamp(speaker.z, -1, 1),
+      spatialize
     };
   }
 
@@ -23,7 +26,8 @@ function normalizeSpeaker(speaker) {
     id: String(speaker.id || speaker.name || 'spk'),
     x: clamp(c.x, -1, 1),
     y: clamp(c.y, -1, 1),
-    z: clamp(c.z, -1, 1)
+    z: clamp(c.z, -1, 1),
+    spatialize
   };
 }
 

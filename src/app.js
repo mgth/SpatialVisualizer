@@ -8,12 +8,52 @@ const layoutSelectEl = document.getElementById('layoutSelect');
 const speakersListEl = document.getElementById('speakersList');
 const objectsListEl = document.getElementById('objectsList');
 const speakersSectionEl = document.getElementById('speakersSection');
+const speakerEditSectionEl = document.getElementById('speakerEditSection');
+const speakerEditEmptyEl = document.getElementById('speakerEditEmpty');
+const speakerEditBodyEl = document.getElementById('speakerEditBody');
+const speakerEditTitleEl = document.getElementById('speakerEditTitle');
+const speakerEditNameInputEl = document.getElementById('speakerEditNameInput');
+const speakerEditXInputEl = document.getElementById('speakerEditXInput');
+const speakerEditYInputEl = document.getElementById('speakerEditYInput');
+const speakerEditZInputEl = document.getElementById('speakerEditZInput');
+const speakerEditAzInputEl = document.getElementById('speakerEditAzInput');
+const speakerEditElInputEl = document.getElementById('speakerEditElInput');
+const speakerEditRInputEl = document.getElementById('speakerEditRInput');
+const speakerEditCartesianGizmoBtnEl = document.getElementById('speakerEditCartesianGizmoBtn');
+const speakerEditPolarGizmoBtnEl = document.getElementById('speakerEditPolarGizmoBtn');
+const speakerEditGainSliderEl = document.getElementById('speakerEditGainSlider');
+const speakerEditGainBoxEl = document.getElementById('speakerEditGainBox');
+const speakerEditDelayMsInputEl = document.getElementById('speakerEditDelayMsInput');
+const speakerEditDelaySamplesInputEl = document.getElementById('speakerEditDelaySamplesInput');
+const speakerEditAutoDelayBtnEl = document.getElementById('speakerEditAutoDelayBtn');
+const speakerEditDelayToDistanceBtnEl = document.getElementById('speakerEditDelayToDistanceBtn');
+const speakerEditSpatializeToggleEl = document.getElementById('speakerEditSpatializeToggle');
+const speakerAddBtnEl = document.getElementById('speakerAddBtn');
+const speakerMoveUpBtnEl = document.getElementById('speakerMoveUpBtn');
+const speakerMoveDownBtnEl = document.getElementById('speakerMoveDownBtn');
+const speakerRemoveBtnEl = document.getElementById('speakerRemoveBtn');
 const objectsSectionEl = document.getElementById('objectsSection');
 const roomRatioEl = document.getElementById('roomRatio');
+const roomRatioWidthInputEl = document.getElementById('roomRatioWidthInput');
+const roomRatioLengthInputEl = document.getElementById('roomRatioLengthInput');
+const roomRatioHeightInputEl = document.getElementById('roomRatioHeightInput');
+const roomRatioRearInputEl = document.getElementById('roomRatioRearInput');
+const roomRatioApplyBtnEl = document.getElementById('roomRatioApplyBtn');
+const metersPerUnitInputEl = document.getElementById('metersPerUnitInput');
+const roomDimWidthInputEl = document.getElementById('roomDimWidthInput');
+const roomDimLengthInputEl = document.getElementById('roomDimLengthInput');
+const roomDimHeightInputEl = document.getElementById('roomDimHeightInput');
+const roomDimApplyBtnEl = document.getElementById('roomDimApplyBtn');
 const spreadInfoEl = document.getElementById('spreadInfo');
 const dialogNormInfoEl = document.getElementById('dialogNormInfo');
 const latencyInfoEl = document.getElementById('latencyInfo');
 const resampleRatioInfoEl = document.getElementById('resampleRatioInfo');
+const audioFormatInfoEl = document.getElementById('audioFormatInfo');
+const audioSampleRateControlEl = document.getElementById('audioSampleRateControl');
+const audioSampleRateInputEl = document.getElementById('audioSampleRateInput');
+const audioSampleRateMenuBtnEl = document.getElementById('audioSampleRateMenuBtn');
+const audioSampleRateMenuEl = document.getElementById('audioSampleRateMenu');
+const audioSampleRateApplyBtnEl = document.getElementById('audioSampleRateApplyBtn');
 const dialogNormToggleEl = document.getElementById('dialogNormToggle');
 const spreadMinSliderEl = document.getElementById('spreadMinSlider');
 const spreadMaxSliderEl = document.getElementById('spreadMaxSlider');
@@ -29,6 +69,8 @@ const distanceDiffuseThresholdValEl = document.getElementById('distanceDiffuseTh
 const distanceDiffuseCurveSliderEl = document.getElementById('distanceDiffuseCurveSlider');
 const distanceDiffuseCurveValEl = document.getElementById('distanceDiffuseCurveVal');
 const saveConfigBtnEl = document.getElementById('saveConfigBtn');
+const exportLayoutBtnEl = document.getElementById('exportLayoutBtn');
+const importLayoutBtnEl = document.getElementById('importLayoutBtn');
 const configSavedIndicatorEl = document.getElementById('configSavedIndicator');
 const trailToggleEl = document.getElementById('trailToggle');
 const oscStatusDotEl = document.getElementById('oscStatusDot');
@@ -42,6 +84,104 @@ const trailLengthSliderEl = document.getElementById('trailLengthSlider');
 const trailLengthValEl = document.getElementById('trailLengthVal');
 const trailTtlSliderEl = document.getElementById('trailTtlSlider');
 const trailTtlValEl = document.getElementById('trailTtlVal');
+
+const LOCALE_STORAGE_KEY = 'spatialviz.locale';
+const TRANSLATIONS = {
+  en: {
+    'app.title': 'Spatial Visualizer',
+    'osc.configTitle': 'OSC Configuration',
+    'osc.host': 'Host',
+    'osc.gsrdPort': 'GSRD Port',
+    'osc.listenPort': 'Listen Port',
+    'osc.apply': 'Apply',
+    'section.objects': 'Objects',
+    'layout.label': 'Layout:',
+    'layout.loading': 'Loading...',
+    'edit.label': 'Edit:',
+    'edit.polar': 'Rings + Elevation',
+    'edit.direct': 'Direct Drag',
+    'edit.cartesian': 'Cartesian',
+    'config.save': 'Save',
+    'config.import': 'Import layout',
+    'config.export': 'Export layout',
+    'distance.enable': 'Enable',
+    'distance.threshold': 'Threshold',
+    'distance.curve': 'Curve',
+    'trail.title': 'Trails',
+    'trail.show': 'Show',
+    'trail.points': 'Points',
+    'trail.duration': 'Duration',
+    'objects.none': 'No objects.',
+    'speakers.none': 'No speakers.',
+    'config.saved': 'Saved',
+    'config.modified': 'Modified (unsaved)',
+    'status.initializing': 'Initializing...',
+    'status.connected': 'Connected',
+    'status.reconnecting': 'Reconnecting...',
+    'status.error': 'Error'
+  },
+  fr: {
+    'app.title': 'Spatial Visualizer',
+    'osc.configTitle': 'Configuration OSC',
+    'osc.host': 'Hôte',
+    'osc.gsrdPort': 'Port GSRD',
+    'osc.listenPort': 'Port d\'écoute',
+    'osc.apply': 'Appliquer',
+    'section.objects': 'Objets',
+    'layout.label': 'Layout :',
+    'layout.loading': 'Chargement...',
+    'edit.label': 'Édition :',
+    'edit.polar': 'Anneaux + élévation',
+    'edit.direct': 'Glisser direct',
+    'edit.cartesian': 'Cartésien',
+    'config.save': 'Sauvegarder',
+    'config.import': 'Importer layout',
+    'config.export': 'Exporter layout',
+    'distance.enable': 'Activer',
+    'distance.threshold': 'Seuil',
+    'distance.curve': 'Courbe',
+    'trail.title': 'Trajectoires',
+    'trail.show': 'Afficher',
+    'trail.points': 'Points',
+    'trail.duration': 'Durée',
+    'objects.none': 'Aucun objet.',
+    'speakers.none': 'Aucun speaker.',
+    'config.saved': 'Sauvegardé',
+    'config.modified': 'Modifié (non sauvegardé)',
+    'status.initializing': 'Initialisation...',
+    'status.connected': 'Connecté',
+    'status.reconnecting': 'Reconnexion...',
+    'status.error': 'Erreur'
+  }
+};
+
+function normalizeLocale(value) {
+  return value === 'fr' ? 'fr' : 'en';
+}
+
+function detectLocale() {
+  const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
+  if (saved) return normalizeLocale(saved);
+  return 'en';
+}
+
+let locale = detectLocale();
+
+function t(key) {
+  return TRANSLATIONS[locale]?.[key] ?? TRANSLATIONS.en[key] ?? key;
+}
+
+function applyStaticTranslations() {
+  document.documentElement.lang = locale;
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.getAttribute('data-i18n');
+    if (key) el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    const key = el.getAttribute('data-i18n-title');
+    if (key) el.setAttribute('title', t(key));
+  });
+}
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0a0b10);
@@ -70,15 +210,34 @@ scene.add(directional);
 const roomGroup = new THREE.Group();
 scene.add(roomGroup);
 
-const roomGeometry = new THREE.BoxGeometry(2, 2, 2);
+const roomGeometry = new THREE.BoxGeometry(2, 1, 2);
 const room = new THREE.Mesh(
   roomGeometry,
   new THREE.MeshBasicMaterial({ color: 0x4d6eff, transparent: true, opacity: 0.08, depthWrite: false })
 );
+room.position.y = 0.5;
 roomGroup.add(room);
 
+const upperRoomEdgePoints = [
+  // top ring (y = 1)
+  new THREE.Vector3(1, 1, 1), new THREE.Vector3(-1, 1, 1),
+  new THREE.Vector3(-1, 1, 1), new THREE.Vector3(-1, 1, -1),
+  new THREE.Vector3(-1, 1, -1), new THREE.Vector3(1, 1, -1),
+  new THREE.Vector3(1, 1, -1), new THREE.Vector3(1, 1, 1),
+  // mid ring (y = 0)
+  new THREE.Vector3(1, 0, 1), new THREE.Vector3(-1, 0, 1),
+  new THREE.Vector3(-1, 0, 1), new THREE.Vector3(-1, 0, -1),
+  new THREE.Vector3(-1, 0, -1), new THREE.Vector3(1, 0, -1),
+  new THREE.Vector3(1, 0, -1), new THREE.Vector3(1, 0, 1),
+  // verticals from y = 0 to y = 1
+  new THREE.Vector3(1, 0, 1), new THREE.Vector3(1, 1, 1),
+  new THREE.Vector3(-1, 0, 1), new THREE.Vector3(-1, 1, 1),
+  new THREE.Vector3(-1, 0, -1), new THREE.Vector3(-1, 1, -1),
+  new THREE.Vector3(1, 0, -1), new THREE.Vector3(1, 1, -1)
+];
+
 const roomEdges = new THREE.LineSegments(
-  new THREE.EdgesGeometry(roomGeometry),
+  new THREE.BufferGeometry().setFromPoints(upperRoomEdgePoints),
   new THREE.LineBasicMaterial({ color: 0x6f8dff, linewidth: 2, transparent: true, opacity: 0.45, depthTest: false })
 );
 roomGroup.add(roomEdges);
@@ -104,23 +263,24 @@ const screenMaterial = new THREE.MeshBasicMaterial({
   depthTest: false
 });
 
-const roomFaceGeometry = new THREE.PlaneGeometry(2, 2);
+const roomFaceSideGeometry = new THREE.PlaneGeometry(2, 1);
+const roomFaceCapGeometry = new THREE.PlaneGeometry(2, 2);
 const roomFaces = {
-  posX: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
-  negX: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
-  posY: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
-  negY: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
-  posZ: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial),
-  negZ: new THREE.Mesh(roomFaceGeometry, roomFaceMaterial)
+  posX: new THREE.Mesh(roomFaceSideGeometry, roomFaceMaterial),
+  negX: new THREE.Mesh(roomFaceSideGeometry, roomFaceMaterial),
+  posY: new THREE.Mesh(roomFaceCapGeometry, roomFaceMaterial),
+  negY: new THREE.Mesh(roomFaceCapGeometry, roomFaceMaterial),
+  posZ: new THREE.Mesh(roomFaceSideGeometry, roomFaceMaterial),
+  negZ: new THREE.Mesh(roomFaceSideGeometry, roomFaceMaterial)
 };
 
 roomFaces.posX.rotation.y = -Math.PI / 2;
-roomFaces.posX.position.set(1, 0, 0);
+roomFaces.posX.position.set(1, 0.5, 0);
 roomFaces.posX.renderOrder = 1;
 roomGroup.add(roomFaces.posX);
 
 roomFaces.negX.rotation.y = Math.PI / 2;
-roomFaces.negX.position.set(-1, 0, 0);
+roomFaces.negX.position.set(-1, 0.5, 0);
 roomFaces.negX.renderOrder = 1;
 roomGroup.add(roomFaces.negX);
 
@@ -130,16 +290,16 @@ roomFaces.posY.renderOrder = 1;
 roomGroup.add(roomFaces.posY);
 
 roomFaces.negY.rotation.x = Math.PI / 2;
-roomFaces.negY.position.set(0, -1, 0);
+roomFaces.negY.position.set(0, 0, 0);
 roomFaces.negY.renderOrder = 1;
 roomGroup.add(roomFaces.negY);
 
-roomFaces.posZ.position.set(0, 0, 1);
+roomFaces.posZ.position.set(0, 0.5, 1);
 roomFaces.posZ.renderOrder = 1;
 roomGroup.add(roomFaces.posZ);
 
 roomFaces.negZ.rotation.y = Math.PI;
-roomFaces.negZ.position.set(0, 0, -1);
+roomFaces.negZ.position.set(0, 0.5, -1);
 roomFaces.negZ.renderOrder = 1;
 roomGroup.add(roomFaces.negZ);
 
@@ -156,14 +316,55 @@ const tempCameraLocal = new THREE.Vector3();
 const tempToCamera = new THREE.Vector3();
 const tempToCenter = new THREE.Vector3();
 
-const screenGeometry = new THREE.PlaneGeometry(2, 2 * (9 / 16));
+const SCREEN_ASPECT = 16 / 9;
+const SCREEN_BASE_WIDTH = 2;
+const SCREEN_BASE_HEIGHT = 2 * (9 / 16);
+const SCREEN_MAX_WIDTH = 2;
+const SCREEN_MAX_HEIGHT_UPPER_HALF = 1;
+
+const screenGeometry = new THREE.PlaneGeometry(SCREEN_BASE_WIDTH, SCREEN_BASE_HEIGHT);
 const screenMesh = new THREE.Mesh(screenGeometry, screenMaterial);
 screenMesh.rotation.y = -Math.PI / 2;
-screenMesh.position.set(0.995, 0, 0);
+screenMesh.position.set(0.995, 0.5, 0);
 screenMesh.renderOrder = 5;
 roomGroup.add(screenMesh);
 
-const roomRatio = { width: 1, length: 2, height: 1 };
+function fitScreenToUpperHalf() {
+  const availableWidth = Math.max(0.01, roomBounds.zMax - roomBounds.zMin);
+  const availableHeight = Math.max(0.01, roomBounds.yMax - roomBounds.yMin);
+  let height = SCREEN_MAX_HEIGHT_UPPER_HALF;
+  let width = height * SCREEN_ASPECT;
+  if (height > availableHeight) {
+    height = availableHeight;
+    width = height * SCREEN_ASPECT;
+  }
+  if (width > SCREEN_MAX_WIDTH) {
+    width = SCREEN_MAX_WIDTH;
+    height = width / SCREEN_ASPECT;
+  }
+  if (width > availableWidth) {
+    width = availableWidth;
+    height = width / SCREEN_ASPECT;
+  }
+  screenMesh.scale.set(width / SCREEN_BASE_WIDTH, height / SCREEN_BASE_HEIGHT, 1);
+  screenMesh.position.set(
+    roomBounds.xMax - 0.005,
+    roomBounds.yMin + (availableHeight * 0.5),
+    (roomBounds.zMin + roomBounds.zMax) * 0.5
+  );
+}
+
+const roomRatio = { width: 1, length: 2, height: 1, rear: 1 };
+const roomBounds = {
+  xMin: -1,
+  xMax: 1,
+  yMin: 0,
+  yMax: 1,
+  zMin: -1,
+  zMax: 1
+};
+fitScreenToUpperHalf();
+let metersPerUnit = 1.0;
 const spreadState = { min: null, max: null };
 const distanceDiffuseState = { enabled: null, threshold: null, curve: null };
 let configSaved = null;
@@ -172,7 +373,44 @@ let dialogNormLevel = null;
 let dialogNormGain = null;
 let latencyMs = null;
 let resampleRatio = null;
+let audioSampleRate = null;
+let audioSampleFormat = null;
+let audioSampleRateEditing = false;
 let masterGain = 1;
+let oscStatusState = 'initializing';
+
+function renderOscStatus() {
+  if (statusEl) statusEl.textContent = t(`status.${oscStatusState}`);
+  if (oscStatusDotEl) {
+    const colors = {
+      initializing: '#89a3ff',
+      connected: '#52e2a2',
+      reconnecting: '#ffb347',
+      error: '#ff5d5d'
+    };
+    oscStatusDotEl.style.background = colors[oscStatusState] || '#7f8a99';
+  }
+}
+
+function setOscStatus(next) {
+  oscStatusState = next;
+  renderOscStatus();
+}
+
+function setLocale(nextLocale) {
+  locale = normalizeLocale(nextLocale);
+  localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  applyStaticTranslations();
+  renderOscStatus();
+  renderSpeakersList();
+  renderObjectsList();
+  renderConfigSavedUI();
+}
+
+window.spatialVizI18n = {
+  getLocale: () => locale,
+  setLocale
+};
 
 const axes = new THREE.AxesHelper(1.2);
 scene.add(axes);
@@ -302,6 +540,106 @@ distanceGizmo.group.add(distanceGizmo.label);
 distanceGizmo.group.visible = false;
 scene.add(distanceGizmo.group);
 
+function createSpeakerFaceShadow(color = 0x000000, opacity = 0.18) {
+  return new THREE.Mesh(
+    new THREE.CircleGeometry(1, 24),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      depthTest: false
+    })
+  );
+}
+
+const selectedSpeakerShadows = {
+  posX: createSpeakerFaceShadow(),
+  negX: createSpeakerFaceShadow(),
+  posY: createSpeakerFaceShadow(),
+  negY: createSpeakerFaceShadow(),
+  posZ: createSpeakerFaceShadow(),
+  negZ: createSpeakerFaceShadow()
+};
+
+selectedSpeakerShadows.posX.rotation.y = Math.PI / 2;
+selectedSpeakerShadows.negX.rotation.y = -Math.PI / 2;
+selectedSpeakerShadows.posY.rotation.x = -Math.PI / 2;
+selectedSpeakerShadows.negY.rotation.x = Math.PI / 2;
+selectedSpeakerShadows.posZ.rotation.y = Math.PI;
+selectedSpeakerShadows.negZ.rotation.y = 0;
+
+Object.values(selectedSpeakerShadows).forEach((shadow) => {
+  shadow.visible = false;
+  shadow.renderOrder = 3;
+  scene.add(shadow);
+});
+
+const selectedObjectShadows = {
+  posX: createSpeakerFaceShadow(0xffa14d, 0.16),
+  negX: createSpeakerFaceShadow(0xffa14d, 0.16),
+  posY: createSpeakerFaceShadow(0xffa14d, 0.16),
+  negY: createSpeakerFaceShadow(0xffa14d, 0.16),
+  posZ: createSpeakerFaceShadow(0xffa14d, 0.16),
+  negZ: createSpeakerFaceShadow(0xffa14d, 0.16)
+};
+
+selectedObjectShadows.posX.rotation.y = Math.PI / 2;
+selectedObjectShadows.negX.rotation.y = -Math.PI / 2;
+selectedObjectShadows.posY.rotation.x = -Math.PI / 2;
+selectedObjectShadows.negY.rotation.x = Math.PI / 2;
+selectedObjectShadows.posZ.rotation.y = Math.PI;
+selectedObjectShadows.negZ.rotation.y = 0;
+
+Object.values(selectedObjectShadows).forEach((shadow) => {
+  shadow.visible = false;
+  shadow.renderOrder = 3;
+  scene.add(shadow);
+});
+
+const cartesianGizmo = {
+  group: new THREE.Group(),
+  xLine: new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0.45, 0, 0)]),
+    new THREE.LineBasicMaterial({ color: 0xff6b6b, transparent: true, opacity: 0.85 })
+  ),
+  yLine: new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0.45, 0)]),
+    new THREE.LineBasicMaterial({ color: 0x7fff7f, transparent: true, opacity: 0.85 })
+  ),
+  zLine: new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, 0.45)]),
+    new THREE.LineBasicMaterial({ color: 0x6bb8ff, transparent: true, opacity: 0.85 })
+  ),
+  xHandle: new THREE.Mesh(
+    new THREE.SphereGeometry(0.045, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0xff6b6b, transparent: true, opacity: 0.95 })
+  ),
+  yHandle: new THREE.Mesh(
+    new THREE.SphereGeometry(0.045, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0x7fff7f, transparent: true, opacity: 0.95 })
+  ),
+  zHandle: new THREE.Mesh(
+    new THREE.SphereGeometry(0.045, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0x6bb8ff, transparent: true, opacity: 0.95 })
+  )
+};
+cartesianGizmo.xHandle.position.set(0.45, 0, 0);
+cartesianGizmo.yHandle.position.set(0, 0.45, 0);
+cartesianGizmo.zHandle.position.set(0, 0, 0.45);
+cartesianGizmo.xHandle.userData.axis = 'x';
+cartesianGizmo.yHandle.userData.axis = 'y';
+cartesianGizmo.zHandle.userData.axis = 'z';
+cartesianGizmo.group.add(cartesianGizmo.xLine);
+cartesianGizmo.group.add(cartesianGizmo.yLine);
+cartesianGizmo.group.add(cartesianGizmo.zLine);
+cartesianGizmo.group.add(cartesianGizmo.xHandle);
+cartesianGizmo.group.add(cartesianGizmo.yHandle);
+cartesianGizmo.group.add(cartesianGizmo.zHandle);
+cartesianGizmo.group.visible = false;
+scene.add(cartesianGizmo.group);
+
   const ringLabelAngles = Array.from({ length: 24 }, (_, i) => -180 + i * 15);
   const arcLabelAngles = Array.from({ length: 13 }, (_, i) => -90 + i * 15);
 
@@ -329,6 +667,7 @@ const speakerGainCache = new Map();
 const objectGainCache = new Map();
 const speakerBaseGains = new Map();
 const objectBaseGains = new Map();
+const speakerDelays = new Map();
 const speakerMuted = new Set();
 const objectMuted = new Set();
 const speakerItems = new Map();
@@ -344,6 +683,7 @@ let trailPointTtlMs = 7000;
 let lastTrailDecayAt = 0;
 const METER_DECAY_START_MS = 250;
 const METER_DECAY_DB_PER_SEC = 45;
+const DEFAULT_SAMPLE_RATE_HZ = 48000;
 let lastMeterDecayAt = 0;
 
 let uiFlushScheduled = false;
@@ -359,13 +699,23 @@ let dirtyDistanceDiffuse = false;
 let dirtyConfigSaved = false;
 let dirtyLatency = false;
 let dirtyResample = false;
+let dirtyAudioFormat = false;
 let dirtyMasterGain = false;
+
+const AUDIO_SAMPLE_RATE_PRESETS = [0, 32000, 44100, 48000, 88200, 96000, 176400, 192000];
 
 let selectedSourceId = null;
 let selectedSpeakerIndex = null;
+let polarEditArmed = false;
+let cartesianEditArmed = false;
 let activeEditMode = 'polar';
 let isDraggingSpeaker = false;
 let dragMode = null;
+let dragAxis = null;
+const dragAxisOrigin = new THREE.Vector3();
+const dragAxisDirection = new THREE.Vector3(1, 0, 0);
+const dragSpeakerStartPosition = new THREE.Vector3();
+let dragAxisStartT = 0;
 let dragAzimuthDeg = 0;
 let dragElevationDeg = 0;
 let dragDistance = 1;
@@ -389,6 +739,7 @@ const speakerMaterial = new THREE.MeshStandardMaterial({
 
 const speakerBaseColor = new THREE.Color(0x8ec8ff);
 const speakerHotColor = new THREE.Color(0xff3030);
+const speakerSelectedColor = new THREE.Color(0x4dff88);
 const sourceDefaultEmissive = new THREE.Color(0x64210c);
 const sourceSelectedEmissive = new THREE.Color(0x9b7f22);
 const sourceOutlineColor = new THREE.Color(0xd9ecff);
@@ -437,6 +788,116 @@ function formatPosition(position) {
   const dist = Math.sqrt(x * x + y * y + z * z);
 
   return `x:${formatNumber(x, 1)} y:${formatNumber(y, 1)} z:${formatNumber(z, 1)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(dist, 2)}`;
+}
+
+function getSpeakerSpatializeValue(speaker) {
+  return Number(speaker?.spatialize) === 0 ? 0 : 1;
+}
+
+function getSpeakerBaseOpacity(speaker) {
+  return getSpeakerSpatializeValue(speaker) === 0 ? 0.3 : 0.65;
+}
+
+function defaultLayoutExportNameFromSpeakers(speakers) {
+  let a = 0;
+  let b = 0;
+  let c = 0;
+  for (const speaker of speakers || []) {
+    const spatialized = getSpeakerSpatializeValue(speaker) !== 0;
+    if (!spatialized) {
+      b += 1;
+      continue;
+    }
+    const y = Number(speaker?.y);
+    if (Number.isFinite(y) && y > 0.5) {
+      c += 1;
+    } else {
+      a += 1;
+    }
+  }
+  return `${a}.${b}.${c}`;
+}
+
+function delayMsToSamples(ms, sampleRateHz = DEFAULT_SAMPLE_RATE_HZ) {
+  const msValue = Number(ms);
+  if (!Number.isFinite(msValue) || msValue < 0) {
+    return 0;
+  }
+  return Math.round((msValue / 1000) * sampleRateHz);
+}
+
+function samplesToDelayMs(samples, sampleRateHz = DEFAULT_SAMPLE_RATE_HZ) {
+  const sampleValue = Number(samples);
+  if (!Number.isFinite(sampleValue) || sampleValue < 0) {
+    return 0;
+  }
+  return (sampleValue * 1000) / sampleRateHz;
+}
+
+function distanceMetersFromSpeaker(speaker) {
+  if (!speaker) return 0;
+  const x = Number(speaker.x);
+  const y = Number(speaker.y);
+  const z = Number(speaker.z);
+  if (![x, y, z].every(Number.isFinite)) return 0;
+  return Math.sqrt(x * x + y * y + z * z);
+}
+
+function computeAndApplySpeakerDelays() {
+  if (!currentLayoutSpeakers.length) return;
+  const SPEED_OF_SOUND_M_S = 343.0;
+  const scale = Math.max(0.01, Number(metersPerUnit) || 1.0);
+  const distances = currentLayoutSpeakers.map((speaker) => distanceMetersFromSpeaker(speaker) * scale);
+  const maxDistance = distances.reduce((acc, d) => Math.max(acc, d), 0);
+
+  distances.forEach((distance, index) => {
+    const delayMs = Math.max(0, ((maxDistance - distance) / SPEED_OF_SOUND_M_S) * 1000);
+    const rounded = Math.round(delayMs * 1000) / 1000;
+    const id = String(index);
+    speakerDelays.set(id, rounded);
+    invoke('control_speaker_delay', { id: index, delayMs: rounded });
+  });
+
+  renderSpeakerEditor();
+}
+
+function adjustSpeakerDistancesFromDelays() {
+  if (!currentLayoutSpeakers.length) return;
+  const SPEED_OF_SOUND_M_S = 343.0;
+  const scale = Math.max(0.01, Number(metersPerUnit) || 1.0);
+  const currentDistancesM = currentLayoutSpeakers.map((speaker) => distanceMetersFromSpeaker(speaker) * scale);
+  const referenceMaxM = currentDistancesM.reduce((acc, d) => Math.max(acc, d), 0.01);
+
+  currentLayoutSpeakers.forEach((speaker, index) => {
+    const id = String(index);
+    const delayMs = Math.max(0, Number(speakerDelays.get(id) ?? speaker.delay_ms ?? 0));
+    const deltaM = (delayMs / 1000) * SPEED_OF_SOUND_M_S;
+    const targetDistanceUnits = Math.max(0.01, (referenceMaxM - deltaM) / scale);
+
+    const x = Number(speaker.x) || 0;
+    const y = Number(speaker.y) || 0;
+    const z = Number(speaker.z) || 0;
+    const norm = Math.sqrt(x * x + y * y + z * z);
+    const dirX = norm > 1e-6 ? x / norm : 1;
+    const dirY = norm > 1e-6 ? y / norm : 0;
+    const dirZ = norm > 1e-6 ? z / norm : 0;
+
+    applySpeakerCartesianEdit(
+      index,
+      dirX * targetDistanceUnits,
+      dirY * targetDistanceUnits,
+      dirZ * targetDistanceUnits,
+      false
+    );
+  });
+
+  currentLayoutSpeakers.forEach((speaker, index) => {
+    invoke('control_speaker_az', { id: index, value: Number(speaker.azimuthDeg) || 0 });
+    invoke('control_speaker_el', { id: index, value: Number(speaker.elevationDeg) || 0 });
+    invoke('control_speaker_distance', { id: index, value: Number(speaker.distanceM) || 1 });
+  });
+  invoke('control_speakers_apply');
+  renderSpeakerEditor();
 }
 
 function formatLevel(meter) {
@@ -555,6 +1016,11 @@ function flushUI() {
     dirtyResample = false;
   }
 
+  if (dirtyAudioFormat) {
+    renderAudioFormatDisplay();
+    dirtyAudioFormat = false;
+  }
+
   if (dirtyMasterGain) {
     renderMasterGainUI();
     dirtyMasterGain = false;
@@ -617,14 +1083,12 @@ function formatObjectLabel(id) {
 function updateSpeakerControlsUI() {
   const soloTarget = getSoloTarget('speaker');
   speakerItems.forEach((entry, id) => {
-    const gainValue = getBaseGain(speakerBaseGains, speakerGainCache, id);
-    entry.gainSlider.value = String(gainValue);
-    entry.gainBox.textContent = linearToDb(gainValue);
     entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
     entry.soloBtn.classList.toggle('active', soloTarget === id);
     updateItemClasses(entry, speakerMuted.has(id), soloTarget && soloTarget !== id);
     entry.root.classList.toggle('is-selected', selectedSpeakerIndex !== null && Number(id) === selectedSpeakerIndex);
   });
+  renderSpeakerEditor();
 }
 
 function updateObjectControlsUI() {
@@ -676,29 +1140,6 @@ function createSpeakerItem(id, speaker) {
   const controls = document.createElement('div');
   controls.className = 'control-row';
 
-  const gainSlider = document.createElement('input');
-  gainSlider.type = 'range';
-  gainSlider.min = '0';
-  gainSlider.max = '2';
-  gainSlider.step = '0.01';
-  gainSlider.className = 'gain-slider';
-  gainSlider.addEventListener('input', () => {
-    speakerBaseGains.set(id, Number(gainSlider.value));
-    applyGroupGains('speaker');
-  });
-  gainSlider.addEventListener('dblclick', () => {
-    gainSlider.value = '1';
-    speakerBaseGains.set(id, 1);
-    applyGroupGains('speaker');
-    updateSpeakerControlsUI();
-  });
-  controls.appendChild(gainSlider);
-
-  const gainBox = document.createElement('div');
-  gainBox.className = 'gain-box';
-  gainBox.textContent = '0.0 dB';
-  controls.appendChild(gainBox);
-
   const muteBtn = document.createElement('button');
   muteBtn.type = 'button';
   muteBtn.className = 'toggle-btn';
@@ -723,21 +1164,142 @@ function createSpeakerItem(id, speaker) {
   root.appendChild(content);
   root.appendChild(idStrip);
 
-  return { root, label: idText, position, levelText, meterFill, gainSlider, gainBox, muteBtn, soloBtn };
+  return { root, label: idText, position, levelText, meterFill, muteBtn, soloBtn };
 }
 
 function updateSpeakerItem(entry, id, speaker) {
   const soloTarget = getSoloTarget('speaker');
   entry.label.textContent = String(speaker.id ?? id);
   entry.position.textContent = formatPosition(speaker);
-  const gainValue = getBaseGain(speakerBaseGains, speakerGainCache, id);
-  entry.gainSlider.value = String(gainValue);
-  entry.gainBox.textContent = linearToDb(gainValue);
   entry.muteBtn.classList.toggle('active', speakerMuted.has(id));
   entry.soloBtn.classList.toggle('active', soloTarget === id);
   updateItemClasses(entry, speakerMuted.has(id), soloTarget && soloTarget !== id);
   entry.root.classList.toggle('is-selected', selectedSpeakerIndex !== null && Number(id) === selectedSpeakerIndex);
   updateMeterUI(entry, speakerLevels.get(id));
+}
+
+function setSpeakerSpatializeLocal(index, spatialize) {
+  const speaker = currentLayoutSpeakers[index];
+  if (!speaker) {
+    return;
+  }
+  speaker.spatialize = spatialize === 0 ? 0 : 1;
+  const mesh = speakerMeshes[index];
+  if (mesh) {
+    const baseOpacity = getSpeakerBaseOpacity(speaker);
+    mesh.userData.baseOpacity = baseOpacity;
+    mesh.material.opacity = baseOpacity;
+  }
+  updateSpeakerColorsFromSelection();
+  renderSpeakerEditor();
+}
+
+function updateSpeakerVisualsFromState(index) {
+  const speaker = currentLayoutSpeakers[index];
+  if (!speaker) return;
+
+  const mesh = speakerMeshes[index];
+  if (mesh) {
+    mesh.position.set(Number(speaker.x) || 0, Number(speaker.y) || 0, Number(speaker.z) || 0);
+  }
+
+  const label = speakerLabels[index];
+  if (label) {
+    label.position.set((Number(speaker.x) || 0), (Number(speaker.y) || 0) + 0.12, Number(speaker.z) || 0);
+    setLabelSpriteText(label, String(speaker.id ?? index));
+  }
+
+  const entry = speakerItems.get(String(index));
+  if (entry) {
+    entry.label.textContent = String(speaker.id ?? index);
+    entry.position.textContent = formatPosition(speaker);
+  }
+
+  if (selectedSpeakerIndex === index) {
+    updateSpeakerGizmo();
+  }
+}
+
+function applySpeakerCartesianEdit(index, x, y, z, sendOsc = true) {
+  const speaker = currentLayoutSpeakers[index];
+  if (!speaker) return;
+  if (![x, y, z].every((v) => Number.isFinite(v))) return;
+
+  speaker.x = x;
+  speaker.y = y;
+  speaker.z = z;
+  const sph = cartesianToSpherical({ x, y, z });
+  speaker.azimuthDeg = sph.az;
+  speaker.elevationDeg = sph.el;
+  speaker.distanceM = Math.max(0.01, sph.dist);
+  updateSpeakerVisualsFromState(index);
+
+  if (sendOsc) {
+    invoke('control_speaker_az', { id: index, value: speaker.azimuthDeg });
+    invoke('control_speaker_el', { id: index, value: speaker.elevationDeg });
+    invoke('control_speaker_distance', { id: index, value: speaker.distanceM });
+    invoke('control_speakers_apply');
+  }
+
+  renderSpeakerEditor();
+}
+
+function applySpeakerPolarEdit(index, az, el, r, sendOsc = true) {
+  if (![az, el, r].every((v) => Number.isFinite(v))) return;
+  const radius = Math.max(0.01, r);
+  const cart = sphericalToCartesianDeg(az, el, radius);
+  applySpeakerCartesianEdit(index, cart.x, cart.y, cart.z, sendOsc);
+}
+
+function renderSpeakerEditor() {
+  if (!speakerEditSectionEl || !speakerEditEmptyEl || !speakerEditBodyEl) {
+    return;
+  }
+
+  if (selectedSpeakerIndex === null || !currentLayoutSpeakers[selectedSpeakerIndex]) {
+    if (speakerMoveUpBtnEl) speakerMoveUpBtnEl.disabled = true;
+    if (speakerMoveDownBtnEl) speakerMoveDownBtnEl.disabled = true;
+    if (speakerRemoveBtnEl) speakerRemoveBtnEl.disabled = true;
+    speakerEditEmptyEl.style.display = '';
+    speakerEditBodyEl.style.display = 'none';
+    return;
+  }
+
+  const idx = selectedSpeakerIndex;
+  const id = String(idx);
+  const speaker = currentLayoutSpeakers[idx];
+  if (speakerMoveUpBtnEl) speakerMoveUpBtnEl.disabled = idx <= 0;
+  if (speakerMoveDownBtnEl) speakerMoveDownBtnEl.disabled = idx >= currentLayoutSpeakers.length - 1;
+  if (speakerRemoveBtnEl) speakerRemoveBtnEl.disabled = currentLayoutSpeakers.length === 0;
+  const gain = getBaseGain(speakerBaseGains, speakerGainCache, id);
+  const delayMs = Number(speakerDelays.get(id) ?? speaker.delay_ms ?? 0);
+  const spherical = cartesianToSpherical(speaker);
+  const az = Number.isFinite(Number(speaker.azimuthDeg)) ? Number(speaker.azimuthDeg) : spherical.az;
+  const el = Number.isFinite(Number(speaker.elevationDeg)) ? Number(speaker.elevationDeg) : spherical.el;
+  const r = Number.isFinite(Number(speaker.distanceM)) ? Number(speaker.distanceM) : spherical.dist;
+
+  speakerEditEmptyEl.style.display = 'none';
+  speakerEditBodyEl.style.display = '';
+
+  if (speakerEditTitleEl) speakerEditTitleEl.textContent = `Speaker ${idx}`;
+  if (speakerEditNameInputEl) speakerEditNameInputEl.value = String(speaker.id ?? idx);
+  if (speakerEditXInputEl) speakerEditXInputEl.value = formatNumber(Number(speaker.x), 3);
+  if (speakerEditYInputEl) speakerEditYInputEl.value = formatNumber(Number(speaker.y), 3);
+  if (speakerEditZInputEl) speakerEditZInputEl.value = formatNumber(Number(speaker.z), 3);
+  if (speakerEditAzInputEl) speakerEditAzInputEl.value = formatNumber(az, 1);
+  if (speakerEditElInputEl) speakerEditElInputEl.value = formatNumber(el, 1);
+  if (speakerEditRInputEl) speakerEditRInputEl.value = formatNumber(r, 3);
+  if (speakerEditGainSliderEl) speakerEditGainSliderEl.value = String(gain);
+  if (speakerEditGainBoxEl) speakerEditGainBoxEl.textContent = linearToDb(gain);
+  if (speakerEditDelayMsInputEl) speakerEditDelayMsInputEl.value = String(Math.max(0, delayMs));
+  if (speakerEditDelaySamplesInputEl) speakerEditDelaySamplesInputEl.value = String(delayMsToSamples(delayMs));
+  if (speakerEditSpatializeToggleEl) speakerEditSpatializeToggleEl.checked = getSpeakerSpatializeValue(speaker) !== 0;
+  if (speakerEditCartesianGizmoBtnEl) {
+    speakerEditCartesianGizmoBtnEl.classList.toggle('active', cartesianEditArmed && activeEditMode === 'cartesian');
+  }
+  if (speakerEditPolarGizmoBtnEl) {
+    speakerEditPolarGizmoBtnEl.classList.toggle('active', polarEditArmed && activeEditMode === 'polar');
+  }
 }
 
 function createObjectItem(id) {
@@ -847,7 +1409,7 @@ function renderSpeakersList() {
   if (!speakersListEl) return;
 
   if (!currentLayoutSpeakers.length) {
-    speakersListEl.textContent = 'Aucun speaker.';
+    speakersListEl.textContent = t('speakers.none');
     speakerItems.clear();
     updateSectionProportions();
     return;
@@ -895,7 +1457,7 @@ function renderObjectsList() {
     return String(a).localeCompare(String(b));
   });
   if (!ids.length) {
-    objectsListEl.textContent = 'Aucun objet.';
+    objectsListEl.textContent = t('objects.none');
     objectItems.clear();
     updateSectionProportions();
     return;
@@ -1010,7 +1572,18 @@ function applyGroupGains(group) {
 
 function renderRoomRatioDisplay() {
   if (!roomRatioEl) return;
-  roomRatioEl.textContent = `room_ratio: ${formatNumber(roomRatio.width, 2)} ${formatNumber(roomRatio.length, 2)} ${formatNumber(roomRatio.height, 2)}`;
+  roomRatioEl.textContent = `room_ratio: ${formatNumber(roomRatio.width, 2)} ${formatNumber(roomRatio.length, 2)} ${formatNumber(roomRatio.height, 2)} | rear: ${formatNumber(roomRatio.rear, 2)} | m/u: ${formatNumber(metersPerUnit, 2)}`;
+  if (roomRatioWidthInputEl) roomRatioWidthInputEl.value = formatNumber(roomRatio.width, 2);
+  if (roomRatioLengthInputEl) roomRatioLengthInputEl.value = formatNumber(roomRatio.length, 2);
+  if (roomRatioHeightInputEl) roomRatioHeightInputEl.value = formatNumber(roomRatio.height, 2);
+  if (roomRatioRearInputEl) roomRatioRearInputEl.value = formatNumber(roomRatio.rear, 2);
+  if (metersPerUnitInputEl) metersPerUnitInputEl.value = formatNumber(metersPerUnit, 2);
+  const dimW = roomRatio.width * metersPerUnit * 2;
+  const dimL = roomRatio.length * metersPerUnit * 2;
+  const dimH = roomRatio.height * metersPerUnit * 2;
+  if (roomDimWidthInputEl) roomDimWidthInputEl.value = formatNumber(dimW, 2);
+  if (roomDimLengthInputEl) roomDimLengthInputEl.value = formatNumber(dimL, 2);
+  if (roomDimHeightInputEl) roomDimHeightInputEl.value = formatNumber(dimH, 2);
 }
 
 function updateRoomRatioDisplay() {
@@ -1084,15 +1657,12 @@ function updateDistanceDiffuseUI() {
 
 function renderConfigSavedUI() {
   if (!configSavedIndicatorEl) return;
-  if (configSaved === null) {
-    configSavedIndicatorEl.textContent = '—';
-    configSavedIndicatorEl.style.color = '#d9ecff';
-  } else if (configSaved) {
-    configSavedIndicatorEl.textContent = 'Sauvegardé';
-    configSavedIndicatorEl.style.color = '#52e2a2';
-  } else {
-    configSavedIndicatorEl.textContent = 'Modifié (non sauvegardé)';
-    configSavedIndicatorEl.style.color = '#ffd56a';
+  configSavedIndicatorEl.textContent = '';
+  if (saveConfigBtnEl) {
+    const alreadySaved = configSaved === true;
+    saveConfigBtnEl.disabled = alreadySaved;
+    saveConfigBtnEl.style.opacity = alreadySaved ? '0.5' : '1';
+    saveConfigBtnEl.style.cursor = alreadySaved ? 'default' : 'pointer';
   }
 }
 
@@ -1127,6 +1697,53 @@ function renderResampleRatioDisplay() {
 
 function updateResampleRatioDisplay() {
   dirtyResample = true;
+  scheduleUIFlush();
+}
+
+function renderAudioFormatDisplay() {
+  if (audioFormatInfoEl) {
+    const rateText = audioSampleRate ? `${audioSampleRate} Hz` : '—';
+    const fmtText = audioSampleFormat || '—';
+    audioFormatInfoEl.textContent = `audio: ${rateText} / ${fmtText}`;
+  }
+  if (audioSampleRateInputEl && !audioSampleRateEditing) {
+    audioSampleRateInputEl.value = String(audioSampleRate || 0);
+  }
+}
+
+function closeAudioSampleRateMenu() {
+  if (!audioSampleRateMenuEl) return;
+  audioSampleRateMenuEl.style.display = 'none';
+}
+
+function openAudioSampleRateMenu() {
+  if (!audioSampleRateMenuEl) return;
+  audioSampleRateEditing = true;
+  audioSampleRateMenuEl.innerHTML = '';
+  AUDIO_SAMPLE_RATE_PRESETS.forEach((rate) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.style.cssText = 'display:block;width:100%;text-align:left;background:none;border:none;color:#d9ecff;padding:0.25rem 0.35rem;border-radius:6px;cursor:pointer;font-size:12px';
+    item.textContent = rate === 0 ? 'Native (0)' : `${rate} Hz`;
+    item.addEventListener('click', () => {
+      if (audioSampleRateInputEl) {
+        audioSampleRateInputEl.value = String(rate);
+      }
+      closeAudioSampleRateMenu();
+    });
+    item.addEventListener('mouseenter', () => {
+      item.style.background = 'rgba(255,255,255,0.12)';
+    });
+    item.addEventListener('mouseleave', () => {
+      item.style.background = 'transparent';
+    });
+    audioSampleRateMenuEl.appendChild(item);
+  });
+  audioSampleRateMenuEl.style.display = 'block';
+}
+
+function updateAudioFormatDisplay() {
+  dirtyAudioFormat = true;
   scheduleUIFlush();
 }
 
@@ -1189,11 +1806,57 @@ function updateMasterMeterUI() {
 }
 
 function applyRoomRatioToScene() {
-  const maxDim = Math.max(roomRatio.width, roomRatio.length, roomRatio.height, 1e-6);
-  const sx = (roomRatio.length / maxDim) * 2;
-  const sy = (roomRatio.height / maxDim) * 2;
-  const sz = (roomRatio.width / maxDim) * 2;
-  roomGroup.scale.set(sx, sy, sz);
+  const maxDim = Math.max(roomRatio.width, roomRatio.length, roomRatio.height, roomRatio.rear, 1e-6);
+  const xMax = (roomRatio.length / maxDim) * 2;
+  const xMin = -(roomRatio.rear / maxDim) * 2;
+  const yMax = (roomRatio.height / maxDim) * 2;
+  const halfZ = (roomRatio.width / maxDim) * 2;
+  const depthHalfX = Math.max(0.001, (xMax - xMin) * 0.5);
+  const xCenter = (xMin + xMax) * 0.5;
+
+  roomBounds.xMin = xMin;
+  roomBounds.xMax = xMax;
+  roomBounds.yMin = 0;
+  roomBounds.yMax = yMax;
+  roomBounds.zMin = -halfZ;
+  roomBounds.zMax = halfZ;
+
+  roomGroup.scale.set(1, 1, 1);
+
+  room.scale.set(depthHalfX, yMax, halfZ);
+  room.position.set(xCenter, yMax * 0.5, 0);
+  roomEdges.scale.set(depthHalfX, yMax, halfZ);
+  roomEdges.position.set(xCenter, 0, 0);
+
+  roomFaces.posX.position.set(xMax, yMax * 0.5, 0);
+  roomFaces.posX.scale.set(halfZ, yMax, 1);
+  roomFaces.negX.position.set(xMin, yMax * 0.5, 0);
+  roomFaces.negX.scale.set(halfZ, yMax, 1);
+  roomFaces.posY.position.set(xCenter, yMax, 0);
+  roomFaces.posY.scale.set(depthHalfX, halfZ, 1);
+  roomFaces.negY.position.set(xCenter, 0, 0);
+  roomFaces.negY.scale.set(depthHalfX, halfZ, 1);
+  roomFaces.posZ.position.set(xCenter, yMax * 0.5, halfZ);
+  roomFaces.posZ.scale.set(depthHalfX, yMax, 1);
+  roomFaces.negZ.position.set(xCenter, yMax * 0.5, -halfZ);
+  roomFaces.negZ.scale.set(depthHalfX, yMax, 1);
+
+  fitScreenToUpperHalf();
+}
+
+function smoothstep01(t) {
+  const x = Math.max(0, Math.min(1, Number(t) || 0));
+  return x * x * (3 - 2 * x);
+}
+
+function mapRoomDepth(rawX) {
+  const x = Math.max(-1, Math.min(1, Number(rawX) || 0));
+  if (x >= 0) {
+    const ratio = 1 + (roomRatio.length - 1) * smoothstep01(x);
+    return x * ratio;
+  }
+  const ratio = 1 + (roomRatio.rear - 1) * smoothstep01(-x);
+  return x * ratio;
 }
 
 function cartesianToSpherical(position) {
@@ -1227,8 +1890,29 @@ function snapAngleDeg(angle, step, threshold) {
   return Math.abs(angle - snapped) <= threshold ? snapped : angle;
 }
 
+function clampNumber(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function projectRayOntoAxis(rayOrigin, rayDirection, axisOrigin, axisDirection) {
+  const w0 = new THREE.Vector3().subVectors(axisOrigin, rayOrigin);
+  const b = axisDirection.dot(rayDirection);
+  const d = axisDirection.dot(w0);
+  const e = rayDirection.dot(w0);
+  const den = 1 - (b * b);
+  if (Math.abs(den) < 1e-6) {
+    return 0;
+  }
+  return ((b * e) - d) / den;
+}
+
 function updateSpeakerGizmo() {
-  if (activeEditMode !== 'polar' || selectedSpeakerIndex === null) {
+  const polarActive = activeEditMode === 'polar' && selectedSpeakerIndex !== null && polarEditArmed;
+  const cartesianActive = activeEditMode === 'cartesian' && selectedSpeakerIndex !== null && cartesianEditArmed;
+
+  cartesianGizmo.group.visible = false;
+
+  if (!polarActive) {
     speakerGizmo.ring.visible = false;
     speakerGizmo.ringTicks.visible = false;
     speakerGizmo.ringMinorTicks.visible = false;
@@ -1240,117 +1924,132 @@ function updateSpeakerGizmo() {
     speakerGizmo.ringCurrent.visible = false;
     speakerGizmo.arcCurrent.visible = false;
     distanceGizmo.group.visible = false;
-    return;
+  } else {
+    const mesh = speakerMeshes[selectedSpeakerIndex];
+    if (!mesh) {
+      speakerGizmo.ring.visible = false;
+      speakerGizmo.ringTicks.visible = false;
+      speakerGizmo.ringMinorTicks.visible = false;
+      speakerGizmo.arc.visible = false;
+      speakerGizmo.arcTicks.visible = false;
+      speakerGizmo.arcMinorTicks.visible = false;
+      speakerGizmo.ringLabels.visible = false;
+      speakerGizmo.arcLabels.visible = false;
+      speakerGizmo.ringCurrent.visible = false;
+      speakerGizmo.arcCurrent.visible = false;
+      distanceGizmo.group.visible = false;
+    } else {
+      const { az, el, dist } = cartesianToSpherical(mesh.position);
+      dragAzimuthDeg = az;
+      dragElevationDeg = el;
+      dragDistance = Math.max(0.01, dist);
+
+      speakerGizmo.ring.visible = true;
+      speakerGizmo.ringTicks.visible = !isDraggingSpeaker || dragAzimuthDelta > 0.1;
+      speakerGizmo.ringMinorTicks.visible = isDraggingSpeaker && dragAzimuthDelta >= 0 && dragAzimuthDelta <= 0.1;
+      speakerGizmo.arc.visible = true;
+      speakerGizmo.arcTicks.visible = !isDraggingSpeaker || dragElevationDelta > 0.1;
+      speakerGizmo.arcMinorTicks.visible = isDraggingSpeaker && dragElevationDelta >= 0 && dragElevationDelta <= 0.1;
+      speakerGizmo.ringLabels.visible = true;
+      speakerGizmo.arcLabels.visible = true;
+      speakerGizmo.ringCurrent.visible = true;
+      speakerGizmo.arcCurrent.visible = true;
+      distanceGizmo.group.visible = true;
+
+      speakerGizmo.ring.position.set(0, 0, 0);
+      speakerGizmo.ring.scale.set(dragDistance, 1, dragDistance);
+      speakerGizmo.ringTicks.position.set(0, 0, 0);
+      speakerGizmo.ringTicks.scale.set(dragDistance, 1, dragDistance);
+      speakerGizmo.ringMinorTicks.position.set(0, 0, 0);
+      speakerGizmo.ringMinorTicks.scale.set(dragDistance, 1, dragDistance);
+      speakerGizmo.ringLabels.position.set(0, 0, 0);
+      speakerGizmo.ringLabels.scale.set(dragDistance, 1, dragDistance);
+      speakerGizmo.ringCurrent.position.set(0, 0, 0);
+      speakerGizmo.ringCurrent.scale.set(dragDistance, 1, dragDistance);
+
+      const azRad = (az * Math.PI) / 180;
+      speakerGizmo.arc.position.set(0, 0, 0);
+      speakerGizmo.arc.scale.set(dragDistance, dragDistance, dragDistance);
+      speakerGizmo.arc.rotation.set(0, -azRad, 0);
+      speakerGizmo.arcTicks.position.set(0, 0, 0);
+      speakerGizmo.arcTicks.scale.set(dragDistance, dragDistance, dragDistance);
+      speakerGizmo.arcTicks.rotation.set(0, -azRad, 0);
+      speakerGizmo.arcMinorTicks.position.set(0, 0, 0);
+      speakerGizmo.arcMinorTicks.scale.set(dragDistance, dragDistance, dragDistance);
+      speakerGizmo.arcMinorTicks.rotation.set(0, -azRad, 0);
+      speakerGizmo.arcLabels.position.set(0, 0, 0);
+      speakerGizmo.arcLabels.scale.set(dragDistance, dragDistance, dragDistance);
+      speakerGizmo.arcLabels.rotation.set(0, -azRad, 0);
+      speakerGizmo.arcCurrent.position.set(0, 0, 0);
+      speakerGizmo.arcCurrent.scale.set(dragDistance, dragDistance, dragDistance);
+      speakerGizmo.arcCurrent.rotation.set(0, -azRad, 0);
+
+      ringLabelAngles.forEach((angle, idx) => {
+        const sprite = speakerGizmo.ringLabels.children[idx];
+        const rad = (angle * Math.PI) / 180;
+        const r = 1.1;
+        sprite.position.set(Math.cos(rad) * r, 0.02, Math.sin(rad) * r);
+      });
+
+      arcLabelAngles.forEach((angle, idx) => {
+        const sprite = speakerGizmo.arcLabels.children[idx];
+        const rad = (angle * Math.PI) / 180;
+        const r = 1.1;
+        sprite.position.set(Math.cos(rad) * r, Math.sin(rad) * r, 0);
+      });
+
+      const ringAngle = normalizeAngleDeg(dragAzimuthDeg);
+      const ringRad = (ringAngle * Math.PI) / 180;
+      speakerGizmo.ringCurrentLabel.position.set(Math.cos(ringRad) * 1.24, 0.04, Math.sin(ringRad) * 1.24);
+      setLabelSpriteText(speakerGizmo.ringCurrentLabel, `${ringAngle.toFixed(1)}`);
+
+      const arcAngle = dragElevationDeg;
+      const arcRad = (arcAngle * Math.PI) / 180;
+      speakerGizmo.arcCurrentLabel.position.set(Math.cos(arcRad) * 1.24, Math.sin(arcRad) * 1.24, 0);
+      setLabelSpriteText(speakerGizmo.arcCurrentLabel, `${arcAngle.toFixed(1)}`);
+
+      const speakerPos = mesh.position.clone();
+      const dir = speakerPos.length() > 1e-6 ? speakerPos.clone().normalize() : new THREE.Vector3(1, 0, 0);
+      const lineGeom = distanceGizmo.line.geometry;
+      lineGeom.setFromPoints([new THREE.Vector3(0, 0, 0), speakerPos.clone()]);
+      lineGeom.attributes.position.needsUpdate = true;
+
+      const arrowOffset = 0.1;
+      distanceGizmo.arrowA.position.copy(dir.clone().multiplyScalar(arrowOffset));
+      distanceGizmo.arrowB.position.copy(speakerPos.clone().add(dir.clone().multiplyScalar(-arrowOffset)));
+
+      const up = new THREE.Vector3(0, 1, 0);
+      const quat = new THREE.Quaternion().setFromUnitVectors(up, dir);
+      distanceGizmo.arrowA.quaternion.copy(quat);
+      const quatB = new THREE.Quaternion().setFromUnitVectors(up, dir.clone().negate());
+      distanceGizmo.arrowB.quaternion.copy(quatB);
+
+      const mid = speakerPos.clone().multiplyScalar(0.5);
+      distanceGizmo.label.position.set(mid.x, mid.y + 0.08, mid.z);
+      setLabelSpriteText(distanceGizmo.label, `${speakerPos.length().toFixed(2)}`);
+    }
   }
 
-  const mesh = speakerMeshes[selectedSpeakerIndex];
-  if (!mesh) {
-    speakerGizmo.ring.visible = false;
-    speakerGizmo.ringTicks.visible = false;
-    speakerGizmo.ringMinorTicks.visible = false;
-    speakerGizmo.arc.visible = false;
-    speakerGizmo.arcTicks.visible = false;
-    speakerGizmo.arcMinorTicks.visible = false;
-    speakerGizmo.ringLabels.visible = false;
-    speakerGizmo.arcLabels.visible = false;
-    speakerGizmo.ringCurrent.visible = false;
-    speakerGizmo.arcCurrent.visible = false;
-    distanceGizmo.group.visible = false;
-    return;
+  if (cartesianActive) {
+    const mesh = speakerMeshes[selectedSpeakerIndex];
+    if (!mesh) {
+      cartesianGizmo.group.visible = false;
+    } else {
+      cartesianGizmo.group.visible = true;
+      cartesianGizmo.group.position.copy(mesh.position);
+      const scale = Math.max(0.2, camera.position.distanceTo(mesh.position) * 0.08);
+      cartesianGizmo.group.scale.setScalar(scale);
+    }
   }
-
-  const { az, el, dist } = cartesianToSpherical(mesh.position);
-  dragAzimuthDeg = az;
-  dragElevationDeg = el;
-  dragDistance = Math.max(0.01, dist);
-
-  speakerGizmo.ring.visible = true;
-  speakerGizmo.ringTicks.visible = !isDraggingSpeaker || dragAzimuthDelta > 0.1;
-  speakerGizmo.ringMinorTicks.visible = isDraggingSpeaker && dragAzimuthDelta >= 0 && dragAzimuthDelta <= 0.1;
-  speakerGizmo.arc.visible = true;
-  speakerGizmo.arcTicks.visible = !isDraggingSpeaker || dragElevationDelta > 0.1;
-  speakerGizmo.arcMinorTicks.visible = isDraggingSpeaker && dragElevationDelta >= 0 && dragElevationDelta <= 0.1;
-  speakerGizmo.ringLabels.visible = true;
-  speakerGizmo.arcLabels.visible = true;
-  speakerGizmo.ringCurrent.visible = true;
-  speakerGizmo.arcCurrent.visible = true;
-  distanceGizmo.group.visible = true;
-
-  speakerGizmo.ring.position.set(0, 0, 0);
-  speakerGizmo.ring.scale.set(dragDistance, 1, dragDistance);
-  speakerGizmo.ringTicks.position.set(0, 0, 0);
-  speakerGizmo.ringTicks.scale.set(dragDistance, 1, dragDistance);
-  speakerGizmo.ringMinorTicks.position.set(0, 0, 0);
-  speakerGizmo.ringMinorTicks.scale.set(dragDistance, 1, dragDistance);
-  speakerGizmo.ringLabels.position.set(0, 0, 0);
-  speakerGizmo.ringLabels.scale.set(dragDistance, 1, dragDistance);
-  speakerGizmo.ringCurrent.position.set(0, 0, 0);
-  speakerGizmo.ringCurrent.scale.set(dragDistance, 1, dragDistance);
-
-  const azRad = (az * Math.PI) / 180;
-  speakerGizmo.arc.position.set(0, 0, 0);
-  speakerGizmo.arc.scale.set(dragDistance, dragDistance, dragDistance);
-  speakerGizmo.arc.rotation.set(0, -azRad, 0);
-  speakerGizmo.arcTicks.position.set(0, 0, 0);
-  speakerGizmo.arcTicks.scale.set(dragDistance, dragDistance, dragDistance);
-  speakerGizmo.arcTicks.rotation.set(0, -azRad, 0);
-  speakerGizmo.arcMinorTicks.position.set(0, 0, 0);
-  speakerGizmo.arcMinorTicks.scale.set(dragDistance, dragDistance, dragDistance);
-  speakerGizmo.arcMinorTicks.rotation.set(0, -azRad, 0);
-  speakerGizmo.arcLabels.position.set(0, 0, 0);
-  speakerGizmo.arcLabels.scale.set(dragDistance, dragDistance, dragDistance);
-  speakerGizmo.arcLabels.rotation.set(0, -azRad, 0);
-  speakerGizmo.arcCurrent.position.set(0, 0, 0);
-  speakerGizmo.arcCurrent.scale.set(dragDistance, dragDistance, dragDistance);
-  speakerGizmo.arcCurrent.rotation.set(0, -azRad, 0);
-
-  ringLabelAngles.forEach((angle, idx) => {
-    const sprite = speakerGizmo.ringLabels.children[idx];
-    const rad = (angle * Math.PI) / 180;
-    const r = 1.1;
-    sprite.position.set(Math.cos(rad) * r, 0.02, Math.sin(rad) * r);
-  });
-
-  arcLabelAngles.forEach((angle, idx) => {
-    const sprite = speakerGizmo.arcLabels.children[idx];
-    const rad = (angle * Math.PI) / 180;
-    const r = 1.1;
-    sprite.position.set(Math.cos(rad) * r, Math.sin(rad) * r, 0);
-  });
-
-  const ringAngle = normalizeAngleDeg(dragAzimuthDeg);
-  const ringRad = (ringAngle * Math.PI) / 180;
-  speakerGizmo.ringCurrentLabel.position.set(Math.cos(ringRad) * 1.24, 0.04, Math.sin(ringRad) * 1.24);
-  setLabelSpriteText(speakerGizmo.ringCurrentLabel, `${ringAngle.toFixed(1)}`);
-
-  const arcAngle = dragElevationDeg;
-  const arcRad = (arcAngle * Math.PI) / 180;
-  speakerGizmo.arcCurrentLabel.position.set(Math.cos(arcRad) * 1.24, Math.sin(arcRad) * 1.24, 0);
-  setLabelSpriteText(speakerGizmo.arcCurrentLabel, `${arcAngle.toFixed(1)}`);
-
-  const speakerPos = mesh.position.clone();
-  const dir = speakerPos.length() > 1e-6 ? speakerPos.clone().normalize() : new THREE.Vector3(1, 0, 0);
-  const lineGeom = distanceGizmo.line.geometry;
-  lineGeom.setFromPoints([new THREE.Vector3(0, 0, 0), speakerPos.clone()]);
-  lineGeom.attributes.position.needsUpdate = true;
-
-  const arrowOffset = 0.1;
-  distanceGizmo.arrowA.position.copy(dir.clone().multiplyScalar(arrowOffset));
-  distanceGizmo.arrowB.position.copy(speakerPos.clone().add(dir.clone().multiplyScalar(-arrowOffset)));
-
-  const up = new THREE.Vector3(0, 1, 0);
-  const quat = new THREE.Quaternion().setFromUnitVectors(up, dir);
-  distanceGizmo.arrowA.quaternion.copy(quat);
-  const quatB = new THREE.Quaternion().setFromUnitVectors(up, dir.clone().negate());
-  distanceGizmo.arrowB.quaternion.copy(quatB);
-
-  const mid = speakerPos.clone().multiplyScalar(0.5);
-  distanceGizmo.label.position.set(mid.x, mid.y + 0.08, mid.z);
-  setLabelSpriteText(distanceGizmo.label, `${speakerPos.length().toFixed(2)}`);
 }
 
 function setSelectedSpeaker(index) {
+  if (index === null) {
+    polarEditArmed = false;
+    cartesianEditArmed = false;
+  }
   selectedSpeakerIndex = index;
+  updateSpeakerColorsFromSelection();
   updateSpeakerGizmo();
   updateSpeakerControlsUI();
   updateControlsForEditMode();
@@ -1387,6 +2086,91 @@ function updateRoomFaceVisibility() {
     const isInside = camSide > 0;
     screenMaterial.opacity = isInside ? 0.18 : 0.18;
   }
+}
+
+function updateSelectedSpeakerFaceShadows() {
+  const index = selectedSpeakerIndex;
+  const mesh = index !== null ? speakerMeshes[index] : null;
+  if (!mesh) {
+    Object.values(selectedSpeakerShadows).forEach((shadow) => {
+      shadow.visible = false;
+    });
+    return;
+  }
+
+  const xMin = roomBounds.xMin;
+  const xMax = roomBounds.xMax;
+  const yMin = roomBounds.yMin;
+  const yMax = roomBounds.yMax;
+  const zMin = roomBounds.zMin;
+  const zMax = roomBounds.zMax;
+  const spanX = Math.max(1e-6, xMax - xMin);
+  const spanY = Math.max(1e-6, yMax - yMin);
+  const spanZ = Math.max(1e-6, zMax - zMin);
+  const p = mesh.position;
+  const eps = 0.01;
+  const baseRadius = 0.08;
+
+  const clampedX = clampNumber(p.x, xMin, xMax);
+  const clampedY = clampNumber(p.y, yMin, yMax);
+  const clampedZ = clampNumber(p.z, zMin, zMax);
+
+  const setShadow = (shadow, x, y, z, dist, maxDist) => {
+    const t = maxDist > 1e-6 ? clampNumber(1 - (dist / maxDist), 0.08, 1) : 1;
+    shadow.visible = true;
+    shadow.position.set(x, y, z);
+    shadow.scale.setScalar(baseRadius * (0.7 + 0.6 * t));
+    shadow.material.opacity = 0.06 + 0.18 * t;
+  };
+
+  setShadow(selectedSpeakerShadows.posX, xMax - eps, clampedY, clampedZ, Math.abs(xMax - p.x), spanX);
+  setShadow(selectedSpeakerShadows.negX, xMin + eps, clampedY, clampedZ, Math.abs(xMin - p.x), spanX);
+  setShadow(selectedSpeakerShadows.posY, clampedX, yMax - eps, clampedZ, Math.abs(yMax - p.y), spanY);
+  setShadow(selectedSpeakerShadows.negY, clampedX, yMin + eps, clampedZ, Math.abs(yMin - p.y), spanY);
+  setShadow(selectedSpeakerShadows.posZ, clampedX, clampedY, zMax - eps, Math.abs(zMax - p.z), spanZ);
+  setShadow(selectedSpeakerShadows.negZ, clampedX, clampedY, zMin + eps, Math.abs(zMin - p.z), spanZ);
+}
+
+function updateSelectedObjectFaceShadows() {
+  const mesh = selectedSourceId ? sourceMeshes.get(selectedSourceId) : null;
+  if (!mesh) {
+    Object.values(selectedObjectShadows).forEach((shadow) => {
+      shadow.visible = false;
+    });
+    return;
+  }
+
+  const xMin = roomBounds.xMin;
+  const xMax = roomBounds.xMax;
+  const yMin = roomBounds.yMin;
+  const yMax = roomBounds.yMax;
+  const zMin = roomBounds.zMin;
+  const zMax = roomBounds.zMax;
+  const spanX = Math.max(1e-6, xMax - xMin);
+  const spanY = Math.max(1e-6, yMax - yMin);
+  const spanZ = Math.max(1e-6, zMax - zMin);
+  const p = mesh.position;
+  const eps = 0.01;
+  const baseRadius = 0.09;
+
+  const clampedX = clampNumber(p.x, xMin, xMax);
+  const clampedY = clampNumber(p.y, yMin, yMax);
+  const clampedZ = clampNumber(p.z, zMin, zMax);
+
+  const setShadow = (shadow, x, y, z, dist, maxDist) => {
+    const t = maxDist > 1e-6 ? clampNumber(1 - (dist / maxDist), 0.08, 1) : 1;
+    shadow.visible = true;
+    shadow.position.set(x, y, z);
+    shadow.scale.setScalar(baseRadius * (0.7 + 0.7 * t));
+    shadow.material.opacity = 0.05 + 0.16 * t;
+  };
+
+  setShadow(selectedObjectShadows.posX, xMax - eps, clampedY, clampedZ, Math.abs(xMax - p.x), spanX);
+  setShadow(selectedObjectShadows.negX, xMin + eps, clampedY, clampedZ, Math.abs(xMin - p.x), spanX);
+  setShadow(selectedObjectShadows.posY, clampedX, yMax - eps, clampedZ, Math.abs(yMax - p.y), spanY);
+  setShadow(selectedObjectShadows.negY, clampedX, yMin + eps, clampedZ, Math.abs(yMin - p.y), spanY);
+  setShadow(selectedObjectShadows.posZ, clampedX, clampedY, zMax - eps, Math.abs(zMax - p.z), spanZ);
+  setShadow(selectedObjectShadows.negZ, clampedX, clampedY, zMin + eps, Math.abs(zMin - p.z), spanZ);
 }
 
 function toggleMute(group, id) {
@@ -1590,7 +2374,7 @@ function rebuildTrailGeometry(id) {
   const colAttr = trail.line.geometry.getAttribute('color');
   for (let i = 0; i < count; i++) {
     const raw = trail.positions[i];
-    posAttr.array[i * 3] = raw.x * roomRatio.length;
+    posAttr.array[i * 3] = mapRoomDepth(raw.x);
     posAttr.array[i * 3 + 1] = raw.y * roomRatio.height;
     posAttr.array[i * 3 + 2] = raw.z * roomRatio.width;
     const t = count > 1 ? i / (count - 1) : 1; // 0=oldest (dark), 1=newest (full colour)
@@ -1692,6 +2476,9 @@ function updateSpeakerColorsFromSelection() {
   speakerMeshes.forEach((mesh, index) => {
     const mix = gainToMix(gains?.[index]);
     mesh.material.color.copy(speakerBaseColor).lerp(speakerHotColor, mix);
+    if (selectedSpeakerIndex !== null && index === selectedSpeakerIndex) {
+      mesh.material.color.copy(speakerSelectedColor);
+    }
 
     const baseOpacity = Number(mesh.userData.baseOpacity ?? 0.65);
     if (!selectedSourceId) {
@@ -1704,7 +2491,23 @@ function updateSpeakerColorsFromSelection() {
 }
 
 function setSelectedSource(id) {
-  selectedSourceId = id;
+  const nextId = id === null || id === undefined ? null : String(id);
+  const currentSolo = getSoloTarget('object');
+  if (nextId !== null && currentSolo && currentSolo !== nextId) {
+    const ids = getObjectIds();
+    ids.forEach((objId) => {
+      const shouldMute = objId !== nextId;
+      if (shouldMute) {
+        objectMuted.add(objId);
+      } else {
+        objectMuted.delete(objId);
+        objectManualMuted.delete(objId);
+      }
+      sendObjectMute(objId, shouldMute);
+    });
+    applyGroupGains('object');
+  }
+  selectedSourceId = nextId;
   updateSourceSelectionStyles();
   updateSpeakerColorsFromSelection();
   updateObjectControlsUI();
@@ -1752,7 +2555,7 @@ function updateSource(id, position) {
   };
   sourcePositionsRaw.set(String(id), raw);
   const scaled = {
-    x: raw.x * roomRatio.length,
+    x: mapRoomDepth(raw.x),
     y: raw.y * roomRatio.height,
     z: raw.z * roomRatio.width
   };
@@ -1902,6 +2705,64 @@ function clearSpeakers() {
   speakerLabels.length = 0;
 }
 
+function currentLayoutRef() {
+  return currentLayoutKey ? layoutsByKey.get(currentLayoutKey) : null;
+}
+
+function requestAddSpeaker() {
+  const layout = currentLayoutRef();
+  if (!layout) return;
+  const base = selectedSpeakerIndex !== null ? layout.speakers[selectedSpeakerIndex] : null;
+  const nextIndex = layout.speakers.length;
+  const speaker = {
+    id: `spk-${nextIndex}`,
+    x: Number(base?.x) || 0,
+    y: Number(base?.y) || 0,
+    z: Number(base?.z) || 0,
+    azimuthDeg: Number(base?.azimuthDeg) || 0,
+    elevationDeg: Number(base?.elevationDeg) || 0,
+    distanceM: Math.max(0.01, Number(base?.distanceM) || 1),
+    spatialize: Number(base?.spatialize ?? 1) ? 1 : 0,
+    delay_ms: Math.max(0, Number(base?.delay_ms) || 0)
+  };
+  layout.speakers.push(speaker);
+  renderLayout(currentLayoutKey);
+  setSelectedSpeaker(layout.speakers.length - 1);
+  invoke('control_speakers_add', {
+    name: speaker.id,
+    azimuth: Number(speaker.azimuthDeg) || 0,
+    elevation: Number(speaker.elevationDeg) || 0,
+    distance: Math.max(0.01, Number(speaker.distanceM) || 1),
+    spatialize: Number(speaker.spatialize) ? 1 : 0,
+    delayMs: Math.max(0, Number(speaker.delay_ms) || 0)
+  });
+}
+
+function requestRemoveSpeaker() {
+  const layout = currentLayoutRef();
+  if (!layout || selectedSpeakerIndex === null) return;
+  const idx = selectedSpeakerIndex;
+  if (idx < 0 || idx >= layout.speakers.length) return;
+  layout.speakers.splice(idx, 1);
+  renderLayout(currentLayoutKey);
+  const next = layout.speakers.length ? Math.max(0, idx - 1) : null;
+  setSelectedSpeaker(next);
+  invoke('control_speakers_remove', { index: idx });
+}
+
+function requestMoveSpeaker(delta) {
+  const layout = currentLayoutRef();
+  if (!layout || selectedSpeakerIndex === null) return;
+  const from = selectedSpeakerIndex;
+  const to = Math.max(0, Math.min(layout.speakers.length - 1, from + delta));
+  if (from === to) return;
+  const moved = layout.speakers.splice(from, 1)[0];
+  layout.speakers.splice(to, 0, moved);
+  renderLayout(currentLayoutKey);
+  setSelectedSpeaker(to);
+  invoke('control_speakers_move', { from, to });
+}
+
 function renderLayout(key) {
   clearSpeakers();
   const layout = layoutsByKey.get(key);
@@ -1910,14 +2771,24 @@ function renderLayout(key) {
     currentLayoutSpeakers = [];
     renderSpeakersList();
     selectedSpeakerIndex = null;
+    polarEditArmed = false;
+    cartesianEditArmed = false;
     updateSpeakerGizmo();
     updateControlsForEditMode();
+    renderSpeakerEditor();
     return;
   }
 
   currentLayoutKey = key;
   currentLayoutSpeakers = Array.isArray(layout.speakers) ? layout.speakers : [];
+  metersPerUnit = Math.max(0.01, Number(layout.radius_m) || 1.0);
+  speakerDelays.clear();
+  currentLayoutSpeakers.forEach((speaker, index) => {
+    speakerDelays.set(String(index), speaker.delay_ms ?? 0);
+  });
   selectedSpeakerIndex = null;
+  polarEditArmed = false;
+  cartesianEditArmed = false;
   updateSpeakerGizmo();
   updateControlsForEditMode();
   const speakerIds = getSpeakerIds();
@@ -1940,7 +2811,7 @@ function renderLayout(key) {
   layout.speakers.forEach((speaker, index) => {
     const mesh = new THREE.Mesh(speakerGeometry.clone(), speakerMaterial.clone());
     mesh.position.set(speaker.x, speaker.y, speaker.z);
-    const baseOpacity = speaker.spatialize === 0 ? 0.3 : 0.65;
+    const baseOpacity = getSpeakerBaseOpacity(speaker);
     mesh.userData.baseOpacity = baseOpacity;
     mesh.material.opacity = baseOpacity;
     scene.add(mesh);
@@ -1956,6 +2827,7 @@ function renderLayout(key) {
 
   updateSpeakerColorsFromSelection();
   refreshOverlayLists();
+  renderSpeakerEditor();
 }
 
 function updateSpeakerLevel(index, meter) {
@@ -2031,13 +2903,15 @@ function applyRoomRatio(nextRatio) {
   roomRatio.width = Number(nextRatio.width) || 1;
   roomRatio.length = Number(nextRatio.length) || 1;
   roomRatio.height = Number(nextRatio.height) || 1;
+  const rearValue = Number(nextRatio.rear);
+  roomRatio.rear = Number.isFinite(rearValue) && rearValue > 0 ? rearValue : roomRatio.rear;
   updateRoomRatioDisplay();
   applyRoomRatioToScene();
 
   sourceMeshes.forEach((mesh, id) => {
     const raw = sourcePositionsRaw.get(String(id));
     if (!raw) return;
-    mesh.position.set(raw.x * roomRatio.length, raw.y * roomRatio.height, raw.z * roomRatio.width);
+    mesh.position.set(mapRoomDepth(raw.x), raw.y * roomRatio.height, raw.z * roomRatio.width);
     updateSourceDecorations(id);
     rebuildTrailGeometry(id);
   });
@@ -2055,27 +2929,37 @@ function applyRoomRatio(nextRatio) {
 
 function hydrateLayoutSelect(layouts, selectedLayoutKey) {
   layoutsByKey.clear();
-  layoutSelectEl.innerHTML = '';
+  if (layoutSelectEl) {
+    layoutSelectEl.innerHTML = '';
+  }
 
   layouts.forEach((layout) => {
     layoutsByKey.set(layout.key, layout);
-
-    const option = document.createElement('option');
-    option.value = layout.key;
-    option.textContent = layout.name;
-    layoutSelectEl.appendChild(option);
+    if (layoutSelectEl) {
+      const option = document.createElement('option');
+      option.value = layout.key;
+      option.textContent = layout.name;
+      layoutSelectEl.appendChild(option);
+    }
   });
 
   if (selectedLayoutKey && layoutsByKey.has(selectedLayoutKey)) {
-    layoutSelectEl.value = selectedLayoutKey;
+    if (layoutSelectEl) layoutSelectEl.value = selectedLayoutKey;
     renderLayout(selectedLayoutKey);
+  } else if (layouts.length > 0) {
+    const firstKey = layouts[0].key;
+    if (layoutSelectEl) layoutSelectEl.value = firstKey;
+    renderLayout(firstKey);
   } else {
     currentLayoutKey = null;
     currentLayoutSpeakers = [];
     renderSpeakersList();
+    renderSpeakerEditor();
   }
 
-  layoutSelectEl.disabled = layouts.length === 0;
+  if (layoutSelectEl) {
+    layoutSelectEl.disabled = layouts.length === 0;
+  }
 }
 
 function pointerEventToNdc(event) {
@@ -2123,23 +3007,64 @@ function selectSpeakerFromPointer(event) {
 }
 
 function beginSpeakerDrag(event) {
-  if (activeEditMode !== 'polar' || selectedSpeakerIndex === null) {
+  if (selectedSpeakerIndex === null) {
     return false;
   }
   pointerEventToNdc(event);
   raycaster.setFromCamera(pointer, camera);
-  const gizmoHits = raycaster.intersectObjects([speakerGizmo.ring, speakerGizmo.arc], false);
-  if (gizmoHits.length === 0) {
-    return false;
+
+  if (activeEditMode === 'polar' && polarEditArmed) {
+    const gizmoHits = raycaster.intersectObjects([speakerGizmo.ring, speakerGizmo.arc], false);
+    if (gizmoHits.length === 0) {
+      return false;
+    }
+    const hit = gizmoHits[0].object;
+    dragMode = hit === speakerGizmo.ring ? 'azimuth' : 'elevation';
+    isDraggingSpeaker = true;
+    draggingPointerId = event.pointerId;
+    dragAzimuthDelta = 1;
+    dragElevationDelta = 1;
+    controls.enabled = false;
+    return true;
   }
-  const hit = gizmoHits[0].object;
-  dragMode = hit === speakerGizmo.ring ? 'azimuth' : 'elevation';
-  isDraggingSpeaker = true;
-  draggingPointerId = event.pointerId;
-  dragAzimuthDelta = 1;
-  dragElevationDelta = 1;
-  controls.enabled = false;
-  return true;
+
+  if (activeEditMode === 'cartesian' && cartesianEditArmed) {
+    const handleHits = raycaster.intersectObjects(
+      [cartesianGizmo.xHandle, cartesianGizmo.yHandle, cartesianGizmo.zHandle],
+      false
+    );
+    if (handleHits.length === 0) {
+      return false;
+    }
+    const axis = handleHits[0].object?.userData?.axis;
+    if (!axis) {
+      return false;
+    }
+    dragMode = 'cartesian';
+    dragAxis = axis;
+    dragAxisDirection.set(
+      axis === 'x' ? 1 : 0,
+      axis === 'y' ? 1 : 0,
+      axis === 'z' ? 1 : 0
+    );
+    const mesh = speakerMeshes[selectedSpeakerIndex];
+    if (mesh) {
+      dragAxisOrigin.copy(mesh.position);
+      dragSpeakerStartPosition.copy(mesh.position);
+      dragAxisStartT = projectRayOntoAxis(
+        raycaster.ray.origin,
+        raycaster.ray.direction,
+        dragAxisOrigin,
+        dragAxisDirection
+      );
+    }
+    isDraggingSpeaker = true;
+    draggingPointerId = event.pointerId;
+    controls.enabled = false;
+    return true;
+  }
+
+  return false;
 }
 
 function updateSpeakerDrag(event) {
@@ -2183,6 +3108,17 @@ function updateSpeakerDrag(event) {
         dragElevationDeg = snapAngleDeg(dragElevationDeg, 5, 2.5);
       }
     }
+  } else if (dragMode === 'cartesian') {
+    const tNow = projectRayOntoAxis(
+      raycaster.ray.origin,
+      raycaster.ray.direction,
+      dragAxisOrigin,
+      dragAxisDirection
+    );
+    const delta = tNow - dragAxisStartT;
+    const pos = dragSpeakerStartPosition.clone().add(dragAxisDirection.clone().multiplyScalar(delta));
+    applySpeakerCartesianEdit(selectedSpeakerIndex, pos.x, pos.y, pos.z, false);
+    return;
   }
 
   const pos = sphericalToCartesianDeg(dragAzimuthDeg, dragElevationDeg, dragDistance);
@@ -2204,6 +3140,7 @@ function updateSpeakerDrag(event) {
       entry.position.textContent = formatPosition(speaker);
     }
   }
+  renderSpeakerEditor();
   updateSpeakerGizmo();
 }
 
@@ -2213,15 +3150,19 @@ function endSpeakerDrag() {
   }
   isDraggingSpeaker = false;
   dragMode = null;
+  dragAxis = null;
   draggingPointerId = null;
   controls.enabled = true;
 
   if (selectedSpeakerIndex !== null) {
     const idx = selectedSpeakerIndex;
-    invoke('control_speaker_az', { id: idx, value: dragAzimuthDeg });
-    invoke('control_speaker_el', { id: idx, value: dragElevationDeg });
-    invoke('control_speaker_distance', { id: idx, value: dragDistance });
-    invoke('control_speakers_apply');
+    const speaker = currentLayoutSpeakers[idx];
+    if (speaker) {
+      const x = Number(speaker.x) || 0;
+      const y = Number(speaker.y) || 0;
+      const z = Number(speaker.z) || 0;
+      applySpeakerCartesianEdit(idx, x, y, z, true);
+    }
   }
 }
 
@@ -2277,7 +3218,7 @@ renderer.domElement.addEventListener('pointerleave', () => {
 });
 
 renderer.domElement.addEventListener('wheel', (event) => {
-  if (activeEditMode !== 'polar' || selectedSpeakerIndex === null) {
+  if (activeEditMode !== 'polar' || selectedSpeakerIndex === null || !polarEditArmed) {
     return;
   }
   if (!event.ctrlKey && !event.shiftKey) {
@@ -2315,6 +3256,7 @@ renderer.domElement.addEventListener('wheel', (event) => {
       entry.position.textContent = formatPosition(speaker);
     }
   }
+  renderSpeakerEditor();
   updateSpeakerGizmo();
   controls.enableZoom = prevZoom;
 }, { passive: false, capture: true });
@@ -2402,9 +3344,130 @@ if (distanceDiffuseCurveSliderEl) {
   });
 }
 
+if (roomRatioApplyBtnEl) {
+  roomRatioApplyBtnEl.addEventListener('click', () => {
+    const width = Math.max(0.01, Number(roomRatioWidthInputEl?.value) || 1);
+    const length = Math.max(0.01, Number(roomRatioLengthInputEl?.value) || 1);
+    const height = Math.max(0.01, Number(roomRatioHeightInputEl?.value) || 1);
+    const rear = Math.max(0.01, Number(roomRatioRearInputEl?.value) || width);
+    applyRoomRatio({ width, length, height, rear });
+    invoke('control_room_ratio', { width, length, height });
+    invoke('control_room_ratio_rear', { value: rear });
+  });
+}
+
+if (metersPerUnitInputEl) {
+  metersPerUnitInputEl.addEventListener('change', () => {
+    const next = Math.max(0.01, Number(metersPerUnitInputEl.value) || 1);
+    metersPerUnit = next;
+    const layout = currentLayoutKey ? layoutsByKey.get(currentLayoutKey) : null;
+    if (layout) {
+      layout.radius_m = next;
+    }
+    invoke('control_layout_radius_m', { value: next });
+    updateRoomRatioDisplay();
+    renderSpeakerEditor();
+  });
+}
+
+if (roomDimApplyBtnEl) {
+  roomDimApplyBtnEl.addEventListener('click', () => {
+    const mpu = Math.max(0.01, Number(metersPerUnit) || 1);
+    const dimW = Math.max(0.01, Number(roomDimWidthInputEl?.value) || (mpu * 2));
+    const dimL = Math.max(0.01, Number(roomDimLengthInputEl?.value) || (mpu * 4));
+    const dimH = Math.max(0.01, Number(roomDimHeightInputEl?.value) || (mpu * 2));
+    const width = dimW / (mpu * 2);
+    const length = dimL / (mpu * 2);
+    const height = dimH / (mpu * 2);
+    applyRoomRatio({ width, length, height, rear: roomRatio.rear });
+    invoke('control_room_ratio', { width, length, height });
+  });
+}
+
 if (saveConfigBtnEl) {
   saveConfigBtnEl.addEventListener('click', () => {
     invoke('control_save_config');
+  });
+}
+
+if (audioSampleRateApplyBtnEl) {
+  audioSampleRateApplyBtnEl.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+  });
+  audioSampleRateApplyBtnEl.addEventListener('click', () => {
+    const requested = Math.max(0, Math.round(Number(audioSampleRateInputEl?.value) || 0));
+    invoke('control_audio_sample_rate', { sampleRate: requested });
+    audioSampleRateEditing = false;
+    closeAudioSampleRateMenu();
+  });
+}
+
+if (audioSampleRateMenuBtnEl) {
+  audioSampleRateMenuBtnEl.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (!audioSampleRateMenuEl) return;
+    if (audioSampleRateMenuEl.style.display === 'block') {
+      closeAudioSampleRateMenu();
+    } else {
+      openAudioSampleRateMenu();
+    }
+  });
+}
+
+if (audioSampleRateInputEl) {
+  audioSampleRateInputEl.addEventListener('focus', () => {
+    audioSampleRateEditing = true;
+    audioSampleRateInputEl.select();
+  });
+}
+
+document.addEventListener('pointerdown', (event) => {
+  if (!audioSampleRateMenuEl || audioSampleRateMenuEl.style.display !== 'block') return;
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+  if (audioSampleRateMenuEl.contains(target) || audioSampleRateMenuBtnEl?.contains(target)) return;
+  closeAudioSampleRateMenu();
+});
+
+document.addEventListener('pointerdown', (event) => {
+  if (!audioSampleRateControlEl) return;
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+  if (!audioSampleRateControlEl.contains(target) && target !== audioSampleRateApplyBtnEl) {
+    audioSampleRateEditing = false;
+  }
+});
+
+
+if (exportLayoutBtnEl) {
+  exportLayoutBtnEl.addEventListener('click', () => {
+    const fallbackName = defaultLayoutExportNameFromSpeakers(currentLayoutSpeakers);
+    const promptLabel = locale === 'fr' ? 'Nom du layout' : 'Layout name';
+    const requested = window.prompt(`${promptLabel}:`, fallbackName);
+    if (requested === null) {
+      return;
+    }
+    const name = requested.trim() || fallbackName;
+    invoke('control_export_layout', { name });
+  });
+}
+
+if (importLayoutBtnEl) {
+  importLayoutBtnEl.addEventListener('click', () => {
+    const promptLabel = locale === 'fr'
+      ? 'Chemin du layout à importer'
+      : 'Layout path to import';
+    const path = window.prompt(`${promptLabel}:`, '');
+    if (path === null) return;
+    const trimmed = path.trim();
+    if (!trimmed) return;
+    invoke('import_layout_from_path', { path: trimmed })
+      .then((payload) => {
+        hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
+        refreshOverlayLists();
+        renderSpeakerEditor();
+      })
+      .catch((e) => console.error('[layout import]', e));
   });
 }
 
@@ -2413,6 +3476,190 @@ if (editModeSelectEl) {
     activeEditMode = editModeSelectEl.value;
     updateSpeakerGizmo();
     updateControlsForEditMode();
+  });
+}
+
+if (speakerEditCartesianGizmoBtnEl) {
+  speakerEditCartesianGizmoBtnEl.addEventListener('click', () => {
+    if (selectedSpeakerIndex === null) return;
+    activeEditMode = 'cartesian';
+    if (editModeSelectEl) editModeSelectEl.value = 'cartesian';
+    cartesianEditArmed = !cartesianEditArmed;
+    if (cartesianEditArmed) {
+      polarEditArmed = false;
+    }
+    renderSpeakerEditor();
+    updateSpeakerGizmo();
+  });
+}
+
+if (speakerAddBtnEl) {
+  speakerAddBtnEl.addEventListener('click', () => {
+    requestAddSpeaker();
+  });
+}
+
+if (speakerMoveUpBtnEl) {
+  speakerMoveUpBtnEl.addEventListener('click', () => {
+    requestMoveSpeaker(-1);
+  });
+}
+
+if (speakerMoveDownBtnEl) {
+  speakerMoveDownBtnEl.addEventListener('click', () => {
+    requestMoveSpeaker(1);
+  });
+}
+
+if (speakerRemoveBtnEl) {
+  speakerRemoveBtnEl.addEventListener('click', () => {
+    requestRemoveSpeaker();
+  });
+}
+
+if (speakerEditPolarGizmoBtnEl) {
+  speakerEditPolarGizmoBtnEl.addEventListener('click', () => {
+    if (selectedSpeakerIndex === null) return;
+    activeEditMode = 'polar';
+    if (editModeSelectEl) editModeSelectEl.value = 'polar';
+    polarEditArmed = !polarEditArmed;
+    if (polarEditArmed) {
+      cartesianEditArmed = false;
+    }
+    renderSpeakerEditor();
+    updateSpeakerGizmo();
+  });
+}
+
+if (speakerEditGainSliderEl) {
+  speakerEditGainSliderEl.addEventListener('input', () => {
+    if (selectedSpeakerIndex === null) return;
+    const id = String(selectedSpeakerIndex);
+    const value = Number(speakerEditGainSliderEl.value);
+    if (!Number.isFinite(value)) return;
+    speakerBaseGains.set(id, value);
+    applyGroupGains('speaker');
+    renderSpeakerEditor();
+  });
+  speakerEditGainSliderEl.addEventListener('dblclick', () => {
+    if (selectedSpeakerIndex === null) return;
+    speakerEditGainSliderEl.value = '1';
+    const id = String(selectedSpeakerIndex);
+    speakerBaseGains.set(id, 1);
+    applyGroupGains('speaker');
+    renderSpeakerEditor();
+  });
+}
+
+if (speakerEditDelayMsInputEl) {
+  speakerEditDelayMsInputEl.addEventListener('change', () => {
+    if (selectedSpeakerIndex === null) return;
+    const id = String(selectedSpeakerIndex);
+    const value = Math.max(0, Number(speakerEditDelayMsInputEl.value) || 0);
+    speakerDelays.set(id, value);
+    speakerEditDelayMsInputEl.value = String(value);
+    invoke('control_speaker_delay', { id: Number(id), delayMs: value });
+    renderSpeakerEditor();
+  });
+}
+
+if (speakerEditDelaySamplesInputEl) {
+  speakerEditDelaySamplesInputEl.addEventListener('change', () => {
+    if (selectedSpeakerIndex === null) return;
+    const id = String(selectedSpeakerIndex);
+    const samples = Math.max(0, Math.round(Number(speakerEditDelaySamplesInputEl.value) || 0));
+    const delayMs = samplesToDelayMs(samples);
+    speakerDelays.set(id, delayMs);
+    invoke('control_speaker_delay', { id: Number(id), delayMs });
+    renderSpeakerEditor();
+  });
+}
+
+if (speakerEditAutoDelayBtnEl) {
+  speakerEditAutoDelayBtnEl.addEventListener('click', () => {
+    computeAndApplySpeakerDelays();
+  });
+}
+
+if (speakerEditDelayToDistanceBtnEl) {
+  speakerEditDelayToDistanceBtnEl.addEventListener('click', () => {
+    adjustSpeakerDistancesFromDelays();
+  });
+}
+
+if (speakerEditNameInputEl) {
+  speakerEditNameInputEl.addEventListener('change', () => {
+    if (selectedSpeakerIndex === null) return;
+    const speaker = currentLayoutSpeakers[selectedSpeakerIndex];
+    if (!speaker) return;
+    const nextName = speakerEditNameInputEl.value.trim() || `spk-${selectedSpeakerIndex}`;
+    speaker.id = nextName;
+    invoke('control_speaker_name', { id: selectedSpeakerIndex, name: nextName });
+    invoke('control_speakers_apply');
+    updateSpeakerVisualsFromState(selectedSpeakerIndex);
+    renderSpeakerEditor();
+  });
+}
+
+function bindSpeakerCoordChange(inputEl, getter) {
+  if (!inputEl) return;
+  inputEl.addEventListener('change', () => {
+    if (selectedSpeakerIndex === null) return;
+    getter(selectedSpeakerIndex);
+  });
+}
+
+bindSpeakerCoordChange(speakerEditXInputEl, (idx) => {
+  const x = Number(speakerEditXInputEl?.value);
+  const y = Number(speakerEditYInputEl?.value);
+  const z = Number(speakerEditZInputEl?.value);
+  applySpeakerCartesianEdit(idx, x, y, z, true);
+});
+
+bindSpeakerCoordChange(speakerEditYInputEl, (idx) => {
+  const x = Number(speakerEditXInputEl?.value);
+  const y = Number(speakerEditYInputEl?.value);
+  const z = Number(speakerEditZInputEl?.value);
+  applySpeakerCartesianEdit(idx, x, y, z, true);
+});
+
+bindSpeakerCoordChange(speakerEditZInputEl, (idx) => {
+  const x = Number(speakerEditXInputEl?.value);
+  const y = Number(speakerEditYInputEl?.value);
+  const z = Number(speakerEditZInputEl?.value);
+  applySpeakerCartesianEdit(idx, x, y, z, true);
+});
+
+bindSpeakerCoordChange(speakerEditAzInputEl, (idx) => {
+  const az = Number(speakerEditAzInputEl?.value);
+  const el = Number(speakerEditElInputEl?.value);
+  const r = Number(speakerEditRInputEl?.value);
+  applySpeakerPolarEdit(idx, az, el, r, true);
+});
+
+bindSpeakerCoordChange(speakerEditElInputEl, (idx) => {
+  const az = Number(speakerEditAzInputEl?.value);
+  const el = Number(speakerEditElInputEl?.value);
+  const r = Number(speakerEditRInputEl?.value);
+  applySpeakerPolarEdit(idx, az, el, r, true);
+});
+
+bindSpeakerCoordChange(speakerEditRInputEl, (idx) => {
+  const az = Number(speakerEditAzInputEl?.value);
+  const el = Number(speakerEditElInputEl?.value);
+  const r = Number(speakerEditRInputEl?.value);
+  applySpeakerPolarEdit(idx, az, el, r, true);
+});
+
+if (speakerEditSpatializeToggleEl) {
+  speakerEditSpatializeToggleEl.addEventListener('change', () => {
+    if (selectedSpeakerIndex === null) return;
+    const index = selectedSpeakerIndex;
+    const nextSpatialize = speakerEditSpatializeToggleEl.checked ? 1 : 0;
+    setSpeakerSpatializeLocal(index, nextSpatialize);
+    invoke('control_speaker_spatialize', { id: index, spatialize: nextSpatialize });
+    invoke('control_speakers_apply');
+    renderSpeakerEditor();
   });
 }
 
@@ -2449,7 +3696,8 @@ if (trailTtlSliderEl) {
   });
 }
 
-statusEl.textContent = 'connecté';
+applyStaticTranslations();
+setOscStatus('initializing');
 
 // ── OSC config panel ───────────────────────────────────────────────────────
 
@@ -2474,7 +3722,7 @@ if (oscConfigApplyBtnEl) {
     const osc_port = Math.max(0, Math.min(65535, parseInt(oscListenPortInputEl?.value || '0', 10)));
     invoke('save_osc_config', { config: { host, osc_rx_port, osc_port } })
       .then(() => {
-        if (statusEl) statusEl.textContent = 'reconnexion...';
+        setOscStatus('reconnecting');
         oscConfigFormEl?.classList.remove('open');
         if (oscConfigToggleBtnEl) oscConfigToggleBtnEl.textContent = '⚙';
       })
@@ -2484,9 +3732,11 @@ if (oscConfigApplyBtnEl) {
 
 // ── layout select ──────────────────────────────────────────────────────────
 
-layoutSelectEl.addEventListener('change', () => {
-  invoke('select_layout', { key: layoutSelectEl.value });
-});
+if (layoutSelectEl) {
+  layoutSelectEl.addEventListener('change', () => {
+    invoke('select_layout', { key: layoutSelectEl.value });
+  });
+}
 
 function applyInitState(payload) {
   speakerMuted.clear();
@@ -2576,24 +3826,35 @@ function applyInitState(payload) {
   if (typeof payload.resampleRatio === 'number') {
     resampleRatio = payload.resampleRatio;
   }
+  if (typeof payload.audioSampleRate === 'number') {
+    audioSampleRate = payload.audioSampleRate > 0 ? payload.audioSampleRate : null;
+  }
+  if (typeof payload.audioSampleFormat === 'string') {
+    audioSampleFormat = payload.audioSampleFormat.trim() || null;
+  }
+  if (typeof payload.oscStatus === 'string') {
+    const s = payload.oscStatus;
+    if (s === 'initializing' || s === 'connected' || s === 'reconnecting' || s === 'error') {
+      setOscStatus(s);
+    }
+  }
   updateLatencyDisplay();
   updateLatencyMeterUI();
   updateResampleRatioDisplay();
+  updateAudioFormatDisplay();
   updateMasterMeterUI();
 
   hydrateLayoutSelect(payload.layouts || [], payload.selectedLayoutKey);
   refreshOverlayLists();
+  renderSpeakerEditor();
 }
 
 // Initialize state from backend, then subscribe to events.
 invoke('get_state').then((payload) => {
   applyInitState(payload);
-  if (statusEl) statusEl.textContent = 'connecté';
-  if (oscStatusDotEl) oscStatusDotEl.style.background = '#52e2a2';
 }).catch((e) => {
   console.error('[tauri] get_state failed:', e);
-  if (statusEl) statusEl.textContent = 'erreur';
-  if (oscStatusDotEl) oscStatusDotEl.style.background = '#ff5d5d';
+  setOscStatus('error');
 });
 
 listen('layouts:update', ({ payload }) => {
@@ -2602,16 +3863,30 @@ listen('layouts:update', ({ payload }) => {
 
 listen('layout:selected', ({ payload }) => {
   if (payload.key && layoutsByKey.has(payload.key)) {
-    layoutSelectEl.value = payload.key;
+    if (layoutSelectEl) layoutSelectEl.value = payload.key;
     renderLayout(payload.key);
   }
 });
 
+listen('layout:radius_m', ({ payload }) => {
+  const value = Math.max(0.01, Number(payload?.value) || 1.0);
+  metersPerUnit = value;
+  const layout = currentLayoutKey ? layoutsByKey.get(currentLayoutKey) : null;
+  if (layout) {
+    layout.radius_m = value;
+  }
+  updateRoomRatioDisplay();
+  renderSpeakerEditor();
+});
+
 listen('source:update', ({ payload }) => {
   updateSource(payload.id, payload.position);
-  if (statusEl && statusEl.textContent === 'reconnexion...') {
-    statusEl.textContent = 'connecté';
-    if (oscStatusDotEl) oscStatusDotEl.style.background = '#52e2a2';
+});
+
+listen('osc:status', ({ payload }) => {
+  const next = payload?.status;
+  if (next === 'initializing' || next === 'connected' || next === 'reconnecting' || next === 'error') {
+    setOscStatus(next);
   }
 });
 
@@ -2631,7 +3906,7 @@ listen('spatial:frame', ({ payload }) => {
   for (let i = 0; i < objectCount; i += 1) {
     const id = String(i);
     if (!sourceMeshes.has(id)) {
-      updateSource(id, { x: 0, y: 0, z: 0, name: `Obj_${i}`, _noTrail: true });
+      updateSource(id, { x: 0, y: 0, z: 0, name: `Object_${i}`, _noTrail: true });
     }
   }
 
@@ -2666,6 +3941,14 @@ listen('speaker:gain', ({ payload }) => {
   updateSpeakerControlsUI();
 });
 
+listen('speaker:delay', ({ payload }) => {
+  const id = String(payload.id);
+  const delayMs = Math.max(0, Number(payload.delayMs) || 0);
+  speakerDelays.set(id, delayMs);
+  renderSpeakerEditor();
+  updateSpeakerControlsUI();
+});
+
 listen('object:mute', ({ payload }) => {
   const key = String(payload.id);
   if (Number(payload.muted)) {
@@ -2685,6 +3968,30 @@ listen('speaker:mute', ({ payload }) => {
     speakerMuted.delete(key);
     speakerManualMuted.delete(key);
   }
+  updateSpeakerControlsUI();
+});
+
+listen('speaker:spatialize', ({ payload }) => {
+  const index = Number(payload.id);
+  if (!Number.isInteger(index) || index < 0) {
+    return;
+  }
+  const next = Number(payload.spatialize) === 0 ? 0 : 1;
+  setSpeakerSpatializeLocal(index, next);
+  updateSpeakerControlsUI();
+});
+
+listen('speaker:name', ({ payload }) => {
+  const index = Number(payload.id);
+  if (!Number.isInteger(index) || index < 0) {
+    return;
+  }
+  const speaker = currentLayoutSpeakers[index];
+  if (!speaker) {
+    return;
+  }
+  speaker.id = String(payload.name ?? speaker.id ?? index);
+  updateSpeakerVisualsFromState(index);
   updateSpeakerControlsUI();
 });
 
@@ -2755,6 +4062,17 @@ listen('resample_ratio', ({ payload }) => {
   updateResampleRatioDisplay();
 });
 
+listen('audio:sample_rate', ({ payload }) => {
+  const v = Number(payload.value);
+  audioSampleRate = Number.isFinite(v) && v > 0 ? Math.round(v) : null;
+  updateAudioFormatDisplay();
+});
+
+listen('audio:sample_format', ({ payload }) => {
+  audioSampleFormat = typeof payload.value === 'string' ? (payload.value.trim() || null) : null;
+  updateAudioFormatDisplay();
+});
+
 listen('source:remove', ({ payload }) => {
   removeSource(payload.id);
 });
@@ -2763,6 +4081,8 @@ function animate() {
   requestAnimationFrame(animate);
   controls.update();
   updateRoomFaceVisibility();
+  updateSelectedSpeakerFaceShadows();
+  updateSelectedObjectFaceShadows();
   const now = performance.now();
   decayTrails(now);
   decayMeters(now);

@@ -25,13 +25,13 @@ function sphericalToCartesian(azimuthDeg, elevationDeg, distance) {
   return { x, y, z };
 }
 
-function truehddSpeakerToSceneCartesian(azimuthDeg, elevationDeg, distance) {
+function gsrdSpeakerToSceneCartesian(azimuthDeg, elevationDeg, distance) {
   const az = (azimuthDeg * Math.PI) / 180;
   const el = (elevationDeg * Math.PI) / 180;
   const d = distance;
 
   return {
-    // truehdd convention: 0 front, +90 left, +elevation up
+    // gsrd convention: 0 front, +90 left, +elevation up
     x: d * Math.cos(el) * Math.cos(az),
     y: d * Math.sin(el),
     z: d * Math.cos(el) * Math.sin(az)
@@ -54,8 +54,8 @@ function findIdInAddress(parts) {
   return null;
 }
 
-function parseTruehddConfigMessage(parts, args) {
-  if (!parts.includes('truehdd') || !parts.includes('config')) {
+function parseGsrdConfigMessage(parts, args) {
+  if (!parts.includes('gsrd') || !parts.includes('config')) {
     return null;
   }
 
@@ -85,7 +85,7 @@ function parseTruehddConfigMessage(parts, args) {
       return null;
     }
 
-    const position = truehddSpeakerToSceneCartesian(azimuth, elevation, distance);
+    const position = gsrdSpeakerToSceneCartesian(azimuth, elevation, distance);
     const spatialize = toNumber(spatializeRaw);
 
     return {
@@ -107,8 +107,8 @@ function parseTruehddConfigMessage(parts, args) {
   return null;
 }
 
-function parseTruehddObjectXyz(parts, args) {
-  if (!parts.includes('truehdd') || !parts.includes('object') || !parts.includes('xyz')) {
+function parseGsrdObjectXyz(parts, args) {
+  if (!parts.includes('gsrd') || !parts.includes('object') || !parts.includes('xyz')) {
     return null;
   }
 
@@ -142,8 +142,8 @@ function parseTruehddObjectXyz(parts, args) {
   return result;
 }
 
-function parseTruehddStateMessage(parts, args) {
-  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'latency') {
+function parseGsrdStateMessage(parts, args) {
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'latency') {
     const value = toNumber(args[0]);
     if (value === null) {
       return null;
@@ -154,7 +154,7 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'resample_ratio') {
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'resample_ratio') {
     const value = toNumber(args[0]);
     if (value === null) {
       return null;
@@ -165,7 +165,7 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'gain') {
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'gain') {
     const value = toNumber(args[0]);
     if (value === null) {
       return null;
@@ -176,7 +176,7 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'dialog_norm') {
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'dialog_norm') {
     const value = toNumber(args[0]);
     if (value === null) {
       return null;
@@ -187,7 +187,7 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 4 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'dialog_norm') {
+  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'dialog_norm') {
     const kind = parts[3];
     if (!['level', 'gain'].includes(kind)) {
       return null;
@@ -202,7 +202,7 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 4 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'spread') {
+  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'spread') {
     const kind = parts[3];
     if (!['min', 'max'].includes(kind)) {
       return null;
@@ -217,7 +217,7 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 5 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[4] === 'gain') {
+  if (parts.length === 5 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[4] === 'gain') {
     const kind = parts[2];
     if (!['object', 'speaker'].includes(kind)) {
       return null;
@@ -240,7 +240,7 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 3 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'room_ratio') {
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'room_ratio') {
     const width = toNumber(args[0]);
     const length = toNumber(args[1]);
     const height = toNumber(args[2]);
@@ -256,7 +256,7 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 5 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[4] === 'mute') {
+  if (parts.length === 5 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[4] === 'mute') {
     const kind = parts[2];
     if (!['object', 'speaker'].includes(kind)) {
       return null;
@@ -279,7 +279,39 @@ function parseTruehddStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 4 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'distance_diffuse') {
+  if (parts.length === 5 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'speaker' && parts[4] === 'spatialize') {
+    const index = toNumber(parts[3]);
+    if (index === null || index < 0) {
+      return null;
+    }
+    const spatializeRaw = toNumber(args[0]);
+    if (spatializeRaw === null) {
+      return null;
+    }
+    return {
+      type: 'state:speaker:spatialize',
+      id: String(Math.floor(index)),
+      spatialize: spatializeRaw !== 0 ? 1 : 0
+    };
+  }
+
+  if (parts.length === 5 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'speaker' && parts[4] === 'name') {
+    const index = toNumber(parts[3]);
+    if (index === null || index < 0) {
+      return null;
+    }
+    const name = String(args[0] ?? '').trim();
+    if (!name) {
+      return null;
+    }
+    return {
+      type: 'state:speaker:name',
+      id: String(Math.floor(index)),
+      name
+    };
+  }
+
+  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'distance_diffuse') {
     const key = parts[3];
     if (key === 'enabled') {
       const value = toNumber(args[0]);
@@ -293,7 +325,7 @@ function parseTruehddStateMessage(parts, args) {
     }
   }
 
-  if (parts.length === 4 && parts[0] === 'truehdd' && parts[1] === 'state' && parts[2] === 'config' && parts[3] === 'saved') {
+  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'config' && parts[3] === 'saved') {
     const value = toNumber(args[0]);
     if (value === null) return null;
     return { type: 'state:config:saved', saved: value !== 0 };
@@ -353,12 +385,12 @@ function parseMeterMessage(parts, args) {
 
 
 function mapCartesianByAddress(parts, position) {
-  const isTruehddObjectXyz = parts.includes('truehdd') && parts.includes('object') && parts.includes('xyz');
-  if (!isTruehddObjectXyz) {
+  const isGsrdObjectXyz = parts.includes('gsrd') && parts.includes('object') && parts.includes('xyz');
+  if (!isGsrdObjectXyz) {
     return position;
   }
 
-  // truehdd/object/{id}/xyz uses x=right, y=front, z=up.
+  // gsrd/object/{id}/xyz uses x=right, y=front, z=up.
   // Our scene convention is x=front, y=up, z=right.
   return {
     x: position.y,
@@ -372,19 +404,19 @@ function parseOscMessage(oscMsg) {
   const parts = address.split('/').filter(Boolean).map((p) => p.toLowerCase());
   const args = (oscMsg.args || []).map(unwrapArg);
 
-  const parsedTruehddConfig = parseTruehddConfigMessage(parts, args);
-  if (parsedTruehddConfig) {
-    return parsedTruehddConfig;
+  const parsedGsrdConfig = parseGsrdConfigMessage(parts, args);
+  if (parsedGsrdConfig) {
+    return parsedGsrdConfig;
   }
 
-  const parsedTruehddObjectXyz = parseTruehddObjectXyz(parts, args);
-  if (parsedTruehddObjectXyz) {
-    return parsedTruehddObjectXyz;
+  const parsedGsrdObjectXyz = parseGsrdObjectXyz(parts, args);
+  if (parsedGsrdObjectXyz) {
+    return parsedGsrdObjectXyz;
   }
 
-  const parsedTruehddState = parseTruehddStateMessage(parts, args);
-  if (parsedTruehddState) {
-    return parsedTruehddState;
+  const parsedGsrdState = parseGsrdStateMessage(parts, args);
+  if (parsedGsrdState) {
+    return parsedGsrdState;
   }
 
   if (parts.includes('meter')) {

@@ -328,6 +328,21 @@ const sourceTrails = new Map();
 let trailMaxPoints = 80;
 let trailsEnabled = true;
 
+let uiFlushScheduled = false;
+const dirtyObjectMeters = new Set();
+const dirtySpeakerMeters = new Set();
+const dirtyObjectPositions = new Set();
+const dirtyObjectLabels = new Set();
+let dirtyMasterMeter = false;
+let dirtyRoomRatio = false;
+let dirtySpread = false;
+let dirtyDialogNorm = false;
+let dirtyDistanceDiffuse = false;
+let dirtyConfigSaved = false;
+let dirtyLatency = false;
+let dirtyResample = false;
+let dirtyMasterGain = false;
+
 let selectedSourceId = null;
 let selectedSpeakerIndex = null;
 let activeEditMode = 'polar';
@@ -441,33 +456,123 @@ function updateMeterUI(entry, meter) {
   entry.meterFill.style.setProperty('--level', `${meterToPercent(meter).toFixed(1)}%`);
 }
 
+function scheduleUIFlush() {
+  if (uiFlushScheduled) {
+    return;
+  }
+  uiFlushScheduled = true;
+  requestAnimationFrame(flushUI);
+}
+
+function flushUI() {
+  uiFlushScheduled = false;
+
+  dirtyObjectMeters.forEach((id) => {
+    const entry = objectItems.get(id);
+    if (!entry) return;
+    updateMeterUI(entry, sourceLevels.get(id));
+  });
+  dirtyObjectMeters.clear();
+
+  dirtySpeakerMeters.forEach((id) => {
+    const entry = speakerItems.get(id);
+    if (!entry) return;
+    updateMeterUI(entry, speakerLevels.get(id));
+  });
+  dirtySpeakerMeters.clear();
+
+  dirtyObjectPositions.forEach((id) => {
+    const entry = objectItems.get(id);
+    if (!entry) return;
+    const pos = sourcePositionsRaw.get(id);
+    entry.position.textContent = formatPosition(pos);
+  });
+  dirtyObjectPositions.clear();
+
+  dirtyObjectLabels.forEach((id) => {
+    const entry = objectItems.get(id);
+    if (!entry) return;
+    entry.label.textContent = getObjectDisplayName(id);
+  });
+  dirtyObjectLabels.clear();
+
+  if (dirtyMasterMeter) {
+    updateMasterMeterUI();
+    dirtyMasterMeter = false;
+  }
+
+  if (dirtyRoomRatio) {
+    renderRoomRatioDisplay();
+    dirtyRoomRatio = false;
+  }
+
+  if (dirtySpread) {
+    renderSpreadDisplay();
+    dirtySpread = false;
+  }
+
+  if (dirtyDialogNorm) {
+    renderDialogNormDisplay();
+    dirtyDialogNorm = false;
+  }
+
+  if (dirtyDistanceDiffuse) {
+    renderDistanceDiffuseUI();
+    dirtyDistanceDiffuse = false;
+  }
+
+  if (dirtyConfigSaved) {
+    renderConfigSavedUI();
+    dirtyConfigSaved = false;
+  }
+
+  if (dirtyLatency) {
+    renderLatencyDisplay();
+    renderLatencyMeterUI();
+    dirtyLatency = false;
+  }
+
+  if (dirtyResample) {
+    renderResampleRatioDisplay();
+    dirtyResample = false;
+  }
+
+  if (dirtyMasterGain) {
+    renderMasterGainUI();
+    dirtyMasterGain = false;
+  }
+}
+
 function updateItemClasses(entry, isMuted, isDimmed) {
   entry.root.classList.toggle('is-muted', isMuted);
   entry.root.classList.toggle('is-dimmed', isDimmed);
 }
 
 function updateSpeakerMeterUI(id) {
-  const entry = speakerItems.get(id);
-  if (!entry) return;
-  updateMeterUI(entry, speakerLevels.get(id));
+  const key = String(id);
+  dirtySpeakerMeters.add(key);
+  scheduleUIFlush();
 }
 
 function updateObjectMeterUI(id) {
-  const entry = objectItems.get(id);
-  if (!entry) return;
-  updateMeterUI(entry, sourceLevels.get(id));
+  const key = String(id);
+  dirtyObjectMeters.add(key);
+  scheduleUIFlush();
 }
 
 function updateObjectPositionUI(id, position) {
-  const entry = objectItems.get(id);
-  if (!entry) return;
-  entry.position.textContent = formatPosition(position);
+  const key = String(id);
+  if (position) {
+    sourcePositionsRaw.set(key, position);
+  }
+  dirtyObjectPositions.add(key);
+  scheduleUIFlush();
 }
 
 function updateObjectLabelUI(id) {
-  const entry = objectItems.get(id);
-  if (!entry) return;
-  entry.label.textContent = getObjectDisplayName(id);
+  const key = String(id);
+  dirtyObjectLabels.add(key);
+  scheduleUIFlush();
 }
 
 function getObjectDisplayName(id) {
@@ -921,12 +1026,17 @@ function applyGroupGains(group) {
   });
 }
 
-function updateRoomRatioDisplay() {
+function renderRoomRatioDisplay() {
   if (!roomRatioEl) return;
   roomRatioEl.textContent = `room_ratio: ${formatNumber(roomRatio.width, 2)} ${formatNumber(roomRatio.length, 2)} ${formatNumber(roomRatio.height, 2)}`;
 }
 
-function updateSpreadDisplay() {
+function updateRoomRatioDisplay() {
+  dirtyRoomRatio = true;
+  scheduleUIFlush();
+}
+
+function renderSpreadDisplay() {
   if (!spreadInfoEl) return;
   const minText = spreadState.min === null ? '—' : formatNumber(spreadState.min, 2);
   const maxText = spreadState.max === null ? '—' : formatNumber(spreadState.max, 2);
@@ -941,7 +1051,12 @@ function updateSpreadDisplay() {
   }
 }
 
-function updateDialogNormDisplay() {
+function updateSpreadDisplay() {
+  dirtySpread = true;
+  scheduleUIFlush();
+}
+
+function renderDialogNormDisplay() {
   if (!dialogNormInfoEl) return;
   const enabledText = dialogNormEnabled === null ? '—' : dialogNormEnabled ? 'on' : 'off';
   const levelText = dialogNormLevel === null ? '—' : `${formatNumber(dialogNormLevel, 0)} dBFS`;
@@ -955,7 +1070,12 @@ function updateDialogNormDisplay() {
   }
 }
 
-function updateDistanceDiffuseUI() {
+function updateDialogNormDisplay() {
+  dirtyDialogNorm = true;
+  scheduleUIFlush();
+}
+
+function renderDistanceDiffuseUI() {
   if (distanceDiffuseToggleEl) {
     distanceDiffuseToggleEl.checked = distanceDiffuseState.enabled === true;
   }
@@ -975,7 +1095,12 @@ function updateDistanceDiffuseUI() {
   }
 }
 
-function updateConfigSavedUI() {
+function updateDistanceDiffuseUI() {
+  dirtyDistanceDiffuse = true;
+  scheduleUIFlush();
+}
+
+function renderConfigSavedUI() {
   if (!configSavedIndicatorEl) return;
   if (configSaved === null) {
     configSavedIndicatorEl.textContent = '—';
@@ -989,14 +1114,24 @@ function updateConfigSavedUI() {
   }
 }
 
-function updateLatencyDisplay() {
+function updateConfigSavedUI() {
+  dirtyConfigSaved = true;
+  scheduleUIFlush();
+}
+
+function renderLatencyDisplay() {
   if (!latencyInfoEl) return;
   latencyInfoEl.textContent = latencyMs === null
     ? 'latency: —'
     : `latency: ${formatNumber(latencyMs, 0)} ms`;
 }
 
-function updateResampleRatioDisplay() {
+function updateLatencyDisplay() {
+  dirtyLatency = true;
+  scheduleUIFlush();
+}
+
+function renderResampleRatioDisplay() {
   if (!resampleRatioInfoEl) return;
   if (resampleRatio === null) {
     resampleRatioInfoEl.textContent = 'resample: —';
@@ -1008,7 +1143,12 @@ function updateResampleRatioDisplay() {
   resampleRatioInfoEl.textContent = `resample: ${sign}${ppm} ppm`;
 }
 
-function updateLatencyMeterUI() {
+function updateResampleRatioDisplay() {
+  dirtyResample = true;
+  scheduleUIFlush();
+}
+
+function renderLatencyMeterUI() {
   if (!latencyMeterFillEl) return;
   if (latencyMs === null) {
     latencyMeterFillEl.style.setProperty('--level', '0%');
@@ -1020,13 +1160,23 @@ function updateLatencyMeterUI() {
   latencyMeterFillEl.style.setProperty('--level', `${percent.toFixed(1)}%`);
 }
 
-function updateMasterGainUI() {
+function updateLatencyMeterUI() {
+  dirtyLatency = true;
+  scheduleUIFlush();
+}
+
+function renderMasterGainUI() {
   if (masterGainSliderEl) {
     masterGainSliderEl.value = String(masterGain);
   }
   if (masterGainBoxEl) {
     masterGainBoxEl.textContent = linearToDb(masterGain);
   }
+}
+
+function updateMasterGainUI() {
+  dirtyMasterGain = true;
+  scheduleUIFlush();
 }
 
 function getAverageSpeakerRmsDb() {
@@ -1708,6 +1858,9 @@ function removeSource(id) {
   sourceGains.delete(id);
   sourceOutlines.delete(id);
   sourceNames.delete(String(id));
+  dirtyObjectMeters.delete(String(id));
+  dirtyObjectPositions.delete(String(id));
+  dirtyObjectLabels.delete(String(id));
 
   if (selectedSourceId === id) {
     setSelectedSource(null);
@@ -1802,7 +1955,8 @@ function updateSpeakerLevel(index, meter) {
     applySpeakerLevel(mesh, meter);
   }
   updateSpeakerMeterUI(String(index));
-  updateMasterMeterUI();
+  dirtyMasterMeter = true;
+  scheduleUIFlush();
 }
 
 function applyRoomRatio(nextRatio) {

@@ -130,6 +130,8 @@ pub enum OscEvent {
         elevation_deg: f64,
         #[serde(rename = "distanceM")]
         distance_m: f64,
+        #[serde(rename = "delayMs")]
+        delay_ms: f64,
         spatialize: u8,
         position: SpeakerPosition,
     },
@@ -159,10 +161,16 @@ pub enum OscEvent {
     StateObjectGain { id: String, gain: f64 },
     #[serde(rename = "state:speaker:gain")]
     StateSpeakerGain { id: String, gain: f64 },
+    #[serde(rename = "state:speaker:delay")]
+    StateSpeakerDelay { id: String, delay_ms: f64 },
     #[serde(rename = "state:object:mute")]
     StateObjectMute { id: String, muted: bool },
     #[serde(rename = "state:speaker:mute")]
     StateSpeakerMute { id: String, muted: bool },
+    #[serde(rename = "state:speaker:spatialize")]
+    StateSpeakerSpatialize { id: String, spatialize: bool },
+    #[serde(rename = "state:speaker:name")]
+    StateSpeakerName { id: String, name: String },
 
     #[serde(rename = "state:room_ratio")]
     StateRoomRatio {
@@ -170,6 +178,10 @@ pub enum OscEvent {
         length: f64,
         height: f64,
     },
+    #[serde(rename = "state:room_ratio:rear")]
+    StateRoomRatioRear { value: f64 },
+    #[serde(rename = "state:layout:radius_m")]
+    StateLayoutRadiusM { value: f64 },
     #[serde(rename = "state:spread:min")]
     StateSpreadMin { value: f64 },
     #[serde(rename = "state:spread:max")]
@@ -186,6 +198,10 @@ pub enum OscEvent {
     StateLatency { value: f64 },
     #[serde(rename = "state:resample_ratio")]
     StateResampleRatio { value: f64 },
+    #[serde(rename = "state:audio:sample_rate")]
+    StateAudioSampleRate { value: u32 },
+    #[serde(rename = "state:audio:sample_format")]
+    StateAudioSampleFormat { value: String },
     #[serde(rename = "state:distance_diffuse:enabled")]
     StateDistanceDiffuseEnabled { enabled: bool },
     #[serde(rename = "state:distance_diffuse:threshold")]
@@ -204,18 +220,21 @@ fn parse_gsrd_config(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Opti
     }
 
     if parts.len() == 3 && parts[2] == "speakers" {
-        let count = to_number(args[0])? as u32;
+        let count = args.first().copied().and_then(to_number)? as u32;
         return Some(OscEvent::ConfigSpeakersCount { count });
     }
 
     if parts.len() == 4 && parts[2] == "speaker" {
         let index = parts[3].parse::<u32>().ok()?;
         // raw_args: name, az, el, dist, spatialize
-        let name = unwrap_string(&raw_args[0]).unwrap_or_else(|| format!("spk-{index}"));
-        let az = to_number(args[1])?;
-        let el = to_number(args[2])?;
-        let dist = to_number(args[3])?;
-        let spatialize_raw = to_number(args[4]);
+        let name = raw_args
+            .first()
+            .and_then(unwrap_string)
+            .unwrap_or_else(|| format!("spk-{index}"));
+        let az = args.get(1).copied().and_then(to_number)?;
+        let el = args.get(2).copied().and_then(to_number)?;
+        let dist = args.get(3).copied().and_then(to_number)?;
+        let spatialize_raw = args.get(4).copied().and_then(to_number);
         let spatialize = match spatialize_raw {
             None => 1u8,
             Some(v) => {
@@ -227,12 +246,20 @@ fn parse_gsrd_config(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Opti
             }
         };
         let (px, py, pz) = gsrd_speaker_to_scene(az, el, dist);
+        let delay_ms = args
+            .get(5)
+            .copied()
+            .and_then(to_number)
+            .unwrap_or(0.0)
+            .max(0.0);
+
         return Some(OscEvent::ConfigSpeaker {
             index,
             name,
             azimuth_deg: az,
             elevation_deg: el,
             distance_m: dist,
+            delay_ms,
             spatialize,
             position: SpeakerPosition {
                 x: px,
@@ -291,7 +318,7 @@ fn parse_gsrd_spatial_frame(parts: &[&str], args: &[f64]) -> Option<OscEvent> {
     })
 }
 
-fn parse_gsrd_state(parts: &[&str], args: &[f64]) -> Option<OscEvent> {
+fn parse_gsrd_state(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Option<OscEvent> {
     if parts.len() < 3 || parts[0] != "gsrd" || parts[1] != "state" {
         return None;
     }
@@ -319,6 +346,12 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64]) -> Option<OscEvent> {
                 height: h,
             })
         }
+        (3, "room_ratio_rear") => Some(OscEvent::StateRoomRatioRear {
+            value: to_number(args[0])?,
+        }),
+        (4, "layout") if parts[3] == "radius_m" => Some(OscEvent::StateLayoutRadiusM {
+            value: to_number(args[0])?,
+        }),
         (4, "dialog_norm") => {
             let value = to_number(args[0])?;
             match parts[3] {
@@ -350,6 +383,16 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64]) -> Option<OscEvent> {
         (4, "config") if parts[3] == "saved" => Some(OscEvent::StateConfigSaved {
             saved: to_number(args[0])? != 0.0,
         }),
+        (4, "audio") => match parts[3] {
+            "sample_rate" => Some(OscEvent::StateAudioSampleRate {
+                value: to_number(args[0])?.max(0.0) as u32,
+            }),
+            "sample_format" => {
+                let value = raw_args.first().and_then(unwrap_string)?;
+                Some(OscEvent::StateAudioSampleFormat { value })
+            }
+            _ => None,
+        },
         (5, kind) if kind == "object" || kind == "speaker" => match parts[4] {
             "gain" => {
                 let id = parts[3].parse::<u32>().ok()?.to_string();
@@ -360,6 +403,11 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64]) -> Option<OscEvent> {
                     Some(OscEvent::StateObjectGain { id, gain })
                 }
             }
+            "delay" if kind == "speaker" => {
+                let id = parts[3].parse::<u32>().ok()?.to_string();
+                let delay_ms = clamp(to_number(args[0])?, 0.0, 10_000.0);
+                Some(OscEvent::StateSpeakerDelay { id, delay_ms })
+            }
             "mute" => {
                 let id = parts[3].parse::<u32>().ok()?.to_string();
                 let muted = to_number(args[0])? != 0.0;
@@ -368,6 +416,16 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64]) -> Option<OscEvent> {
                 } else {
                     Some(OscEvent::StateObjectMute { id, muted })
                 }
+            }
+            "spatialize" if kind == "speaker" => {
+                let id = parts[3].parse::<u32>().ok()?.to_string();
+                let spatialize = to_number(args[0])? != 0.0;
+                Some(OscEvent::StateSpeakerSpatialize { id, spatialize })
+            }
+            "name" if kind == "speaker" => {
+                let id = parts[3].parse::<u32>().ok()?.to_string();
+                let name = raw_args.first().and_then(unwrap_string)?;
+                Some(OscEvent::StateSpeakerName { id, name })
             }
             _ => None,
         },
@@ -441,7 +499,7 @@ pub fn parse_osc_message(address: &str, raw_args: &[OscType]) -> Option<OscEvent
     }
 
     // gsrd state
-    if let Some(ev) = parse_gsrd_state(&parts, &args) {
+    if let Some(ev) = parse_gsrd_state(&parts, &args, raw_args) {
         return Some(ev);
     }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OSC Bridge: truehdd → Carla/SPARTA Panner
+OSC Bridge: gsrd → Carla/SPARTA Panner
 Maps immersive object positions to Carla plugin parameters via OSC
 
 Usage:
@@ -89,8 +89,8 @@ class OSCBridge:
         return out_min + normalized * (out_max - out_min)
 
     def object_position_handler(self, address, *args):
-        """Handle /truehdd/object/{id}/xyz messages"""
-        # Extract object_id from address like /truehdd/object/0/xyz
+        """Handle /gsrd/object/{id}/xyz messages"""
+        # Extract object_id from address like /gsrd/object/0/xyz
         parts = address.split('/')
         if len(parts) >= 4 and len(args) >= 3:
             try:
@@ -172,7 +172,7 @@ class OSCBridge:
                 print(f"Error mapping object: {e}")
 
     def frame_handler(self, address, *args):
-        """Handle /truehdd/atmos/frame messages"""
+        """Handle /gsrd/spatial/frame messages"""
         if len(args) >= 2:
             sample_pos, object_count = args
             if object_count != self.object_count:
@@ -181,7 +181,7 @@ class OSCBridge:
             self.frame_count += 1
 
     def source_config_handler(self, address, *args):
-        """Handle /truehdd/source/config messages"""
+        """Handle /gsrd/source/config messages"""
         if len(args) >= 1:
             source_count = args[0]
 
@@ -268,13 +268,13 @@ def create_default_config():
 
 
 def main():
-    parser = argparse.ArgumentParser(description='OSC bridge: truehdd → Carla')
+    parser = argparse.ArgumentParser(description='OSC bridge: gsrd → Carla')
     parser.add_argument('--config', default='carla_mapping.yaml',
                        help='Mapping configuration file (default: carla_mapping.yaml)')
     parser.add_argument('--create-config', action='store_true',
                        help='Create default configuration file and exit')
-    parser.add_argument('--truehdd-port', type=int, default=9000,
-                       help='Port to receive OSC from truehdd (default: 9000)')
+    parser.add_argument('--gsrd-port', type=int, default=9000,
+                       help='Port to receive OSC from gsrd (default: 9000)')
     args = parser.parse_args()
 
     if args.create_config:
@@ -304,23 +304,23 @@ def main():
         print(f"Error loading configuration: {e}")
         return
 
-    # Create OSC dispatcher for truehdd messages
+    # Create OSC dispatcher for gsrd messages
     dispatcher = Dispatcher()
-    dispatcher.map("/truehdd/object/*/xyz", bridge.object_position_handler)
-    dispatcher.map("/truehdd/atmos/frame", bridge.frame_handler)
-    dispatcher.map("/truehdd/source/config", bridge.source_config_handler)
+    dispatcher.map("/gsrd/object/*/xyz", bridge.object_position_handler)
+    dispatcher.map("/gsrd/spatial/frame", bridge.frame_handler)
+    dispatcher.map("/gsrd/source/config", bridge.source_config_handler)
 
     # Create and start OSC server
-    server = BlockingOSCUDPServer(("127.0.0.1", args.truehdd_port), dispatcher)
+    server = BlockingOSCUDPServer(("127.0.0.1", args.gsrd_port), dispatcher)
 
     print("=" * 70)
-    print("truehdd → Carla OSC Bridge")
+    print("gsrd → Carla OSC Bridge")
     print("=" * 70)
-    print(f"Listening for truehdd OSC: 127.0.0.1:{args.truehdd_port}")
+    print(f"Listening for gsrd OSC: 127.0.0.1:{args.gsrd_port}")
     print(f"Sending to Carla: {carla_host}:{carla_port}")
     print()
     print("Message flow:")
-    print("  truehdd → OSC (port 9000) → This bridge → Carla OSC → SPARTA Panner")
+    print("  gsrd → OSC (port 9000) → This bridge → Carla OSC → SPARTA Panner")
     print()
     print("Press Ctrl+C to stop")
     print("=" * 70)

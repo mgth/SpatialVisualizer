@@ -26,13 +26,13 @@ Immersive audio 9.1.6 configuration (ITU-R BS.2051-3 Config 6+4+0)
 Use the `--speaker-layout` flag to specify a layout file when decoding with VBAP:
 
 ```bash
-truehdd decode --enable-vbap --speaker-layout layouts/7.1.4.yaml input.thd
+gsrd decode --enable-vbap --speaker-layout layouts/7.1.4.yaml input.thd
 ```
 
 Or use a preset name directly in code:
 
 ```rust
-use truehdd::speaker_layout::SpeakerLayout;
+use gsrd::speaker_layout::SpeakerLayout;
 
 let layout = SpeakerLayout::preset("7.1.4")?;
 ```
@@ -120,10 +120,10 @@ You can test if your layout file is valid by trying to load it:
 
 ```bash
 # This will validate the layout during build
-truehdd decode --enable-vbap --speaker-layout my_layout.yaml --help
+gsrd decode --enable-vbap --speaker-layout my_layout.yaml --help
 ```
 
-If there are errors in the YAML format or speaker positions, truehdd will report them clearly.
+If there are errors in the YAML format or speaker positions, gsrd will report them clearly.
 
 ## Reference Standards
 

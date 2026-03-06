@@ -20,11 +20,23 @@ pub struct Meter {
     pub rms_dbfs: f64,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RoomRatio {
     pub width: f64,
     pub length: f64,
     pub height: f64,
+    pub rear: f64,
+}
+
+impl Default for RoomRatio {
+    fn default() -> Self {
+        Self {
+            width: 1.0,
+            length: 2.0,
+            height: 1.0,
+            rear: 1.0,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -76,6 +88,12 @@ pub struct AppState {
     pub latency_ms: Option<i64>,
     #[serde(rename = "resampleRatio")]
     pub resample_ratio: Option<f64>,
+    #[serde(rename = "audioSampleRate")]
+    pub audio_sample_rate: Option<u32>,
+    #[serde(rename = "audioSampleFormat")]
+    pub audio_sample_format: Option<String>,
+    #[serde(rename = "oscStatus")]
+    pub osc_status: Option<String>,
     #[serde(rename = "lastSpatialSamplePos")]
     pub last_spatial_sample_pos: Option<i64>,
     pub layouts: Vec<Layout>,
@@ -93,6 +111,7 @@ impl AppState {
                 width: 1.0,
                 length: 2.0,
                 height: 1.0,
+                rear: 1.0,
             },
             ..Default::default()
         }
@@ -120,6 +139,9 @@ impl Default for AppState {
             config_saved: None,
             latency_ms: None,
             resample_ratio: None,
+            audio_sample_rate: None,
+            audio_sample_format: None,
+            osc_status: Some("initializing".to_string()),
             last_spatial_sample_pos: None,
             layouts: Vec::new(),
             selected_layout_key: None,

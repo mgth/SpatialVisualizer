@@ -27,6 +27,28 @@ pub enum OscControlMsg {
     SendNoArgs {
         address: String,
     },
+    SendString {
+        address: String,
+        value: String,
+    },
+    SendFloats3 {
+        address: String,
+        a: f32,
+        b: f32,
+        c: f32,
+    },
+    SendSpeakerAdd {
+        name: String,
+        azimuth: f32,
+        elevation: f32,
+        distance: f32,
+        spatialize: i32,
+        delay_ms: f32,
+    },
+    SendSpeakersMove {
+        from: i32,
+        to: i32,
+    },
     Reconnect {
         host: String,
         rx_port: u16,
@@ -69,6 +91,75 @@ fn send_osc_no_args(socket: &UdpSocket, addr: &str, host: &str, rx_port: u16) {
     }
 }
 
+fn send_osc_string(socket: &UdpSocket, addr: &str, host: &str, rx_port: u16, value: &str) {
+    use rosc::{encoder, OscMessage, OscType};
+    let msg = OscPacket::Message(OscMessage {
+        addr: addr.to_string(),
+        args: vec![OscType::String(value.to_string())],
+    });
+    if let Ok(data) = encoder::encode(&msg) {
+        let _ = socket.send_to(&data, format!("{host}:{rx_port}"));
+    }
+}
+
+fn send_osc_floats3(
+    socket: &UdpSocket,
+    addr: &str,
+    host: &str,
+    rx_port: u16,
+    a: f32,
+    b: f32,
+    c: f32,
+) {
+    use rosc::{encoder, OscMessage, OscType};
+    let msg = OscPacket::Message(OscMessage {
+        addr: addr.to_string(),
+        args: vec![OscType::Float(a), OscType::Float(b), OscType::Float(c)],
+    });
+    if let Ok(data) = encoder::encode(&msg) {
+        let _ = socket.send_to(&data, format!("{host}:{rx_port}"));
+    }
+}
+
+fn send_osc_speaker_add(
+    socket: &UdpSocket,
+    host: &str,
+    rx_port: u16,
+    name: &str,
+    azimuth: f32,
+    elevation: f32,
+    distance: f32,
+    spatialize: i32,
+    delay_ms: f32,
+) {
+    use rosc::{encoder, OscMessage, OscType};
+    let msg = OscPacket::Message(OscMessage {
+        addr: "/gsrd/control/speakers/add".to_string(),
+        args: vec![
+            OscType::String(name.to_string()),
+            OscType::Float(azimuth),
+            OscType::Float(elevation),
+            OscType::Float(distance),
+            OscType::Int(if spatialize != 0 { 1 } else { 0 }),
+            OscType::Float(delay_ms),
+        ],
+    });
+    if let Ok(data) = encoder::encode(&msg) {
+        let _ = socket.send_to(&data, format!("{host}:{rx_port}"));
+    }
+}
+
+fn send_osc_speakers_move(socket: &UdpSocket, host: &str, rx_port: u16, from: i32, to: i32) {
+    use rosc::{encoder, OscMessage, OscType};
+    let msg = OscPacket::Message(OscMessage {
+        addr: "/gsrd/control/speakers/move".to_string(),
+        args: vec![OscType::Int(from.max(0)), OscType::Int(to.max(0))],
+    });
+    if let Ok(data) = encoder::encode(&msg) {
+        let _ = socket.send_to(&data, format!("{host}:{rx_port}"));
+    }
+}
+
 fn send_register(socket: &UdpSocket, host: &str, rx_port: u16, listen_port: u16) {
     send_osc_int(socket, "/gsrd/register", host, rx_port, listen_port as i32);
     log::info!("[osc] register sent → udp://{host}:{rx_port} listen_port={listen_port}");
@@ -76,6 +167,14 @@ fn send_register(socket: &UdpSocket, host: &str, rx_port: u16, listen_port: u16)
 
 fn send_heartbeat(socket: &UdpSocket, host: &str, rx_port: u16, listen_port: u16) {
     send_osc_int(socket, "/gsrd/heartbeat", host, rx_port, listen_port as i32);
+}
+
+fn emit_osc_status(app: &AppHandle, state: &Arc<Mutex<AppState>>, status: &str) {
+    {
+        let mut s = state.lock().unwrap();
+        s.osc_status = Some(status.to_string());
+    }
+    let _ = app.emit("osc:status", serde_json::json!({ "status": status }));
 }
 
 // ── public spawn function ─────────────────────────────────────────────────
@@ -102,35 +201,6 @@ pub fn spawn_osc_task(
     });
 }
 
-fn debug_log_packet(packet: &OscPacket) {
-    match packet {
-        OscPacket::Message(msg) => {
-            let args_repr: Vec<String> = msg
-                .args
-                .iter()
-                .map(|a| match a {
-                    rosc::OscType::Float(v) => format!("f:{v:.3}"),
-                    rosc::OscType::Double(v) => format!("d:{v:.3}"),
-                    rosc::OscType::Int(v) => format!("i:{v}"),
-                    rosc::OscType::Long(v) => format!("l:{v}"),
-                    rosc::OscType::String(s) => format!("s:{s:?}"),
-                    _ => "?".to_string(),
-                })
-                .collect();
-            eprintln!(
-                "[osc] {addr}  [{args}]",
-                addr = msg.addr,
-                args = args_repr.join(", ")
-            );
-        }
-        OscPacket::Bundle(b) => {
-            for pkt in &b.content {
-                debug_log_packet(pkt);
-            }
-        }
-    }
-}
-
 fn osc_thread(
     app: AppHandle,
     state: Arc<Mutex<AppState>>,
@@ -145,6 +215,7 @@ fn osc_thread(
         Ok(s) => s,
         Err(e) => {
             log::error!("[osc] bind failed: {e}");
+            emit_osc_status(&app, &state, "error");
             return;
         }
     };
@@ -157,10 +228,12 @@ fn osc_thread(
     log::info!("[osc] listening on udp://0.0.0.0:{listen_port}");
 
     send_register(&socket, &host, osc_rx_port, listen_port);
+    emit_osc_status(&app, &state, "reconnecting");
 
     let mut last_ack_at = Instant::now();
     let mut last_heartbeat_at = Instant::now();
     let mut latency_ema: Option<f64> = None;
+    let mut is_connected = false;
 
     let mut buf = [0u8; 65536];
 
@@ -178,6 +251,35 @@ fn osc_thread(
                     OscControlMsg::SendNoArgs { address } => {
                         send_osc_no_args(&socket, &address, &host, osc_rx_port);
                     }
+                    OscControlMsg::SendString { address, value } => {
+                        send_osc_string(&socket, &address, &host, osc_rx_port, &value);
+                    }
+                    OscControlMsg::SendFloats3 { address, a, b, c } => {
+                        send_osc_floats3(&socket, &address, &host, osc_rx_port, a, b, c);
+                    }
+                    OscControlMsg::SendSpeakerAdd {
+                        name,
+                        azimuth,
+                        elevation,
+                        distance,
+                        spatialize,
+                        delay_ms,
+                    } => {
+                        send_osc_speaker_add(
+                            &socket,
+                            &host,
+                            osc_rx_port,
+                            &name,
+                            azimuth,
+                            elevation,
+                            distance,
+                            spatialize,
+                            delay_ms,
+                        );
+                    }
+                    OscControlMsg::SendSpeakersMove { from, to } => {
+                        send_osc_speakers_move(&socket, &host, osc_rx_port, from, to);
+                    }
                     OscControlMsg::Reconnect {
                         host: h,
                         rx_port,
@@ -188,6 +290,10 @@ fn osc_thread(
                         latency_ema = None;
                         send_register(&socket, &host, osc_rx_port, lp);
                         last_ack_at = Instant::now();
+                        if is_connected {
+                            is_connected = false;
+                        }
+                        emit_osc_status(&app, &state, "reconnecting");
                     }
                 },
                 Err(tokio::sync::mpsc::error::TryRecvError::Empty) => break,
@@ -203,8 +309,11 @@ fn osc_thread(
             if last_ack_at.elapsed() >= HEARTBEAT_ACK_TIMEOUT {
                 log::warn!("[osc] heartbeat timeout, re-registering");
                 latency_ema = None;
+                if is_connected {
+                    is_connected = false;
+                    emit_osc_status(&app, &state, "reconnecting");
+                }
                 send_register(&socket, &host, osc_rx_port, listen_port);
-                last_ack_at = Instant::now();
             }
         }
 
@@ -216,7 +325,6 @@ fn osc_thread(
 
         match decoder::decode_udp(&buf[..n]) {
             Ok((_, packet)) => {
-                debug_log_packet(&packet);
                 handle_packet(
                     packet,
                     &app,
@@ -226,10 +334,11 @@ fn osc_thread(
                     osc_rx_port,
                     listen_port,
                     &mut last_ack_at,
+                    &mut is_connected,
                     &mut latency_ema,
                 );
             }
-            Err(e) => eprintln!("[osc] decode error: {e}"),
+            Err(_) => {}
         }
     }
 }
@@ -243,6 +352,7 @@ fn handle_packet(
     osc_rx_port: u16,
     listen_port: u16,
     last_ack_at: &mut Instant,
+    is_connected: &mut bool,
     latency_ema: &mut Option<f64>,
 ) {
     match packet {
@@ -250,18 +360,30 @@ fn handle_packet(
             match is_heartbeat_address(&msg.addr) {
                 HeartbeatResponse::Ack => {
                     *last_ack_at = Instant::now();
+                    if !*is_connected {
+                        *is_connected = true;
+                        emit_osc_status(app, state, "connected");
+                    }
                     return;
                 }
                 HeartbeatResponse::Unknown => {
                     log::info!("[osc] heartbeat/unknown → re-registering");
                     send_register(socket, host, osc_rx_port, listen_port);
                     *last_ack_at = Instant::now();
+                    if *is_connected {
+                        *is_connected = false;
+                        emit_osc_status(app, state, "reconnecting");
+                    }
                     return;
                 }
                 HeartbeatResponse::None => {}
             }
 
             if let Some(ev) = parse_osc_message(&msg.addr, &msg.args) {
+                if !*is_connected {
+                    *is_connected = true;
+                    emit_osc_status(app, state, "connected");
+                }
                 handle_event(ev, app, state, latency_ema);
             }
         }
@@ -274,17 +396,29 @@ fn handle_packet(
                         match is_heartbeat_address(&msg.addr) {
                             HeartbeatResponse::Ack => {
                                 *last_ack_at = Instant::now();
+                                if !*is_connected {
+                                    *is_connected = true;
+                                    emit_osc_status(app, state, "connected");
+                                }
                                 continue;
                             }
                             HeartbeatResponse::Unknown => {
                                 send_register(socket, host, osc_rx_port, listen_port);
                                 *last_ack_at = Instant::now();
+                                if *is_connected {
+                                    *is_connected = false;
+                                    emit_osc_status(app, state, "reconnecting");
+                                }
                                 continue;
                             }
                             HeartbeatResponse::None => {}
                         }
 
-                        if let Some(ev) = parse_osc_message(&msg.addr, &msg.args) {
+                            if let Some(ev) = parse_osc_message(&msg.addr, &msg.args) {
+                                if !*is_connected {
+                                    *is_connected = true;
+                                    emit_osc_status(app, state, "connected");
+                                }
                             let is_config = matches!(
                                 &ev,
                                 OscEvent::ConfigSpeakersCount { .. }
@@ -301,6 +435,10 @@ fn handle_packet(
                         for pkt2 in inner.content {
                             if let OscPacket::Message(msg) = pkt2 {
                                 if let Some(ev) = parse_osc_message(&msg.addr, &msg.args) {
+                                    if !*is_connected {
+                                        *is_connected = true;
+                                        emit_osc_status(app, state, "connected");
+                                    }
                                     handle_event(ev, app, state, latency_ema);
                                 }
                             }
@@ -492,6 +630,24 @@ fn handle_event(
                     removed_ids,
                 )
             }
+            OscEvent::StateSpeakerDelay { id, delay_ms } => {
+                if let Ok(index) = id.parse::<usize>() {
+                    if let Some(layout_key) = s.selected_layout_key.clone() {
+                        if let Some(layout) = s.layouts.iter_mut().find(|l| l.key == layout_key) {
+                            if let Some(spk) = layout.speakers.get_mut(index) {
+                                spk.delay_ms = delay_ms.max(0.0);
+                            }
+                        }
+                    }
+                }
+                (
+                    Some((
+                        "speaker:delay",
+                        serde_json::json!({ "id": id, "delayMs": delay_ms.max(0.0) }),
+                    )),
+                    removed_ids,
+                )
+            }
 
             OscEvent::StateObjectMute { id, muted } => {
                 if muted {
@@ -522,6 +678,42 @@ fn handle_event(
                     removed_ids,
                 )
             }
+            OscEvent::StateSpeakerSpatialize { id, spatialize } => {
+                if let Ok(index) = id.parse::<usize>() {
+                    if let Some(layout_key) = s.selected_layout_key.clone() {
+                        if let Some(layout) = s.layouts.iter_mut().find(|l| l.key == layout_key) {
+                            if let Some(spk) = layout.speakers.get_mut(index) {
+                                spk.spatialize = if spatialize { 1 } else { 0 };
+                            }
+                        }
+                    }
+                }
+                (
+                    Some((
+                        "speaker:spatialize",
+                        serde_json::json!({ "id": id, "spatialize": if spatialize { 1 } else { 0 } }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateSpeakerName { id, name } => {
+                if let Ok(index) = id.parse::<usize>() {
+                    if let Some(layout_key) = s.selected_layout_key.clone() {
+                        if let Some(layout) = s.layouts.iter_mut().find(|l| l.key == layout_key) {
+                            if let Some(spk) = layout.speakers.get_mut(index) {
+                                spk.id = name.clone();
+                            }
+                        }
+                    }
+                }
+                (
+                    Some((
+                        "speaker:name",
+                        serde_json::json!({ "id": id, "name": name }),
+                    )),
+                    removed_ids,
+                )
+            }
 
             OscEvent::StateRoomRatio {
                 width,
@@ -535,8 +727,44 @@ fn handle_event(
                     Some((
                         "room_ratio",
                         serde_json::json!({
-                            "roomRatio": { "width": width, "length": length, "height": height }
+                            "roomRatio": {
+                                "width": width,
+                                "length": length,
+                                "height": height,
+                                "rear": s.room_ratio.rear
+                            }
                         }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateRoomRatioRear { value } => {
+                s.room_ratio.rear = value;
+                (
+                    Some((
+                        "room_ratio",
+                        serde_json::json!({
+                            "roomRatio": {
+                                "width": s.room_ratio.width,
+                                "length": s.room_ratio.length,
+                                "height": s.room_ratio.height,
+                                "rear": value
+                            }
+                        }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateLayoutRadiusM { value } => {
+                if let Some(layout_key) = s.selected_layout_key.clone() {
+                    if let Some(layout) = s.layouts.iter_mut().find(|l| l.key == layout_key) {
+                        layout.radius_m = value.max(0.01);
+                    }
+                }
+                (
+                    Some((
+                        "layout:radius_m",
+                        serde_json::json!({ "value": value.max(0.01) }),
                     )),
                     removed_ids,
                 )
@@ -609,6 +837,26 @@ fn handle_event(
                 s.resample_ratio = Some(value);
                 (
                     Some(("resample_ratio", serde_json::json!({ "value": value }))),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAudioSampleRate { value } => {
+                s.audio_sample_rate = if value == 0 { None } else { Some(value) };
+                (
+                    Some((
+                        "audio:sample_rate",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAudioSampleFormat { value } => {
+                s.audio_sample_format = Some(value.clone());
+                (
+                    Some((
+                        "audio:sample_format",
+                        serde_json::json!({ "value": value }),
+                    )),
                     removed_ids,
                 )
             }

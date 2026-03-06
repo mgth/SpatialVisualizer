@@ -106,8 +106,8 @@ function broadcast(payload) {
 
 function buildLiveLayoutFromSpeakers(speakers) {
   return {
-    key: 'truehdd-live',
-    name: 'truehdd (live)',
+    key: 'gsrd-live',
+    name: 'gsrd (live)',
     speakers: speakers.map((speaker) => ({
       id: speaker.name || `spk-${speaker.index}`,
       x: speaker.position.x,
@@ -118,7 +118,7 @@ function buildLiveLayoutFromSpeakers(speakers) {
   };
 }
 
-function applyTruehddSpeakerConfig(speakers) {
+function applyGsrdSpeakerConfig(speakers) {
   if (!Array.isArray(speakers) || speakers.length === 0) {
     return;
   }
@@ -392,10 +392,10 @@ function handleOscBundle(bundle) {
 
   const count = countMessage?.count;
   if (typeof count === 'number' && speakerPackets.length !== count) {
-    console.warn(`[osc] truehdd speaker config count mismatch: expected ${count}, got ${speakerPackets.length}`);
+    console.warn(`[osc] gsrd speaker config count mismatch: expected ${count}, got ${speakerPackets.length}`);
   }
 
-  applyTruehddSpeakerConfig(speakerPackets);
+  applyGsrdSpeakerConfig(speakerPackets);
 }
 
 const oscUdpPort = new osc.UDPPort({
@@ -408,7 +408,7 @@ let heartbeatInterval = null;
 let activeListenPort = null;
 let lastHeartbeatAckAt = 0;
 
-function sendTruehddControlMessage(address, listenPort) {
+function sendGsrdControlMessage(address, listenPort) {
   oscUdpPort.send(
     {
       address,
@@ -419,7 +419,7 @@ function sendTruehddControlMessage(address, listenPort) {
   );
 }
 
-function sendTruehddFloatControl(address, value) {
+function sendGsrdFloatControl(address, value) {
   oscUdpPort.send(
     {
       address,
@@ -430,7 +430,7 @@ function sendTruehddFloatControl(address, value) {
   );
 }
 
-function sendTruehddIntControl(address, value) {
+function sendGsrdIntControl(address, value) {
   oscUdpPort.send(
     {
       address,
@@ -441,7 +441,7 @@ function sendTruehddIntControl(address, value) {
   );
 }
 
-function sendTruehddNoArgs(address) {
+function sendGsrdNoArgs(address) {
   oscUdpPort.send(
     {
       address
@@ -451,24 +451,24 @@ function sendTruehddNoArgs(address) {
   );
 }
 
-function registerToTruehdd(listenPort, reason = 'startup') {
+function registerToGsrd(listenPort, reason = 'startup') {
   activeListenPort = listenPort;
   latencyEma = null;
-  sendTruehddControlMessage('/truehdd/register', listenPort);
+  sendGsrdControlMessage('/gsrd/register', listenPort);
   lastHeartbeatAckAt = Date.now();
   console.log(`[osc] register sent to udp://${OSC_HOST}:${OSC_RX_PORT} with listen_port=${listenPort} (${reason})`);
 }
 
 function handleHeartbeatResponseAddress(address) {
   const normalized = String(address || '').toLowerCase();
-  if (normalized === '/truehdd/heartbeat/ack') {
+  if (normalized === '/gsrd/heartbeat/ack') {
     lastHeartbeatAckAt = Date.now();
     return true;
   }
 
-  if (normalized === '/truehdd/heartbeat/unknown') {
+  if (normalized === '/gsrd/heartbeat/unknown') {
     if (activeListenPort !== null) {
-      registerToTruehdd(activeListenPort, 'heartbeat unknown');
+      registerToGsrd(activeListenPort, 'heartbeat unknown');
     }
     return true;
   }
@@ -489,11 +489,11 @@ function startHeartbeat(listenPort) {
   lastHeartbeatAckAt = Date.now();
 
   heartbeatInterval = setInterval(() => {
-    sendTruehddControlMessage('/truehdd/heartbeat', listenPort);
+    sendGsrdControlMessage('/gsrd/heartbeat', listenPort);
 
     const ackAgeMs = Date.now() - lastHeartbeatAckAt;
     if (ackAgeMs > HEARTBEAT_ACK_TIMEOUT_MS) {
-      registerToTruehdd(listenPort, `heartbeat timeout ${Math.round(ackAgeMs)}ms`);
+      registerToGsrd(listenPort, `heartbeat timeout ${Math.round(ackAgeMs)}ms`);
     }
   }, HEARTBEAT_INTERVAL_MS);
 
@@ -506,10 +506,10 @@ oscUdpPort.on('ready', () => {
   const listenPort = oscUdpPort.socket?.address?.().port || OSC_PORT;
   console.log(`[osc] listening on udp://0.0.0.0:${listenPort}`);
 
-  registerToTruehdd(listenPort);
+  registerToGsrd(listenPort);
 
   startHeartbeat(listenPort);
-  console.log(`[osc] heartbeat started: /truehdd/heartbeat every ${HEARTBEAT_INTERVAL_MS / 1000}s`);
+  console.log(`[osc] heartbeat started: /gsrd/heartbeat every ${HEARTBEAT_INTERVAL_MS / 1000}s`);
 });
 
 oscUdpPort.on('message', handleOscMessage);
@@ -539,7 +539,7 @@ wss.on('connection', (ws) => {
           return;
         }
         const clampedGain = Math.min(2, Math.max(0, gain));
-        sendTruehddFloatControl(`/truehdd/control/object/${Math.floor(id)}/gain`, clampedGain);
+        sendGsrdFloatControl(`/gsrd/control/object/${Math.floor(id)}/gain`, clampedGain);
       }
 
       if (payload?.type === 'control:speaker:gain') {
@@ -549,7 +549,7 @@ wss.on('connection', (ws) => {
           return;
         }
         const clampedGain = Math.min(2, Math.max(0, gain));
-        sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/gain`, clampedGain);
+        sendGsrdFloatControl(`/gsrd/control/speaker/${Math.floor(id)}/gain`, clampedGain);
       }
 
       if (payload?.type === 'control:object:mute') {
@@ -558,7 +558,7 @@ wss.on('connection', (ws) => {
         if (!Number.isFinite(id) || id < 0 || !Number.isFinite(muted)) {
           return;
         }
-        sendTruehddIntControl(`/truehdd/control/object/${Math.floor(id)}/mute`, muted ? 1 : 0);
+        sendGsrdIntControl(`/gsrd/control/object/${Math.floor(id)}/mute`, muted ? 1 : 0);
       }
 
       if (payload?.type === 'control:speaker:mute') {
@@ -567,7 +567,7 @@ wss.on('connection', (ws) => {
         if (!Number.isFinite(id) || id < 0 || !Number.isFinite(muted)) {
           return;
         }
-        sendTruehddIntControl(`/truehdd/control/speaker/${Math.floor(id)}/mute`, muted ? 1 : 0);
+        sendGsrdIntControl(`/gsrd/control/speaker/${Math.floor(id)}/mute`, muted ? 1 : 0);
       }
 
       if (payload?.type === 'control:master:gain') {
@@ -576,7 +576,7 @@ wss.on('connection', (ws) => {
           return;
         }
         const clampedGain = Math.min(2, Math.max(0, gain));
-        sendTruehddFloatControl('/truehdd/control/gain', clampedGain);
+        sendGsrdFloatControl('/gsrd/control/gain', clampedGain);
       }
 
       if (payload?.type === 'control:dialog_norm') {
@@ -584,7 +584,7 @@ wss.on('connection', (ws) => {
         if (!Number.isFinite(enable)) {
           return;
         }
-        sendTruehddIntControl('/truehdd/control/dialog_norm', enable ? 1 : 0);
+        sendGsrdIntControl('/gsrd/control/dialog_norm', enable ? 1 : 0);
       }
 
       if (payload?.type === 'control:spread:min') {
@@ -593,7 +593,7 @@ wss.on('connection', (ws) => {
           return;
         }
         const clamped = Math.min(1, Math.max(0, value));
-        sendTruehddFloatControl('/truehdd/control/spread/min', clamped);
+        sendGsrdFloatControl('/gsrd/control/spread/min', clamped);
       }
 
       if (payload?.type === 'control:spread:max') {
@@ -602,25 +602,25 @@ wss.on('connection', (ws) => {
           return;
         }
         const clamped = Math.min(1, Math.max(0, value));
-        sendTruehddFloatControl('/truehdd/control/spread/max', clamped);
+        sendGsrdFloatControl('/gsrd/control/spread/max', clamped);
       }
 
       if (payload?.type === 'control:distance_diffuse:enabled') {
         const enable = Number(payload.enable);
         if (!Number.isFinite(enable)) return;
-        sendTruehddIntControl('/truehdd/control/distance_diffuse/enabled', enable ? 1 : 0);
+        sendGsrdIntControl('/gsrd/control/distance_diffuse/enabled', enable ? 1 : 0);
       }
 
       if (payload?.type === 'control:distance_diffuse:threshold') {
         const value = Number(payload.value);
         if (!Number.isFinite(value)) return;
-        sendTruehddFloatControl('/truehdd/control/distance_diffuse/threshold', Math.max(0.01, value));
+        sendGsrdFloatControl('/gsrd/control/distance_diffuse/threshold', Math.max(0.01, value));
       }
 
       if (payload?.type === 'control:distance_diffuse:curve') {
         const value = Number(payload.value);
         if (!Number.isFinite(value)) return;
-        sendTruehddFloatControl('/truehdd/control/distance_diffuse/curve', Math.max(0, value));
+        sendGsrdFloatControl('/gsrd/control/distance_diffuse/curve', Math.max(0, value));
       }
 
       if (payload?.type === 'control:speaker:az') {
@@ -629,7 +629,7 @@ wss.on('connection', (ws) => {
         if (!Number.isFinite(id) || id < 0 || !Number.isFinite(value)) {
           return;
         }
-        sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/az`, value);
+        sendGsrdFloatControl(`/gsrd/control/speaker/${Math.floor(id)}/az`, value);
       }
 
       if (payload?.type === 'control:speaker:el') {
@@ -638,7 +638,7 @@ wss.on('connection', (ws) => {
         if (!Number.isFinite(id) || id < 0 || !Number.isFinite(value)) {
           return;
         }
-        sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/el`, value);
+        sendGsrdFloatControl(`/gsrd/control/speaker/${Math.floor(id)}/el`, value);
       }
 
       if (payload?.type === 'control:speaker:distance') {
@@ -647,15 +647,15 @@ wss.on('connection', (ws) => {
         if (!Number.isFinite(id) || id < 0 || !Number.isFinite(value)) {
           return;
         }
-        sendTruehddFloatControl(`/truehdd/control/speaker/${Math.floor(id)}/distance`, value);
+        sendGsrdFloatControl(`/gsrd/control/speaker/${Math.floor(id)}/distance`, value);
       }
 
       if (payload?.type === 'control:speakers:apply') {
-        sendTruehddNoArgs('/truehdd/control/speakers/apply');
+        sendGsrdNoArgs('/gsrd/control/speakers/apply');
       }
 
       if (payload?.type === 'control:save_config') {
-        sendTruehddNoArgs('/truehdd/control/save_config');
+        sendGsrdNoArgs('/gsrd/control/save_config');
       }
     } catch {
       // Ignore invalid client payloads.

@@ -277,12 +277,18 @@
       .info-list {
         max-height: none;
         overflow: auto;
+        scrollbar-gutter: stable;
         font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
         font-size: 12.5px;
         display: grid;
         gap: 0.25rem;
         flex: 1 1 auto;
         min-height: 0;
+      }
+
+      #objectsList {
+        padding-right: 0.6rem;
+        box-sizing: border-box;
       }
 
       .info-item {
@@ -329,6 +335,38 @@
         gap: 0.35rem;
         align-items: center;
         margin-top: 0.2rem;
+      }
+
+      .speaker-item .control-row {
+        grid-template-columns: auto auto;
+        justify-content: end;
+      }
+
+      .object-item .control-row {
+        grid-template-columns: minmax(0, 1fr) auto auto auto;
+        padding-right: 0.35rem;
+      }
+
+      .delay-input {
+        width: 52px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        color: #dfe8f3;
+        font-size: 11px;
+        padding: 0.1rem 0.3rem;
+        text-align: right;
+      }
+
+      .delay-input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.45);
+      }
+
+      .delay-label {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.45);
+        white-space: nowrap;
       }
 
       #masterSection .control-row {
@@ -422,33 +460,114 @@
         display: grid;
         gap: 0.2rem;
       }
+
+      .editor-body {
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .editor-meta {
+        display: grid;
+        gap: 0.2rem;
+        font-size: 12px;
+        color: #d9ecff;
+      }
+
+      .editor-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.4rem;
+        align-items: center;
+      }
+
+      .gain-row {
+        grid-template-columns: auto 1fr auto;
+      }
+
+      .editor-row label {
+        font-size: 12px;
+        color: #d9ecff;
+      }
+
+      .coord-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.35rem;
+      }
+
+      .coord-grid input {
+        width: 100%;
+        box-sizing: border-box;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        color: #dfe8f3;
+        font-size: 11px;
+        padding: 0.15rem 0.35rem;
+        text-align: right;
+      }
+
+      .coord-grid input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.45);
+      }
+
+      .name-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        color: #dfe8f3;
+        font-size: 12px;
+        padding: 0.2rem 0.4rem;
+      }
     </style>
   </head>
   <body>
     <div id="overlay">
-      <div><strong>Spatial Visualizer</strong></div>
+      <div><strong data-i18n="app.title">Spatial Visualizer</strong></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <div><span class="osc-status-dot" id="oscStatusDot"></span>OSC: <span id="status">initialisation...</span></div>
-        <button id="oscConfigToggleBtn" title="Configuration OSC">⚙</button>
+        <div><span class="osc-status-dot" id="oscStatusDot"></span>OSC: <span id="status">Initializing...</span></div>
+        <button id="oscConfigToggleBtn" data-i18n-title="osc.configTitle" title="OSC Configuration">⚙</button>
       </div>
       <div class="osc-config-form" id="oscConfigForm">
         <div class="osc-config-row">
-          <label for="oscHostInput">Host</label>
+          <label for="oscHostInput" data-i18n="osc.host">Host</label>
           <input id="oscHostInput" type="text" value="127.0.0.1" spellcheck="false" />
         </div>
         <div class="osc-config-row">
-          <label for="oscRxPortInput">Port gsrd</label>
+          <label for="oscRxPortInput" data-i18n="osc.gsrdPort">GSRD Port</label>
           <input id="oscRxPortInput" type="number" min="1" max="65535" value="9000" />
         </div>
         <div class="osc-config-row">
-          <label for="oscListenPortInput">Port écoute</label>
+          <label for="oscListenPortInput" data-i18n="osc.listenPort">Listen Port</label>
           <input id="oscListenPortInput" type="number" min="0" max="65535" value="0" />
         </div>
         <div class="osc-config-actions">
-          <button id="oscConfigApplyBtn" style="background:rgba(80,200,120,0.2);border:1px solid rgba(80,200,120,0.4);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.7rem;cursor:pointer">Appliquer</button>
+          <button id="oscConfigApplyBtn" data-i18n="osc.apply" style="background:rgba(80,200,120,0.2);border:1px solid rgba(80,200,120,0.4);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.7rem;cursor:pointer">Apply</button>
         </div>
       </div>
       <div id="roomRatio">room_ratio: —</div>
+      <div class="control-row" style="margin-top:0.2rem;grid-template-columns:auto auto auto auto auto auto">
+        <label style="font-size:12px;white-space:nowrap">Room ratio</label>
+        <input id="roomRatioWidthInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" />
+        <input id="roomRatioLengthInput" class="delay-input" type="number" min="0.01" step="0.01" value="2.00" style="width:4.2rem" />
+        <input id="roomRatioHeightInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" />
+        <input id="roomRatioRearInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" title="Rear Z ratio" placeholder="rear" />
+        <button id="roomRatioApplyBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Apply</button>
+      </div>
+      <div class="control-row" style="margin-top:0.2rem">
+        <label for="metersPerUnitInput" style="font-size:12px;white-space:nowrap">Meters / unit</label>
+        <input id="metersPerUnitInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:5.5rem" />
+      </div>
+      <div class="control-row" style="margin-top:0.2rem">
+        <label style="font-size:12px;white-space:nowrap">Room size (m)</label>
+        <input id="roomDimWidthInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" />
+        <input id="roomDimLengthInput" class="delay-input" type="number" min="0.01" step="0.01" value="2.00" style="width:4.2rem" />
+        <input id="roomDimHeightInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" />
+        <button id="roomDimApplyBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Apply</button>
+      </div>
       <div class="spread-row">
         <div id="spreadInfo">spread: — / —</div>
         <div class="dual-range">
@@ -467,23 +586,38 @@
         </div>
       </div>
       <div id="resampleRatioInfo">resample: —</div>
+      <div id="audioFormatInfo">audio: — / —</div>
+      <div class="control-row" style="margin-top:0.3rem">
+        <label for="audioSampleRateInput" style="font-size:12px;white-space:nowrap">Sample rate</label>
+        <div id="audioSampleRateControl" style="position:relative;display:flex;align-items:center;gap:0.2rem;flex:1 1 auto;min-width:0">
+          <input id="audioSampleRateInput" class="delay-input" type="text" inputmode="numeric" value="0" style="flex:1 1 auto;min-width:0" />
+          <button id="audioSampleRateMenuBtn" type="button" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.1rem 0.45rem;cursor:pointer">▾</button>
+          <div id="audioSampleRateMenu" style="position:absolute;left:0;right:0;top:calc(100% + 0.2rem);display:none;z-index:20;background:rgba(10,11,16,0.96);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:0.2rem;max-height:180px;overflow:auto"></div>
+        </div>
+        <button id="audioSampleRateApplyBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Apply</button>
+      </div>
 
       <div class="info-section" id="objectsSection">
-        <div class="info-title">Objets</div>
-        <div id="objectsList" class="info-list">Aucun objet.</div>
+        <div class="info-title" data-i18n="section.objects">Objects</div>
+        <div id="objectsList" class="info-list">No objects.</div>
+      </div>
+      <div class="info-section" id="trailSection">
+        <div class="info-title" data-i18n="trail.title">Trails</div>
+        <div class="inline-toggle">
+          <label for="trailToggle" data-i18n="trail.show">Show</label>
+          <input id="trailToggle" type="checkbox" checked />
+        </div>
+        <div class="control-row" style="margin-top:0.3rem">
+          <label style="font-size:12px;white-space:nowrap"><span data-i18n="trail.points">Points</span> <span id="trailLengthVal">80</span></label>
+          <input id="trailLengthSlider" type="range" min="10" max="300" step="10" value="80" class="gain-slider" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label style="font-size:12px;white-space:nowrap"><span data-i18n="trail.duration">Duration</span> <span id="trailTtlVal">7.0s</span></label>
+          <input id="trailTtlSlider" type="range" min="1.0" max="20.0" step="0.5" value="7.0" class="gain-slider" />
+        </div>
       </div>
     </div>
     <div id="speakersOverlay">
-      <label for="layoutSelect">Layout:</label>
-      <select id="layoutSelect" disabled>
-        <option>Chargement...</option>
-      </select>
-      <label for="editModeSelect">Édition:</label>
-      <select id="editModeSelect">
-        <option value="polar">Anneaux + élévation</option>
-        <option value="direct">Drag direct</option>
-        <option value="cartesian">Cartésien</option>
-      </select>
       <div class="info-section" id="masterSection">
         <div class="info-title">Master</div>
         <div class="meter-row">
@@ -500,42 +634,93 @@
       <div class="info-section" id="configSection">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
           <span id="configSavedIndicator" style="font-size:12px;color:#d9ecff">—</span>
-          <button id="saveConfigBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.6rem;cursor:pointer">Sauvegarder</button>
+          <div style="display:flex;gap:0.35rem;align-items:center">
+            <button id="importLayoutBtn" data-i18n="config.import" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.6rem;cursor:pointer">Import layout</button>
+            <button id="exportLayoutBtn" data-i18n="config.export" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.6rem;cursor:pointer">Export layout</button>
+            <button id="saveConfigBtn" data-i18n="config.save" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.6rem;cursor:pointer">Save</button>
+          </div>
         </div>
       </div>
       <div class="info-section" id="distanceDiffuseSection">
         <div class="info-title">Distance Diffuse</div>
         <div class="inline-toggle">
-          <label for="distanceDiffuseToggle">Activer</label>
+          <label for="distanceDiffuseToggle" data-i18n="distance.enable">Enable</label>
           <input id="distanceDiffuseToggle" type="checkbox" />
         </div>
         <div class="control-row" style="margin-top:0.3rem">
-          <label style="font-size:12px;white-space:nowrap">Seuil <span id="distanceDiffuseThresholdVal">1.00</span></label>
+          <label style="font-size:12px;white-space:nowrap"><span data-i18n="distance.threshold">Threshold</span> <span id="distanceDiffuseThresholdVal">1.00</span></label>
           <input id="distanceDiffuseThresholdSlider" type="range" min="0.1" max="2.0" step="0.01" value="1.0" class="gain-slider" />
         </div>
         <div class="control-row" style="margin-top:0.2rem">
-          <label style="font-size:12px;white-space:nowrap">Courbe <span id="distanceDiffuseCurveVal">1.00</span></label>
+          <label style="font-size:12px;white-space:nowrap"><span data-i18n="distance.curve">Curve</span> <span id="distanceDiffuseCurveVal">1.00</span></label>
           <input id="distanceDiffuseCurveSlider" type="range" min="0.5" max="2.0" step="0.05" value="1.0" class="gain-slider" />
-        </div>
-      </div>
-      <div class="info-section" id="trailSection">
-        <div class="info-title">Trajectoires</div>
-        <div class="inline-toggle">
-          <label for="trailToggle">Afficher</label>
-          <input id="trailToggle" type="checkbox" checked />
-        </div>
-        <div class="control-row" style="margin-top:0.3rem">
-          <label style="font-size:12px;white-space:nowrap">Points <span id="trailLengthVal">80</span></label>
-          <input id="trailLengthSlider" type="range" min="10" max="300" step="10" value="80" class="gain-slider" />
-        </div>
-        <div class="control-row" style="margin-top:0.2rem">
-          <label style="font-size:12px;white-space:nowrap">Durée <span id="trailTtlVal">7.0s</span></label>
-          <input id="trailTtlSlider" type="range" min="1.0" max="20.0" step="0.5" value="7.0" class="gain-slider" />
         </div>
       </div>
       <div class="info-section" id="speakersSection">
         <div class="info-title">Speakers</div>
-        <div id="speakersList" class="info-list">Aucun speaker.</div>
+        <div id="speakersList" class="info-list">No speakers.</div>
+      </div>
+      <div class="info-section" id="speakerEditSection">
+        <div class="info-title" id="speakerEditTitle">Speaker Editor</div>
+        <div class="editor-row" style="margin-bottom:0.35rem">
+          <label>Layout</label>
+          <div style="display:flex;gap:0.3rem;justify-content:flex-end">
+            <button id="speakerAddBtn" type="button" class="toggle-btn">+ Add</button>
+            <button id="speakerMoveUpBtn" type="button" class="toggle-btn">Up</button>
+            <button id="speakerMoveDownBtn" type="button" class="toggle-btn">Down</button>
+            <button id="speakerRemoveBtn" type="button" class="toggle-btn">Delete</button>
+          </div>
+        </div>
+        <div id="speakerEditEmpty" style="font-size:12px;color:rgba(255,255,255,0.7)">Select a speaker.</div>
+        <div id="speakerEditBody" class="editor-body" style="display:none">
+          <div class="editor-meta">
+            <div><strong>Name:</strong></div>
+            <input id="speakerEditNameInput" class="name-input" type="text" value="" />
+            <div><strong>XYZ:</strong></div>
+            <div class="editor-row" style="grid-template-columns:1fr auto">
+              <strong>Cartesian:</strong>
+              <button id="speakerEditCartesianGizmoBtn" type="button" class="toggle-btn">3D Edit</button>
+            </div>
+            <div class="coord-grid">
+              <input id="speakerEditXInput" type="number" step="0.001" />
+              <input id="speakerEditYInput" type="number" step="0.001" />
+              <input id="speakerEditZInput" type="number" step="0.001" />
+            </div>
+            <div class="editor-row" style="grid-template-columns:1fr auto">
+              <strong>Polar:</strong>
+              <button id="speakerEditPolarGizmoBtn" type="button" class="toggle-btn">3D Edit</button>
+            </div>
+            <div class="coord-grid">
+              <input id="speakerEditAzInput" type="number" step="0.1" />
+              <input id="speakerEditElInput" type="number" step="0.1" />
+              <input id="speakerEditRInput" type="number" step="0.001" min="0.01" />
+            </div>
+          </div>
+          <div class="editor-row gain-row">
+            <label for="speakerEditGainSlider">Gain</label>
+            <input id="speakerEditGainSlider" class="gain-slider" type="range" min="0" max="2" step="0.01" value="1" />
+            <div id="speakerEditGainBox" class="gain-box">0.0 dB</div>
+          </div>
+          <div class="editor-row">
+            <label for="speakerEditDelayMsInput">Delay (ms)</label>
+            <input id="speakerEditDelayMsInput" class="delay-input" type="number" min="0" step="0.1" value="0" />
+          </div>
+          <div class="editor-row">
+            <label for="speakerEditDelaySamplesInput">Delay samples</label>
+            <input id="speakerEditDelaySamplesInput" class="delay-input" type="number" min="0" step="1" value="0" />
+          </div>
+          <div class="editor-row">
+            <label>Delay tools</label>
+            <div style="display:flex;gap:0.3rem;justify-content:flex-end">
+              <button id="speakerEditAutoDelayBtn" type="button" class="toggle-btn">Calc delays</button>
+              <button id="speakerEditDelayToDistanceBtn" type="button" class="toggle-btn">Delay → Dist</button>
+            </div>
+          </div>
+          <div class="inline-toggle">
+            <label for="speakerEditSpatializeToggle">Spatialize</label>
+            <input id="speakerEditSpatializeToggle" type="checkbox" />
+          </div>
+        </div>
       </div>
     </div>
 
