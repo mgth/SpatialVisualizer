@@ -83,9 +83,9 @@ const state = {
   speakerMutes: {},
   roomRatio: { width: 1, length: 2, height: 1 },
   spread: { min: null, max: null },
-  dialogNorm: null,
-  dialogNormLevel: null,
-  dialogNormGain: null,
+  loudness: null,
+  loudnessSource: null,
+  loudnessGain: null,
   masterGain: null,
   distanceDiffuse: { enabled: null, threshold: null, curve: null },
   configSaved: null,
@@ -94,6 +94,7 @@ const state = {
   layouts,
   selectedLayoutKey: layouts[0]?.key || null
 };
+const oscParseContext = { gsrdCoordinateFormat: 0 };
 
 function broadcast(payload) {
   const message = JSON.stringify(payload);
@@ -275,26 +276,26 @@ function handleParsedOsc(parsed) {
     });
   }
 
-  if (parsed.type === 'state:dialog_norm') {
-    state.dialogNorm = parsed.enabled ? 1 : 0;
+  if (parsed.type === 'state:loudness') {
+    state.loudness = parsed.enabled ? 1 : 0;
     broadcast({
-      type: 'dialog_norm',
-      enabled: state.dialogNorm
+      type: 'loudness',
+      enabled: state.loudness
     });
   }
 
-  if (parsed.type === 'state:dialog_norm:level') {
-    state.dialogNormLevel = parsed.value;
+  if (parsed.type === 'state:loudness:source') {
+    state.loudnessSource = parsed.value;
     broadcast({
-      type: 'dialog_norm:level',
+      type: 'loudness:source',
       value: parsed.value
     });
   }
 
-  if (parsed.type === 'state:dialog_norm:gain') {
-    state.dialogNormGain = parsed.value;
+  if (parsed.type === 'state:loudness:gain') {
+    state.loudnessGain = parsed.value;
     broadcast({
-      type: 'dialog_norm:gain',
+      type: 'loudness:gain',
       value: parsed.value
     });
   }
@@ -352,7 +353,7 @@ function handleOscMessage(oscMsg) {
     return;
   }
 
-  handleParsedOsc(parseOscMessage(oscMsg));
+  handleParsedOsc(parseOscMessage(oscMsg, oscParseContext));
 }
 
 function handleOscBundle(bundle) {
@@ -368,7 +369,7 @@ function handleOscBundle(bundle) {
       return;
     }
 
-    const parsed = parseOscMessage(packet);
+    const parsed = parseOscMessage(packet, oscParseContext);
     if (!parsed) {
       return;
     }
@@ -579,12 +580,12 @@ wss.on('connection', (ws) => {
         sendGsrdFloatControl('/gsrd/control/gain', clampedGain);
       }
 
-      if (payload?.type === 'control:dialog_norm') {
+      if (payload?.type === 'control:loudness') {
         const enable = Number(payload.enable);
         if (!Number.isFinite(enable)) {
           return;
         }
-        sendGsrdIntControl('/gsrd/control/dialog_norm', enable ? 1 : 0);
+        sendGsrdIntControl('/gsrd/control/loudness', enable ? 1 : 0);
       }
 
       if (payload?.type === 'control:spread:min') {
@@ -675,9 +676,9 @@ wss.on('connection', (ws) => {
       speakerMutes: state.speakerMutes,
       roomRatio: state.roomRatio,
       spread: state.spread,
-      dialogNorm: state.dialogNorm,
-      dialogNormLevel: state.dialogNormLevel,
-      dialogNormGain: state.dialogNormGain,
+      loudness: state.loudness,
+      loudnessSource: state.loudnessSource,
+      loudnessGain: state.loudnessGain,
       masterGain: state.masterGain,
       distanceDiffuse: state.distanceDiffuse,
       configSaved: state.configSaved,

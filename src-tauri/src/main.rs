@@ -72,7 +72,10 @@ fn select_layout(state: State<SharedState>, key: String) -> bool {
 }
 
 #[tauri::command]
-fn import_layout_from_path(state: State<SharedState>, path: String) -> Result<serde_json::Value, String> {
+fn import_layout_from_path(
+    state: State<SharedState>,
+    path: String,
+) -> Result<serde_json::Value, String> {
     let trimmed = path.trim();
     if trimmed.is_empty() {
         return Err("empty layout path".to_string());
@@ -157,12 +160,34 @@ fn control_master_gain(state: State<SharedState>, gain: f32) {
 }
 
 #[tauri::command]
-fn control_dialog_norm(state: State<SharedState>, enable: i32) {
+fn control_loudness(state: State<SharedState>, enable: i32) {
     send_control(
         &state.osc_tx,
         OscControlMsg::SendInt {
-            address: "/gsrd/control/dialog_norm".to_string(),
+            address: "/gsrd/control/loudness".to_string(),
             value: if enable != 0 { 1 } else { 0 },
+        },
+    );
+}
+
+#[tauri::command]
+fn control_adaptive_resampling(state: State<SharedState>, enable: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/adaptive_resampling".to_string(),
+            value: if enable != 0 { 1 } else { 0 },
+        },
+    );
+}
+
+#[tauri::command]
+fn control_latency_target(state: State<SharedState>, value: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/latency_target".to_string(),
+            value: value.max(1),
         },
     );
 }
@@ -187,6 +212,118 @@ fn control_spread_max(state: State<SharedState>, value: f32) {
         OscControlMsg::SendFloat {
             address: "/gsrd/control/spread/max".to_string(),
             value: clamped,
+        },
+    );
+}
+
+#[tauri::command]
+fn control_spread_from_distance(state: State<SharedState>, enable: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/spread/from_distance".to_string(),
+            value: if enable != 0 { 1 } else { 0 },
+        },
+    );
+}
+
+#[tauri::command]
+fn control_spread_distance_range(state: State<SharedState>, value: f32) {
+    let v = value.max(0.01);
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/spread/distance_range".to_string(),
+            value: v,
+        },
+    );
+}
+
+#[tauri::command]
+fn control_spread_distance_curve(state: State<SharedState>, value: f32) {
+    let v = value.max(0.0);
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/spread/distance_curve".to_string(),
+            value: v,
+        },
+    );
+}
+
+#[tauri::command]
+fn control_vbap_cart_x_size(state: State<SharedState>, value: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/vbap/cart/x_size".to_string(),
+            value: value.max(1),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_vbap_cart_y_size(state: State<SharedState>, value: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/vbap/cart/y_size".to_string(),
+            value: value.max(1),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_vbap_cart_z_size(state: State<SharedState>, value: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/vbap/cart/z_size".to_string(),
+            value: value.max(1),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_vbap_polar_azimuth_resolution(state: State<SharedState>, value: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/vbap/polar/azimuth_resolution".to_string(),
+            value: value.max(1),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_vbap_polar_elevation_resolution(state: State<SharedState>, value: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/vbap/polar/elevation_resolution".to_string(),
+            value: value.max(1),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_vbap_polar_distance_res(state: State<SharedState>, value: i32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/vbap/polar/distance_res".to_string(),
+            value: value.max(1),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_vbap_polar_distance_max(state: State<SharedState>, value: f32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/vbap/polar/distance_max".to_string(),
+            value: value.max(0.01),
         },
     );
 }
@@ -249,6 +386,18 @@ fn control_room_ratio_rear(state: State<SharedState>, value: f32) {
         &state.osc_tx,
         OscControlMsg::SendFloat {
             address: "/gsrd/control/room_ratio_rear".to_string(),
+            value: v,
+        },
+    );
+}
+
+#[tauri::command]
+fn control_room_ratio_center_blend(state: State<SharedState>, value: f32) {
+    let v = value.clamp(0.0, 1.0);
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/room_ratio_center_blend".to_string(),
             value: v,
         },
     );
@@ -357,7 +506,11 @@ fn control_speakers_add(
     spatialize: i32,
     delay_ms: f32,
 ) {
-    let n = if name.trim().is_empty() { "speaker" } else { name.trim() };
+    let n = if name.trim().is_empty() {
+        "speaker"
+    } else {
+        name.trim()
+    };
     send_control(
         &state.osc_tx,
         OscControlMsg::SendSpeakerAdd {
@@ -491,14 +644,27 @@ fn main() {
             control_object_mute,
             control_speaker_mute,
             control_master_gain,
-            control_dialog_norm,
+            control_loudness,
+            control_adaptive_resampling,
+            control_latency_target,
             control_spread_min,
             control_spread_max,
+            control_spread_from_distance,
+            control_spread_distance_range,
+            control_spread_distance_curve,
+            control_vbap_cart_x_size,
+            control_vbap_cart_y_size,
+            control_vbap_cart_z_size,
+            control_vbap_polar_azimuth_resolution,
+            control_vbap_polar_elevation_resolution,
+            control_vbap_polar_distance_res,
+            control_vbap_polar_distance_max,
             control_distance_diffuse_enabled,
             control_distance_diffuse_threshold,
             control_distance_diffuse_curve,
             control_room_ratio,
             control_room_ratio_rear,
+            control_room_ratio_center_blend,
             control_layout_radius_m,
             control_speaker_az,
             control_speaker_el,

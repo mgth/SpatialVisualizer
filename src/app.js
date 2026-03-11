@@ -33,20 +33,55 @@ const speakerMoveUpBtnEl = document.getElementById('speakerMoveUpBtn');
 const speakerMoveDownBtnEl = document.getElementById('speakerMoveDownBtn');
 const speakerRemoveBtnEl = document.getElementById('speakerRemoveBtn');
 const objectsSectionEl = document.getElementById('objectsSection');
-const roomRatioEl = document.getElementById('roomRatio');
+const roomGeometrySummaryEl = document.getElementById('roomGeometrySummary');
+const roomGeometrySummaryScaleEl = document.getElementById('roomGeometrySummaryScale');
+const roomGeometrySummarySizeEl = document.getElementById('roomGeometrySummarySize');
+const roomGeometrySummaryRatioEl = document.getElementById('roomGeometrySummaryRatio');
+const roomGeometryToggleBtnEl = document.getElementById('roomGeometryToggleBtn');
+const roomGeometryFormEl = document.getElementById('roomGeometryForm');
+const roomDimWidthInputEl = document.getElementById('roomDimWidthInput');
+const roomDimLengthInputEl = document.getElementById('roomDimLengthInput');
+const roomDimHeightInputEl = document.getElementById('roomDimHeightInput');
+const roomDimRearInputEl = document.getElementById('roomDimRearInput');
 const roomRatioWidthInputEl = document.getElementById('roomRatioWidthInput');
 const roomRatioLengthInputEl = document.getElementById('roomRatioLengthInput');
 const roomRatioHeightInputEl = document.getElementById('roomRatioHeightInput');
 const roomRatioRearInputEl = document.getElementById('roomRatioRearInput');
-const roomRatioApplyBtnEl = document.getElementById('roomRatioApplyBtn');
-const metersPerUnitInputEl = document.getElementById('metersPerUnitInput');
-const roomDimWidthInputEl = document.getElementById('roomDimWidthInput');
-const roomDimLengthInputEl = document.getElementById('roomDimLengthInput');
-const roomDimHeightInputEl = document.getElementById('roomDimHeightInput');
-const roomDimApplyBtnEl = document.getElementById('roomDimApplyBtn');
+const roomRatioCenterBlendSliderEl = document.getElementById('roomRatioCenterBlendSlider');
+const roomRatioCenterBlendValueEl = document.getElementById('roomRatioCenterBlendValue');
+const roomMasterAxisInputs = Array.from(document.querySelectorAll('input[name="roomMasterAxis"]'));
+const roomDriverWidthEl = document.getElementById('roomDriverWidth');
+const roomDriverLengthEl = document.getElementById('roomDriverLength');
+const roomDriverHeightEl = document.getElementById('roomDriverHeight');
+const roomDriverRearEl = document.getElementById('roomDriverRear');
+const roomMasterMpuWidthEl = document.getElementById('roomMasterMpuWidth');
+const roomMasterMpuLengthEl = document.getElementById('roomMasterMpuLength');
+const roomMasterMpuRearEl = document.getElementById('roomMasterMpuRear');
+const roomMasterMpuHeightEl = document.getElementById('roomMasterMpuHeight');
+const roomGeometryCancelBtnEl = document.getElementById('roomGeometryCancelBtn');
+const roomGeometryApplyBtnEl = document.getElementById('roomGeometryApplyBtn');
 const spreadInfoEl = document.getElementById('spreadInfo');
-const dialogNormInfoEl = document.getElementById('dialogNormInfo');
+const vbapStatusEl = document.getElementById('vbapStatus');
+const vbapCartesianGridToggleBtnEl = document.getElementById('vbapCartesianGridToggleBtn');
+const vbapCartXSizeInputEl = document.getElementById('vbapCartXSizeInput');
+const vbapCartYSizeInputEl = document.getElementById('vbapCartYSizeInput');
+const vbapCartZSizeInputEl = document.getElementById('vbapCartZSizeInput');
+const vbapPolarAzimuthResolutionInputEl = document.getElementById('vbapPolarAzimuthResolutionInput');
+const vbapPolarElevationResolutionInputEl = document.getElementById('vbapPolarElevationResolutionInput');
+const vbapPolarDistanceResInputEl = document.getElementById('vbapPolarDistanceResInput');
+const vbapPolarDistanceMaxInputEl = document.getElementById('vbapPolarDistanceMaxInput');
+const vbapCartXStepInfoEl = document.getElementById('vbapCartXStepInfo');
+const vbapCartYStepInfoEl = document.getElementById('vbapCartYStepInfo');
+const vbapCartZStepInfoEl = document.getElementById('vbapCartZStepInfo');
+const vbapAzimuthRangeInfoEl = document.getElementById('vbapAzimuthRangeInfo');
+const vbapElevationRangeInfoEl = document.getElementById('vbapElevationRangeInfo');
+const vbapPolarAzStepInfoEl = document.getElementById('vbapPolarAzStepInfo');
+const vbapPolarElStepInfoEl = document.getElementById('vbapPolarElStepInfo');
+const vbapPolarDistStepInfoEl = document.getElementById('vbapPolarDistStepInfo');
+const loudnessInfoEl = document.getElementById('loudnessInfo');
 const latencyInfoEl = document.getElementById('latencyInfo');
+const latencyTargetInputEl = document.getElementById('latencyTargetInput');
+const latencyTargetApplyBtnEl = document.getElementById('latencyTargetApplyBtn');
 const resampleRatioInfoEl = document.getElementById('resampleRatioInfo');
 const audioFormatInfoEl = document.getElementById('audioFormatInfo');
 const audioSampleRateControlEl = document.getElementById('audioSampleRateControl');
@@ -54,9 +89,18 @@ const audioSampleRateInputEl = document.getElementById('audioSampleRateInput');
 const audioSampleRateMenuBtnEl = document.getElementById('audioSampleRateMenuBtn');
 const audioSampleRateMenuEl = document.getElementById('audioSampleRateMenu');
 const audioSampleRateApplyBtnEl = document.getElementById('audioSampleRateApplyBtn');
-const dialogNormToggleEl = document.getElementById('dialogNormToggle');
+const loudnessToggleEl = document.getElementById('loudnessToggle');
+const adaptiveResamplingToggleEl = document.getElementById('adaptiveResamplingToggle');
 const spreadMinSliderEl = document.getElementById('spreadMinSlider');
 const spreadMaxSliderEl = document.getElementById('spreadMaxSlider');
+const spreadMinValEl = document.getElementById('spreadMinVal');
+const spreadMaxValEl = document.getElementById('spreadMaxVal');
+const spreadFromDistanceToggleEl = document.getElementById('spreadFromDistanceToggle');
+const spreadFromDistanceParamsEl = document.getElementById('spreadFromDistanceParams');
+const spreadDistanceRangeSliderEl = document.getElementById('spreadDistanceRangeSlider');
+const spreadDistanceRangeValEl = document.getElementById('spreadDistanceRangeVal');
+const spreadDistanceCurveSliderEl = document.getElementById('spreadDistanceCurveSlider');
+const spreadDistanceCurveValEl = document.getElementById('spreadDistanceCurveVal');
 const latencyMeterFillEl = document.getElementById('latencyMeterFill');
 const masterGainSliderEl = document.getElementById('masterGainSlider');
 const masterGainBoxEl = document.getElementById('masterGainBox');
@@ -64,15 +108,25 @@ const masterMeterTextEl = document.getElementById('masterMeterText');
 const masterMeterFillEl = document.getElementById('masterMeterFill');
 const editModeSelectEl = document.getElementById('editModeSelect');
 const distanceDiffuseToggleEl = document.getElementById('distanceDiffuseToggle');
+const distanceDiffuseParamsEl = document.getElementById('distanceDiffuseParams');
 const distanceDiffuseThresholdSliderEl = document.getElementById('distanceDiffuseThresholdSlider');
 const distanceDiffuseThresholdValEl = document.getElementById('distanceDiffuseThresholdVal');
 const distanceDiffuseCurveSliderEl = document.getElementById('distanceDiffuseCurveSlider');
 const distanceDiffuseCurveValEl = document.getElementById('distanceDiffuseCurveVal');
+const spreadFromDistanceInfoBtnEl = document.getElementById('spreadFromDistanceInfoBtn');
+const spreadFromDistanceInfoModalEl = document.getElementById('spreadFromDistanceInfoModal');
+const spreadFromDistanceInfoCloseBtnEl = document.getElementById('spreadFromDistanceInfoCloseBtn');
+const distanceDiffuseInfoBtnEl = document.getElementById('distanceDiffuseInfoBtn');
+const distanceDiffuseInfoModalEl = document.getElementById('distanceDiffuseInfoModal');
+const distanceDiffuseInfoCloseBtnEl = document.getElementById('distanceDiffuseInfoCloseBtn');
 const saveConfigBtnEl = document.getElementById('saveConfigBtn');
 const exportLayoutBtnEl = document.getElementById('exportLayoutBtn');
 const importLayoutBtnEl = document.getElementById('importLayoutBtn');
 const configSavedIndicatorEl = document.getElementById('configSavedIndicator');
 const trailToggleEl = document.getElementById('trailToggle');
+const trailInfoBtnEl = document.getElementById('trailInfoBtn');
+const trailInfoModalEl = document.getElementById('trailInfoModal');
+const trailInfoCloseBtnEl = document.getElementById('trailInfoCloseBtn');
 const oscStatusDotEl = document.getElementById('oscStatusDot');
 const oscConfigToggleBtnEl = document.getElementById('oscConfigToggleBtn');
 const oscConfigFormEl = document.getElementById('oscConfigForm');
@@ -86,6 +140,7 @@ const trailTtlSliderEl = document.getElementById('trailTtlSlider');
 const trailTtlValEl = document.getElementById('trailTtlVal');
 
 const LOCALE_STORAGE_KEY = 'spatialviz.locale';
+const ROOM_GEOM_PREFS_STORAGE_KEY = 'spatialviz.room_geometry_prefs';
 const TRANSLATIONS = {
   en: {
     'app.title': 'Spatial Visualizer',
@@ -209,6 +264,8 @@ scene.add(directional);
 
 const roomGroup = new THREE.Group();
 scene.add(roomGroup);
+const roomDimensionGroup = new THREE.Group();
+scene.add(roomDimensionGroup);
 
 const roomGeometry = new THREE.BoxGeometry(2, 1, 2);
 const room = new THREE.Mesh(
@@ -354,7 +411,7 @@ function fitScreenToUpperHalf() {
   );
 }
 
-const roomRatio = { width: 1, length: 2, height: 1, rear: 1 };
+const roomRatio = { width: 1, length: 2, height: 1, rear: 1, centerBlend: 0.5 };
 const roomBounds = {
   xMin: -1,
   xMax: 1,
@@ -364,20 +421,296 @@ const roomBounds = {
   zMax: 1
 };
 fitScreenToUpperHalf();
+roomDimensionGroup.visible = false;
 let metersPerUnit = 1.0;
-const spreadState = { min: null, max: null };
+const spreadState = { min: null, max: null, fromDistance: null, distanceRange: null, distanceCurve: null };
+const vbapCartesianState = { xSize: null, ySize: null, zSize: null };
+const vbapPolarState = { azimuthResolution: null, elevationResolution: null, distanceRes: null, distanceMax: null };
+let vbapAllowNegativeZ = null;
 const distanceDiffuseState = { enabled: null, threshold: null, curve: null };
 let configSaved = null;
-let dialogNormEnabled = null;
-let dialogNormLevel = null;
-let dialogNormGain = null;
+let loudnessEnabled = null;
+let loudnessSource = null;
+let loudnessGain = null;
+let adaptiveResamplingEnabled = null;
+let vbapRecomputing = null;
 let latencyMs = null;
+let latencyInstantMs = null;
+let latencyInstantTrendMs = null;
+let latencyTargetMs = null;
 let resampleRatio = null;
 let audioSampleRate = null;
 let audioSampleFormat = null;
 let audioSampleRateEditing = false;
+let latencyTargetEditing = false;
+let latencyTargetDirty = false;
 let masterGain = 1;
 let oscStatusState = 'initializing';
+let roomMasterAxis = 'width';
+const roomAxisDrivers = {
+  width: 'size',
+  length: 'size',
+  height: 'size',
+  rear: 'size'
+};
+const LATENCY_TREND_ALPHA = 0.06;
+let roomGeometryExpanded = false;
+let roomGeometryBaselineKey = '';
+let vbapCartesianFaceGridEnabled = false;
+
+const vbapCartesianFaceGridMaterial = new THREE.LineBasicMaterial({
+  color: 0x66d8ff,
+  transparent: true,
+  opacity: 0.42,
+  depthWrite: false,
+  depthTest: false
+});
+const vbapCartesianFaceGrids = {
+  posX: new THREE.LineSegments(new THREE.BufferGeometry(), vbapCartesianFaceGridMaterial),
+  negX: new THREE.LineSegments(new THREE.BufferGeometry(), vbapCartesianFaceGridMaterial),
+  posY: new THREE.LineSegments(new THREE.BufferGeometry(), vbapCartesianFaceGridMaterial),
+  negY: new THREE.LineSegments(new THREE.BufferGeometry(), vbapCartesianFaceGridMaterial),
+  posZ: new THREE.LineSegments(new THREE.BufferGeometry(), vbapCartesianFaceGridMaterial),
+  negZ: new THREE.LineSegments(new THREE.BufferGeometry(), vbapCartesianFaceGridMaterial)
+};
+Object.values(vbapCartesianFaceGrids).forEach((grid) => {
+  grid.visible = false;
+  grid.renderOrder = 6;
+  roomGroup.add(grid);
+});
+
+function axisValues(min, max, count) {
+  const n = Number(count);
+  if (!Number.isFinite(n) || n < 2) return [];
+  const out = [];
+  for (let i = 0; i < n; i += 1) {
+    const t = i / (n - 1);
+    out.push(min + (max - min) * t);
+  }
+  return out;
+}
+
+function mapDepthForRoomBounds(rawDepth) {
+  const mapped = depthWarpWithRatios(rawDepth, roomRatio.length, roomRatio.rear, roomRatio.centerBlend);
+  const maxDim = Math.max(roomRatio.width, roomRatio.length, roomRatio.height, roomRatio.rear, 1e-6);
+  return mapped * (2 / maxDim);
+}
+
+function setFaceGridGeometry(faceKey, verts) {
+  const grid = vbapCartesianFaceGrids[faceKey];
+  if (!grid) return;
+  grid.geometry.dispose();
+  const geom = new THREE.BufferGeometry();
+  if (verts.length > 0) {
+    geom.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  }
+  grid.geometry = geom;
+}
+
+function syncVbapCartesianFaceGridVisibility() {
+  Object.entries(vbapCartesianFaceGrids).forEach(([key, grid]) => {
+    const hasLines = Boolean(grid.geometry.getAttribute('position'));
+    grid.visible = vbapCartesianFaceGridEnabled && hasLines && Boolean(roomFaces[key]?.visible);
+  });
+}
+
+function updateVbapCartesianFaceGrid() {
+  if (!vbapCartesianFaceGridEnabled) {
+    Object.values(vbapCartesianFaceGrids).forEach((grid) => { grid.visible = false; });
+    return;
+  }
+  const xN = Number(vbapCartesianState.xSize);
+  const yN = Number(vbapCartesianState.ySize);
+  const zN = Number(vbapCartesianState.zSize);
+  if (!Number.isFinite(xN) || !Number.isFinite(yN) || !Number.isFinite(zN) || xN < 2 || yN < 2 || zN < 2) {
+    Object.values(vbapCartesianFaceGrids).forEach((grid) => { grid.visible = false; });
+    return;
+  }
+
+  const xMin = roomBounds.xMin;
+  const xMax = roomBounds.xMax;
+  const yMin = roomBounds.yMin;
+  const yMax = roomBounds.yMax;
+  const zMin = roomBounds.zMin;
+  const zMax = roomBounds.zMax;
+
+  // Cart axes mapping in scene:
+  // cart_x -> scene x (depth), cart_y -> scene z (width), cart_z -> scene y (height)
+  const xsRaw = axisValues(-1, 1, xN + 1);
+  const xs = xsRaw.map((v) => mapDepthForRoomBounds(v));
+  const ys = axisValues(yMin, yMax, zN + 1);
+  const zs = axisValues(zMin, zMax, yN + 1);
+
+  const line = (x0, y0, z0, x1, y1, z1) => {
+    return [x0, y0, z0, x1, y1, z1];
+  };
+
+  const posX = [];
+  const negX = [];
+  const posY = [];
+  const negY = [];
+  const posZ = [];
+  const negZ = [];
+
+  for (const y of ys) {
+    posX.push(...line(xMax, y, zMin, xMax, y, zMax));
+    negX.push(...line(xMin, y, zMin, xMin, y, zMax));
+  }
+  for (const z of zs) {
+    posX.push(...line(xMax, yMin, z, xMax, yMax, z));
+    negX.push(...line(xMin, yMin, z, xMin, yMax, z));
+  }
+
+  for (const x of xs) {
+    posY.push(...line(x, yMax, zMin, x, yMax, zMax));
+    negY.push(...line(x, yMin, zMin, x, yMin, zMax));
+  }
+  for (const z of zs) {
+    posY.push(...line(xMin, yMax, z, xMax, yMax, z));
+    negY.push(...line(xMin, yMin, z, xMax, yMin, z));
+  }
+
+  for (const x of xs) {
+    posZ.push(...line(x, yMin, zMax, x, yMax, zMax));
+    negZ.push(...line(x, yMin, zMin, x, yMax, zMin));
+  }
+  for (const y of ys) {
+    posZ.push(...line(xMin, y, zMax, xMax, y, zMax));
+    negZ.push(...line(xMin, y, zMin, xMax, y, zMin));
+  }
+
+  setFaceGridGeometry('posX', posX);
+  setFaceGridGeometry('negX', negX);
+  setFaceGridGeometry('posY', posY);
+  setFaceGridGeometry('negY', negY);
+  setFaceGridGeometry('posZ', posZ);
+  setFaceGridGeometry('negZ', negZ);
+  syncVbapCartesianFaceGridVisibility();
+}
+
+function renderVbapCartesianGridToggle() {
+  if (!vbapCartesianGridToggleBtnEl) return;
+  vbapCartesianGridToggleBtnEl.classList.toggle('active', vbapCartesianFaceGridEnabled);
+}
+
+function createRoomDimensionGuide(color = 0x9dd3ff) {
+  const line = new THREE.LineSegments(
+    new THREE.BufferGeometry(),
+    new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.85, depthTest: false })
+  );
+  line.renderOrder = 30;
+  const label = createSmallLabelSprite('');
+  label.renderOrder = 31;
+  const group = new THREE.Group();
+  group.add(line);
+  group.add(label);
+  roomDimensionGroup.add(group);
+  return { group, line, label };
+}
+
+const roomDimensionGuides = {
+  width: createRoomDimensionGuide(0x88c7ff),
+  front: createRoomDimensionGuide(0xa0ffd1),
+  rear: createRoomDimensionGuide(0xffd08a),
+  total: createRoomDimensionGuide(0xb8b8ff),
+  height: createRoomDimensionGuide(0xff9ed8)
+};
+
+function updateRoomDimensionGuide(guide, start, end, tickDir, labelText) {
+  const tick = tickDir.clone().normalize().multiplyScalar(0.04);
+  const points = [
+    start, end,
+    start.clone().sub(tick), start.clone().add(tick),
+    end.clone().sub(tick), end.clone().add(tick)
+  ];
+  guide.line.geometry.dispose();
+  guide.line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+  const mid = start.clone().add(end).multiplyScalar(0.5).add(tick.clone().multiplyScalar(2.2));
+  guide.label.position.copy(mid);
+  setLabelSpriteText(guide.label, labelText);
+}
+
+function updateRoomDimensionGuides(preview = null) {
+  const ratioWidth = Number(preview?.ratio?.width ?? roomRatio.width) || 1;
+  const ratioLength = Number(preview?.ratio?.length ?? roomRatio.length) || 1;
+  const ratioHeight = Number(preview?.ratio?.height ?? roomRatio.height) || 1;
+  const ratioRear = Number(preview?.ratio?.rear ?? roomRatio.rear) || 1;
+  const mpuValue = Number(preview?.mpu ?? metersPerUnit) || 1;
+  const xMin = roomBounds.xMin;
+  const xMax = roomBounds.xMax;
+  const yMin = roomBounds.yMin;
+  const yMax = roomBounds.yMax;
+  const zMin = roomBounds.zMin;
+  const zMax = roomBounds.zMax;
+  const yTop = yMax + 0.06;
+  const off = 0.08;
+
+  updateRoomDimensionGuide(
+    roomDimensionGuides.width,
+    new THREE.Vector3(xMax + off, yTop, zMin),
+    new THREE.Vector3(xMax + off, yTop, zMax),
+    new THREE.Vector3(1, 0, 0),
+    `${formatNumber(ratioWidth * mpuValue * 2, 2)}m`
+  );
+  updateRoomDimensionGuide(
+    roomDimensionGuides.front,
+    new THREE.Vector3(0, yTop, zMax + off),
+    new THREE.Vector3(xMax, yTop, zMax + off),
+    new THREE.Vector3(0, 0, 1),
+    `${formatNumber(ratioLength * mpuValue, 2)}m`
+  );
+  updateRoomDimensionGuide(
+    roomDimensionGuides.rear,
+    new THREE.Vector3(xMin, yTop + 0.08, zMax + off),
+    new THREE.Vector3(0, yTop + 0.08, zMax + off),
+    new THREE.Vector3(0, 0, 1),
+    `${formatNumber(ratioRear * mpuValue, 2)}m`
+  );
+  updateRoomDimensionGuide(
+    roomDimensionGuides.total,
+    new THREE.Vector3(xMin, yTop, zMin - off),
+    new THREE.Vector3(xMax, yTop, zMin - off),
+    new THREE.Vector3(0, 0, 1),
+    `${formatNumber((ratioLength + ratioRear) * mpuValue, 2)}m`
+  );
+  updateRoomDimensionGuide(
+    roomDimensionGuides.height,
+    new THREE.Vector3(xMax + off, yMin, zMax + off),
+    new THREE.Vector3(xMax + off, yMax, zMax + off),
+    new THREE.Vector3(1, 0, 0),
+    `${formatNumber(ratioHeight * mpuValue, 2)}m`
+  );
+
+  roomDimensionGroup.visible = roomGeometryExpanded;
+}
+
+function setRoomGeometryExpanded(expanded) {
+  roomGeometryExpanded = Boolean(expanded);
+  if (roomGeometryFormEl) {
+    roomGeometryFormEl.classList.toggle('open', roomGeometryExpanded);
+  }
+  if (roomGeometrySummaryEl) {
+    roomGeometrySummaryEl.style.display = roomGeometryExpanded ? 'none' : '';
+  }
+  if (roomGeometryToggleBtnEl) {
+    roomGeometryToggleBtnEl.textContent = roomGeometryExpanded ? '▾' : '▸';
+  }
+  roomDimensionGroup.visible = roomGeometryExpanded;
+}
+
+function setLatencyInstantMs(value) {
+  const next = Number(value);
+  if (!Number.isFinite(next)) {
+    return;
+  }
+  latencyInstantMs = next;
+  if (latencyInstantTrendMs === null) {
+    latencyInstantTrendMs = next;
+    return;
+  }
+  latencyInstantTrendMs =
+    LATENCY_TREND_ALPHA * next + (1 - LATENCY_TREND_ALPHA) * latencyInstantTrendMs;
+}
 
 function renderOscStatus() {
   if (statusEl) statusEl.textContent = t(`status.${oscStatusState}`);
@@ -694,7 +1027,10 @@ const dirtyObjectLabels = new Set();
 let dirtyMasterMeter = false;
 let dirtyRoomRatio = false;
 let dirtySpread = false;
-let dirtyDialogNorm = false;
+let dirtyVbapCartesian = false;
+let dirtyVbapPolar = false;
+let dirtyLoudness = false;
+let dirtyAdaptiveResampling = false;
 let dirtyDistanceDiffuse = false;
 let dirtyConfigSaved = false;
 let dirtyLatency = false;
@@ -706,6 +1042,11 @@ const AUDIO_SAMPLE_RATE_PRESETS = [0, 32000, 44100, 48000, 88200, 96000, 176400,
 
 let selectedSourceId = null;
 let selectedSpeakerIndex = null;
+let draggedSpeakerIndex = null;
+let draggedSpeakerInitialIndex = null;
+let draggedSpeakerDidDrop = false;
+let draggedSpeakerRoot = null;
+const speakerReorderAnimations = new WeakMap();
 let polarEditArmed = false;
 let cartesianEditArmed = false;
 let activeEditMode = 'polar';
@@ -761,13 +1102,30 @@ function formatNumber(value, digits = 2) {
   return value.toFixed(digits);
 }
 
+function sceneToGsrdCartesian(position) {
+  return {
+    x: Number(position?.z) || 0,
+    y: Number(position?.x) || 0,
+    z: Number(position?.y) || 0
+  };
+}
+
+function gsrdToSceneCartesian(position) {
+  return {
+    x: Number(position?.y) || 0,
+    y: Number(position?.z) || 0,
+    z: Number(position?.x) || 0
+  };
+}
+
 function formatPosition(position) {
   if (!position) {
     return 'x:— y:— z:—';
   }
-  const x = Number(position.x);
-  const y = Number(position.y);
-  const z = Number(position.z);
+  const gsrdPos = sceneToGsrdCartesian(position);
+  const x = Number(gsrdPos.x);
+  const y = Number(gsrdPos.y);
+  const z = Number(gsrdPos.z);
   if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) {
     return 'x:— y:— z:—';
   }
@@ -782,9 +1140,9 @@ function formatPosition(position) {
     return `x:${formatNumber(x, 1)} y:${formatNumber(y, 1)} z:${formatNumber(z, 1)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(r, 2)}`;
   }
 
-  const az = (Math.atan2(z, x) * 180) / Math.PI;
-  const planar = Math.sqrt(x * x + z * z);
-  const el = (Math.atan2(y, planar) * 180) / Math.PI;
+  const az = (Math.atan2(x, y) * 180) / Math.PI;
+  const planar = Math.sqrt((x * x) + (y * y));
+  const el = (Math.atan2(z, planar) * 180) / Math.PI;
   const dist = Math.sqrt(x * x + y * y + z * z);
 
   return `x:${formatNumber(x, 1)} y:${formatNumber(y, 1)} z:${formatNumber(z, 1)} | az:${formatNumber(az, 1)} el:${formatNumber(el, 1)} r:${formatNumber(dist, 2)}`;
@@ -990,9 +1348,24 @@ function flushUI() {
     dirtySpread = false;
   }
 
-  if (dirtyDialogNorm) {
-    renderDialogNormDisplay();
-    dirtyDialogNorm = false;
+  if (dirtyVbapCartesian) {
+    renderVbapCartesian();
+    dirtyVbapCartesian = false;
+  }
+
+  if (dirtyVbapPolar) {
+    renderVbapPolar();
+    dirtyVbapPolar = false;
+  }
+
+  if (dirtyLoudness) {
+    renderLoudnessDisplay();
+    dirtyLoudness = false;
+  }
+
+  if (dirtyAdaptiveResampling) {
+    renderAdaptiveResamplingUI();
+    dirtyAdaptiveResampling = false;
   }
 
   if (dirtyDistanceDiffuse) {
@@ -1111,9 +1484,72 @@ function createSpeakerItem(id, speaker) {
     setSelectedSource(null);
     setSelectedSpeaker(Number(id));
   });
+  root.addEventListener('dragover', (event) => {
+    if (draggedSpeakerIndex === null || !draggedSpeakerRoot || !speakersListEl) return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    const targetIndex = Number(id);
+    if (!Number.isInteger(targetIndex) || targetIndex === draggedSpeakerIndex) return;
+    const rect = root.getBoundingClientRect();
+    const insertAfter = event.clientY >= (rect.top + rect.height * 0.5);
+    if (insertAfter) {
+      const afterNode = root.nextSibling;
+      if (afterNode !== draggedSpeakerRoot) {
+        animateSpeakerListReorder(() => {
+          speakersListEl.insertBefore(draggedSpeakerRoot, afterNode);
+        });
+      }
+    } else if (root !== draggedSpeakerRoot) {
+      animateSpeakerListReorder(() => {
+        speakersListEl.insertBefore(draggedSpeakerRoot, root);
+      });
+    }
+    draggedSpeakerIndex = Array.from(speakersListEl.querySelectorAll('.speaker-item')).indexOf(draggedSpeakerRoot);
+    markDraggedSpeakerItem();
+  });
+  root.addEventListener('drop', (event) => {
+    event.preventDefault();
+    draggedSpeakerDidDrop = true;
+  });
 
   const idStrip = document.createElement('div');
-  idStrip.className = 'id-strip';
+  idStrip.className = 'id-strip flip';
+  idStrip.title = 'Drag to reorder';
+  idStrip.draggable = true;
+  idStrip.addEventListener('dragstart', (event) => {
+    const idx = Number(id);
+    if (!Number.isInteger(idx)) return;
+    draggedSpeakerIndex = idx;
+    draggedSpeakerInitialIndex = idx;
+    draggedSpeakerDidDrop = false;
+    draggedSpeakerRoot = root;
+    markDraggedSpeakerItem();
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(idx));
+    }
+  });
+  idStrip.addEventListener('dragend', () => {
+    if (draggedSpeakerInitialIndex !== null && draggedSpeakerIndex !== null) {
+      if (draggedSpeakerDidDrop) {
+        if (draggedSpeakerInitialIndex !== draggedSpeakerIndex) {
+          invoke('control_speakers_move', { from: draggedSpeakerInitialIndex, to: draggedSpeakerIndex });
+          requestMoveSpeakerTo(draggedSpeakerInitialIndex, draggedSpeakerIndex, false);
+        }
+      } else {
+        // Drag cancelled: restore current logical order.
+        renderSpeakersList();
+      }
+    }
+    draggedSpeakerIndex = null;
+    draggedSpeakerInitialIndex = null;
+    draggedSpeakerDidDrop = false;
+    draggedSpeakerRoot = null;
+    speakerItems.forEach((item) => item.root.classList.remove('is-dragging'));
+  });
+
   const idText = document.createElement('span');
   idStrip.appendChild(idText);
 
@@ -1161,8 +1597,8 @@ function createSpeakerItem(id, speaker) {
   controls.appendChild(soloBtn);
 
   content.appendChild(controls);
-  root.appendChild(content);
   root.appendChild(idStrip);
+  root.appendChild(content);
 
   return { root, label: idText, position, levelText, meterFill, muteBtn, soloBtn };
 }
@@ -1283,9 +1719,10 @@ function renderSpeakerEditor() {
 
   if (speakerEditTitleEl) speakerEditTitleEl.textContent = `Speaker ${idx}`;
   if (speakerEditNameInputEl) speakerEditNameInputEl.value = String(speaker.id ?? idx);
-  if (speakerEditXInputEl) speakerEditXInputEl.value = formatNumber(Number(speaker.x), 3);
-  if (speakerEditYInputEl) speakerEditYInputEl.value = formatNumber(Number(speaker.y), 3);
-  if (speakerEditZInputEl) speakerEditZInputEl.value = formatNumber(Number(speaker.z), 3);
+  const gsrdSpeakerPos = sceneToGsrdCartesian(speaker);
+  if (speakerEditXInputEl) speakerEditXInputEl.value = formatNumber(Number(gsrdSpeakerPos.x), 3);
+  if (speakerEditYInputEl) speakerEditYInputEl.value = formatNumber(Number(gsrdSpeakerPos.y), 3);
+  if (speakerEditZInputEl) speakerEditZInputEl.value = formatNumber(Number(gsrdSpeakerPos.z), 3);
   if (speakerEditAzInputEl) speakerEditAzInputEl.value = formatNumber(az, 1);
   if (speakerEditElInputEl) speakerEditElInputEl.value = formatNumber(el, 1);
   if (speakerEditRInputEl) speakerEditRInputEl.value = formatNumber(r, 3);
@@ -1570,20 +2007,373 @@ function applyGroupGains(group) {
   });
 }
 
+function roomAxisFactor(axis) {
+  return axis === 'width' ? 2 : 1;
+}
+
+function persistRoomGeometryPrefs() {
+  try {
+    const payload = {
+      master: roomMasterAxis,
+      drivers: {
+        width: roomAxisDrivers.width === 'ratio' ? 'ratio' : 'size',
+        length: roomAxisDrivers.length === 'ratio' ? 'ratio' : 'size',
+        height: roomAxisDrivers.height === 'ratio' ? 'ratio' : 'size',
+        rear: roomAxisDrivers.rear === 'ratio' ? 'ratio' : 'size'
+      }
+    };
+    localStorage.setItem(ROOM_GEOM_PREFS_STORAGE_KEY, JSON.stringify(payload));
+  } catch (_e) {
+    // Ignore storage errors (private mode, quota, etc.).
+  }
+}
+
+function loadRoomGeometryPrefs() {
+  try {
+    const raw = localStorage.getItem(ROOM_GEOM_PREFS_STORAGE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const axes = ['width', 'length', 'height', 'rear'];
+    if (axes.includes(parsed?.master)) {
+      roomMasterAxis = parsed.master;
+    }
+    const drivers = parsed?.drivers || {};
+    axes.forEach((axis) => {
+      roomAxisDrivers[axis] = drivers[axis] === 'ratio' ? 'ratio' : 'size';
+    });
+  } catch (_e) {
+    // Ignore malformed payloads.
+  }
+}
+
+function getRoomDriverEl(axis) {
+  if (axis === 'width') return roomDriverWidthEl;
+  if (axis === 'length') return roomDriverLengthEl;
+  if (axis === 'height') return roomDriverHeightEl;
+  if (axis === 'rear') return roomDriverRearEl;
+  return null;
+}
+
+function getRoomDriverValue(axis) {
+  const el = getRoomDriverEl(axis);
+  return el?.checked ? 'ratio' : 'size';
+}
+
+function setRoomDriverValue(axis, value) {
+  const el = getRoomDriverEl(axis);
+  if (!el) return;
+  el.checked = value === 'ratio';
+}
+
+function getRoomSizeInputEl(axis) {
+  if (axis === 'width') return roomDimWidthInputEl;
+  if (axis === 'length') return roomDimLengthInputEl;
+  if (axis === 'height') return roomDimHeightInputEl;
+  if (axis === 'rear') return roomDimRearInputEl;
+  return null;
+}
+
+function getRoomRatioInputEl(axis) {
+  if (axis === 'width') return roomRatioWidthInputEl;
+  if (axis === 'length') return roomRatioLengthInputEl;
+  if (axis === 'height') return roomRatioHeightInputEl;
+  if (axis === 'rear') return roomRatioRearInputEl;
+  return null;
+}
+
+function roundRoomGeom(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n * 1e6) / 1e6;
+}
+
+function getRoomCenterBlendFromInput(fallback = roomRatio.centerBlend) {
+  const n = Number(roomRatioCenterBlendSliderEl?.value);
+  const fallbackNum = Number(fallback);
+  if (!Number.isFinite(n)) return Number.isFinite(fallbackNum) ? fallbackNum : 0.5;
+  return Math.max(0, Math.min(1, n / 100));
+}
+
+function renderRoomCenterBlendControl(value = roomRatio.centerBlend) {
+  const parsed = Number(value);
+  const blend = Math.max(0, Math.min(1, Number.isFinite(parsed) ? parsed : 0.5));
+  if (roomRatioCenterBlendSliderEl) {
+    roomRatioCenterBlendSliderEl.value = String(Math.round(blend * 100));
+  }
+  if (roomRatioCenterBlendValueEl) {
+    roomRatioCenterBlendValueEl.textContent = `${Math.round(blend * 100)}/${Math.round((1 - blend) * 100)}`;
+  }
+}
+
+function roomGeometryStateFromInputs() {
+  const axes = ['width', 'length', 'height', 'rear'];
+  const preview = computeRoomGeometryFromInputs();
+  const state = {
+    mpu: roundRoomGeom(preview.mpu),
+    master: roomMasterAxis,
+    centerBlend: roundRoomGeom(getRoomCenterBlendFromInput()),
+    drivers: {},
+    size: {},
+    ratio: {}
+  };
+  axes.forEach((axis) => {
+    state.drivers[axis] = roomAxisDrivers[axis] === 'ratio' ? 'ratio' : 'size';
+    state.size[axis] = roundRoomGeom(getRoomSizeInputEl(axis)?.value);
+    state.ratio[axis] = roundRoomGeom(getRoomRatioInputEl(axis)?.value);
+  });
+  return state;
+}
+
+function normalizeRoomGeometryInputDisplays() {
+  [
+    roomDimWidthInputEl,
+    roomDimLengthInputEl,
+    roomDimHeightInputEl,
+    roomDimRearInputEl,
+    roomRatioWidthInputEl,
+    roomRatioLengthInputEl,
+    roomRatioHeightInputEl,
+    roomRatioRearInputEl
+  ].forEach((el) => {
+    if (!el) return;
+    const n = Number(el.value);
+    if (!Number.isFinite(n)) return;
+    el.value = formatNumber(n, 2);
+  });
+}
+
+function roomGeometryStateKey(state) {
+  const s = state || roomGeometryStateFromInputs();
+  return JSON.stringify({
+    mpu: s.mpu,
+    master: s.master,
+    centerBlend: s.centerBlend,
+    drivers: s.drivers,
+    size: s.size,
+    ratio: s.ratio
+  });
+}
+
+function updateRoomGeometryButtonsState() {
+  const currentKey = roomGeometryStateKey();
+  const unchanged = roomGeometryBaselineKey !== '' && currentKey === roomGeometryBaselineKey;
+  if (roomGeometryApplyBtnEl) {
+    roomGeometryApplyBtnEl.disabled = unchanged;
+    roomGeometryApplyBtnEl.style.opacity = unchanged ? '0.55' : '1';
+    roomGeometryApplyBtnEl.style.cursor = unchanged ? 'default' : 'pointer';
+  }
+  if (roomGeometryCancelBtnEl) {
+    roomGeometryCancelBtnEl.disabled = unchanged;
+    roomGeometryCancelBtnEl.style.opacity = unchanged ? '0.55' : '1';
+    roomGeometryCancelBtnEl.style.cursor = unchanged ? 'default' : 'pointer';
+  }
+}
+
+function setRoomGeometryBaselineFromInputs() {
+  roomGeometryBaselineKey = roomGeometryStateKey();
+  updateRoomGeometryButtonsState();
+}
+
+function renderRoomGeometrySummary(preview = null) {
+  if (!roomGeometrySummaryEl) return;
+  const ratioWidth = Number(preview?.ratio?.width ?? roomRatio.width) || 1;
+  const ratioLength = Number(preview?.ratio?.length ?? roomRatio.length) || 1;
+  const ratioRear = Number(preview?.ratio?.rear ?? roomRatio.rear) || 1;
+  const ratioHeight = Number(preview?.ratio?.height ?? roomRatio.height) || 1;
+  const mpuValue = Number(preview?.mpu ?? metersPerUnit) || 1;
+  const sizeWidth = ratioWidth * mpuValue * 2;
+  const sizeFront = ratioLength * mpuValue;
+  const sizeRear = ratioRear * mpuValue;
+  const sizeHeight = ratioHeight * mpuValue;
+
+  if (roomGeometrySummaryScaleEl) {
+    roomGeometrySummaryScaleEl.textContent = `m/u: ${formatNumber(mpuValue, 2)}`;
+  }
+  if (roomGeometrySummarySizeEl) {
+    roomGeometrySummarySizeEl.textContent =
+      `X: ${formatNumber(sizeWidth, 2)}m | Y+: ${formatNumber(sizeFront, 2)}m | Y-: ${formatNumber(sizeRear, 2)}m | Z+: ${formatNumber(sizeHeight, 2)}m`;
+  }
+  if (roomGeometrySummaryRatioEl) {
+    roomGeometrySummaryRatioEl.textContent =
+      `X: ${formatNumber(ratioWidth, 2)} | Y+: ${formatNumber(ratioLength, 2)} | Y-: ${formatNumber(ratioRear, 2)} | Z+: ${formatNumber(ratioHeight, 2)}`;
+  }
+}
+
+function applyRoomGeometryStateToInputs(state) {
+  if (!state) return;
+  const axes = ['width', 'length', 'height', 'rear'];
+  roomMasterAxis = axes.includes(state.master) ? state.master : roomMasterAxis;
+  axes.forEach((axis) => {
+    roomAxisDrivers[axis] = state.drivers?.[axis] === 'ratio' ? 'ratio' : 'size';
+    const sizeEl = getRoomSizeInputEl(axis);
+    const ratioEl = getRoomRatioInputEl(axis);
+    if (sizeEl && Number.isFinite(state.size?.[axis])) sizeEl.value = String(state.size[axis]);
+    if (ratioEl && Number.isFinite(state.ratio?.[axis])) ratioEl.value = String(state.ratio[axis]);
+  });
+  const centerBlend = Number.isFinite(state.centerBlend) ? state.centerBlend : roomRatio.centerBlend;
+  renderRoomCenterBlendControl(centerBlend);
+  normalizeRoomGeometryInputDisplays();
+  refreshRoomGeometryInputState();
+  updateRoomGeometryButtonsState();
+}
+
+function computeRoomGeometryFromInputs() {
+  const axes = ['width', 'length', 'height', 'rear'];
+  const safeNumber = (value, fallback, min = 0.01) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.max(min, n);
+  };
+
+  const inputData = {};
+  axes.forEach((axis) => {
+    const ratioNow = axis === 'width' ? roomRatio.width
+      : axis === 'length' ? roomRatio.length
+        : axis === 'height' ? roomRatio.height
+          : roomRatio.rear;
+    const defaultSize = ratioNow * metersPerUnit * roomAxisFactor(axis);
+    const sizeEl = getRoomSizeInputEl(axis);
+    const ratioEl = getRoomRatioInputEl(axis);
+    inputData[axis] = {
+      size: safeNumber(sizeEl?.value, Math.max(0.01, defaultSize)),
+      ratio: safeNumber(ratioEl?.value, Math.max(0.01, ratioNow))
+    };
+  });
+
+  let master = roomMasterAxis;
+  if (!axes.includes(master)) master = 'width';
+
+  const masterRatio = inputData[master].ratio;
+  const masterSize = inputData[master].size;
+  const masterFactor = roomAxisFactor(master);
+  const mpu = safeNumber(masterSize / Math.max(0.01, masterRatio * masterFactor), Number(metersPerUnit) || 1);
+
+  const ratios = {};
+  axes.forEach((axis) => {
+    if (axis === master) {
+      ratios[axis] = masterRatio;
+      return;
+    }
+    const driver = roomAxisDrivers[axis] === 'ratio' ? 'ratio' : 'size';
+    if (driver === 'ratio') {
+      ratios[axis] = inputData[axis].ratio;
+    } else {
+      ratios[axis] = safeNumber(inputData[axis].size / Math.max(0.01, mpu * roomAxisFactor(axis)), 1);
+    }
+  });
+
+  return {
+    master,
+    mpu,
+    ratio: {
+      width: ratios.width,
+      length: ratios.length,
+      height: ratios.height,
+      rear: ratios.rear
+    },
+    size: {
+      width: ratios.width * mpu * roomAxisFactor('width'),
+      length: ratios.length * mpu * roomAxisFactor('length'),
+      height: ratios.height * mpu * roomAxisFactor('height'),
+      rear: ratios.rear * mpu * roomAxisFactor('rear')
+    }
+  };
+}
+
+function updateRoomGeometryLivePreview() {
+  const preview = computeRoomGeometryFromInputs();
+  const axes = ['width', 'length', 'height', 'rear'];
+  axes.forEach((axis) => {
+    const isMaster = axis === roomMasterAxis;
+    const driver = roomAxisDrivers[axis] === 'ratio' ? 'ratio' : 'size';
+    const sizeEditable = isMaster || driver === 'size';
+    const ratioEditable = isMaster || driver === 'ratio';
+    const sizeEl = getRoomSizeInputEl(axis);
+    const ratioEl = getRoomRatioInputEl(axis);
+    if (!sizeEditable && sizeEl) sizeEl.value = formatNumber(preview.size[axis], 2);
+    if (!ratioEditable && ratioEl) ratioEl.value = formatNumber(preview.ratio[axis], 2);
+  });
+  renderRoomGeometryMasterMpu(preview);
+  renderRoomGeometrySummary(preview);
+  updateRoomDimensionGuides(preview);
+}
+
+function renderRoomGeometryMasterMpu(preview = null) {
+  const mpuValue = Number(preview?.mpu ?? metersPerUnit) || 1;
+  const text = `m/u ${formatNumber(mpuValue, 2)}`;
+  const values = {
+    width: roomMasterAxis === 'width' ? text : '',
+    length: roomMasterAxis === 'length' ? text : '',
+    rear: roomMasterAxis === 'rear' ? text : '',
+    height: roomMasterAxis === 'height' ? text : ''
+  };
+  if (roomMasterMpuWidthEl) roomMasterMpuWidthEl.textContent = values.width;
+  if (roomMasterMpuLengthEl) roomMasterMpuLengthEl.textContent = values.length;
+  if (roomMasterMpuRearEl) roomMasterMpuRearEl.textContent = values.rear;
+  if (roomMasterMpuHeightEl) roomMasterMpuHeightEl.textContent = values.height;
+}
+
+function setRoomFieldEditable(inputEl, editable) {
+  if (!inputEl) return;
+  inputEl.readOnly = !editable;
+  inputEl.tabIndex = editable ? 0 : -1;
+  inputEl.style.pointerEvents = editable ? 'auto' : 'none';
+  inputEl.classList.toggle('derived-field', !editable);
+  inputEl.style.background = editable ? 'rgba(255,255,255,0.08)' : 'transparent';
+  inputEl.style.border = editable ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent';
+  inputEl.style.color = editable ? '#dfe8f3' : 'rgba(223,232,243,0.88)';
+  inputEl.style.boxShadow = 'none';
+}
+
+function syncRoomMasterAxisUI() {
+  roomMasterAxisInputs.forEach((input) => {
+    input.checked = input.value === roomMasterAxis;
+  });
+}
+
+function refreshRoomGeometryInputState() {
+  const axes = ['width', 'length', 'height', 'rear'];
+  syncRoomMasterAxisUI();
+
+  axes.forEach((axis) => {
+    const isMaster = axis === roomMasterAxis;
+    const sizeEl = getRoomSizeInputEl(axis);
+    const ratioEl = getRoomRatioInputEl(axis);
+    const driverEl = getRoomDriverEl(axis);
+    const driver = roomAxisDrivers[axis] === 'ratio' ? 'ratio' : 'size';
+
+    if (driverEl) {
+      setRoomDriverValue(axis, driver);
+      driverEl.disabled = isMaster;
+    }
+    const sizeEditable = isMaster || driver === 'size';
+    const ratioEditable = isMaster || driver === 'ratio';
+    setRoomFieldEditable(sizeEl, sizeEditable);
+    setRoomFieldEditable(ratioEl, ratioEditable);
+  });
+  updateRoomGeometryLivePreview();
+  updateRoomGeometryButtonsState();
+}
+
 function renderRoomRatioDisplay() {
-  if (!roomRatioEl) return;
-  roomRatioEl.textContent = `room_ratio: ${formatNumber(roomRatio.width, 2)} ${formatNumber(roomRatio.length, 2)} ${formatNumber(roomRatio.height, 2)} | rear: ${formatNumber(roomRatio.rear, 2)} | m/u: ${formatNumber(metersPerUnit, 2)}`;
+  const dimW = roomRatio.width * metersPerUnit * 2;
+  const dimL = roomRatio.length * metersPerUnit;
+  const dimH = roomRatio.height * metersPerUnit;
+  const dimRear = roomRatio.rear * metersPerUnit;
+  if (roomDimWidthInputEl) roomDimWidthInputEl.value = formatNumber(dimW, 2);
+  if (roomDimLengthInputEl) roomDimLengthInputEl.value = formatNumber(dimL, 2);
+  if (roomDimHeightInputEl) roomDimHeightInputEl.value = formatNumber(dimH, 2);
+  if (roomDimRearInputEl) roomDimRearInputEl.value = formatNumber(dimRear, 2);
   if (roomRatioWidthInputEl) roomRatioWidthInputEl.value = formatNumber(roomRatio.width, 2);
   if (roomRatioLengthInputEl) roomRatioLengthInputEl.value = formatNumber(roomRatio.length, 2);
   if (roomRatioHeightInputEl) roomRatioHeightInputEl.value = formatNumber(roomRatio.height, 2);
   if (roomRatioRearInputEl) roomRatioRearInputEl.value = formatNumber(roomRatio.rear, 2);
-  if (metersPerUnitInputEl) metersPerUnitInputEl.value = formatNumber(metersPerUnit, 2);
-  const dimW = roomRatio.width * metersPerUnit * 2;
-  const dimL = roomRatio.length * metersPerUnit * 2;
-  const dimH = roomRatio.height * metersPerUnit * 2;
-  if (roomDimWidthInputEl) roomDimWidthInputEl.value = formatNumber(dimW, 2);
-  if (roomDimLengthInputEl) roomDimLengthInputEl.value = formatNumber(dimL, 2);
-  if (roomDimHeightInputEl) roomDimHeightInputEl.value = formatNumber(dimH, 2);
+  renderRoomCenterBlendControl(roomRatio.centerBlend);
+  renderRoomGeometryMasterMpu();
+  renderRoomGeometrySummary();
+  normalizeRoomGeometryInputDisplays();
+  refreshRoomGeometryInputState();
+  setRoomGeometryBaselineFromInputs();
 }
 
 function updateRoomRatioDisplay() {
@@ -1593,16 +2383,45 @@ function updateRoomRatioDisplay() {
 
 function renderSpreadDisplay() {
   if (!spreadInfoEl) return;
-  const minText = spreadState.min === null ? '—' : formatNumber(spreadState.min, 2);
-  const maxText = spreadState.max === null ? '—' : formatNumber(spreadState.max, 2);
-  spreadInfoEl.textContent = `spread: ${minText} / ${maxText}`;
+  const minDeg = spreadState.min === null ? null : spreadState.min * 180.0;
+  const maxDeg = spreadState.max === null ? null : spreadState.max * 180.0;
+  const minText = minDeg === null ? '—' : formatNumber(minDeg, 0);
+  const maxText = maxDeg === null ? '—' : formatNumber(maxDeg, 0);
+  const modeText = spreadState.fromDistance === null ? '—' : spreadState.fromDistance ? 'distance' : 'object_size';
+  spreadInfoEl.textContent = `spread: ${minText}° / ${maxText}° | mode: ${modeText}`;
   if (spreadMinSliderEl) {
-    const value = spreadState.min === null ? 0 : spreadState.min;
+    const value = minDeg === null ? 0 : minDeg;
     spreadMinSliderEl.value = String(value);
   }
   if (spreadMaxSliderEl) {
-    const value = spreadState.max === null ? 1 : spreadState.max;
+    const value = maxDeg === null ? 180 : maxDeg;
     spreadMaxSliderEl.value = String(value);
+  }
+  if (spreadMinValEl) {
+    spreadMinValEl.textContent = minDeg === null ? '—' : `${formatNumber(minDeg, 0)}°`;
+  }
+  if (spreadMaxValEl) {
+    spreadMaxValEl.textContent = maxDeg === null ? '—' : `${formatNumber(maxDeg, 0)}°`;
+  }
+  if (spreadFromDistanceToggleEl) {
+    spreadFromDistanceToggleEl.checked = spreadState.fromDistance === true;
+  }
+  if (spreadFromDistanceParamsEl) {
+    spreadFromDistanceParamsEl.classList.toggle('open', spreadState.fromDistance === true);
+  }
+  if (spreadDistanceRangeSliderEl && spreadState.distanceRange !== null) {
+    spreadDistanceRangeSliderEl.value = String(spreadState.distanceRange);
+  }
+  if (spreadDistanceRangeValEl) {
+    const v = spreadState.distanceRange === null ? '—' : formatNumber(spreadState.distanceRange, 2);
+    spreadDistanceRangeValEl.textContent = v;
+  }
+  if (spreadDistanceCurveSliderEl && spreadState.distanceCurve !== null) {
+    spreadDistanceCurveSliderEl.value = String(spreadState.distanceCurve);
+  }
+  if (spreadDistanceCurveValEl) {
+    const v = spreadState.distanceCurve === null ? '—' : formatNumber(spreadState.distanceCurve, 2);
+    spreadDistanceCurveValEl.textContent = v;
   }
 }
 
@@ -1611,28 +2430,148 @@ function updateSpreadDisplay() {
   scheduleUIFlush();
 }
 
-function renderDialogNormDisplay() {
-  if (!dialogNormInfoEl) return;
-  const enabledText = dialogNormEnabled === null ? '—' : dialogNormEnabled ? 'on' : 'off';
-  const levelText = dialogNormLevel === null ? '—' : `${formatNumber(dialogNormLevel, 0)} dBFS`;
-  const gainText =
-    dialogNormGain === null
-      ? '—'
-      : `${formatNumber(dialogNormGain, 2)} (${linearToDb(dialogNormGain)})`;
-  dialogNormInfoEl.textContent = `dialog_norm: ${enabledText} | level: ${levelText} | gain: ${gainText}`;
-  if (dialogNormToggleEl) {
-    dialogNormToggleEl.checked = dialogNormEnabled === true;
+function renderVbapStatus() {
+  if (!vbapStatusEl) return;
+  vbapStatusEl.classList.remove('computing', 'ready');
+  if (vbapRecomputing === true) {
+    vbapStatusEl.textContent = 'VBAP: computing...';
+    vbapStatusEl.classList.add('computing');
+  } else if (vbapRecomputing === false) {
+    vbapStatusEl.textContent = 'VBAP: up to date';
+    vbapStatusEl.classList.add('ready');
+  } else {
+    vbapStatusEl.textContent = 'VBAP status: —';
   }
 }
 
-function updateDialogNormDisplay() {
-  dirtyDialogNorm = true;
+function renderVbapCartesian() {
+  if (vbapCartXSizeInputEl) {
+    vbapCartXSizeInputEl.value = vbapCartesianState.xSize === null ? '' : String(vbapCartesianState.xSize);
+  }
+  if (vbapCartYSizeInputEl) {
+    vbapCartYSizeInputEl.value = vbapCartesianState.ySize === null ? '' : String(vbapCartesianState.ySize);
+  }
+  if (vbapCartZSizeInputEl) {
+    vbapCartZSizeInputEl.value = vbapCartesianState.zSize === null ? '' : String(vbapCartesianState.zSize);
+  }
+  const xStep = vbapCartesianState.xSize && vbapCartesianState.xSize > 0
+    ? 2.0 / vbapCartesianState.xSize
+    : null;
+  const yStep = vbapCartesianState.ySize && vbapCartesianState.ySize > 0
+    ? 2.0 / vbapCartesianState.ySize
+    : null;
+  const zRange = vbapAllowNegativeZ === false ? 1.0 : 2.0;
+  const zStep = vbapCartesianState.zSize && vbapCartesianState.zSize > 0
+    ? zRange / vbapCartesianState.zSize
+    : null;
+  const xStepMm = xStep === null ? null : xStep * metersPerUnit * 1000.0;
+  const yStepMm = yStep === null ? null : yStep * metersPerUnit * 1000.0;
+  const zStepMm = zStep === null ? null : zStep * metersPerUnit * 1000.0;
+  if (vbapCartXStepInfoEl) vbapCartXStepInfoEl.textContent = xStepMm === null ? '—' : `${formatNumber(xStepMm, 1)}mm`;
+  if (vbapCartYStepInfoEl) vbapCartYStepInfoEl.textContent = yStepMm === null ? '—' : `${formatNumber(yStepMm, 1)}mm`;
+  if (vbapCartZStepInfoEl) vbapCartZStepInfoEl.textContent = zStepMm === null ? '—' : `${formatNumber(zStepMm, 1)}mm`;
+  updateVbapCartesianFaceGrid();
+  renderVbapCartesianGridToggle();
+}
+
+function updateVbapCartesian() {
+  dirtyVbapCartesian = true;
+  scheduleUIFlush();
+}
+
+function renderVbapPolar() {
+  if (vbapPolarAzimuthResolutionInputEl) {
+    vbapPolarAzimuthResolutionInputEl.value =
+      vbapPolarState.azimuthResolution === null ? '' : String(vbapPolarState.azimuthResolution);
+  }
+  if (vbapPolarElevationResolutionInputEl) {
+    vbapPolarElevationResolutionInputEl.value =
+      vbapPolarState.elevationResolution === null ? '' : String(vbapPolarState.elevationResolution);
+  }
+  if (vbapPolarDistanceResInputEl) {
+    vbapPolarDistanceResInputEl.value =
+      vbapPolarState.distanceRes === null ? '' : String(vbapPolarState.distanceRes);
+  }
+  if (vbapPolarDistanceMaxInputEl) {
+    vbapPolarDistanceMaxInputEl.value =
+      vbapPolarState.distanceMax === null ? '' : String(vbapPolarState.distanceMax);
+  }
+  if (vbapElevationRangeInfoEl) {
+    const txt = vbapAllowNegativeZ === null
+      ? '—'
+      : vbapAllowNegativeZ
+        ? '-90..90'
+        : '0..90';
+    vbapElevationRangeInfoEl.textContent = txt;
+  }
+  if (vbapAzimuthRangeInfoEl) {
+    vbapAzimuthRangeInfoEl.textContent = '-180..180';
+  }
+  const azStep = vbapPolarState.azimuthResolution && vbapPolarState.azimuthResolution > 0
+    ? 360.0 / vbapPolarState.azimuthResolution
+    : null;
+  const elRange = vbapAllowNegativeZ === false ? 90.0 : 180.0;
+  const elStep = vbapPolarState.elevationResolution && vbapPolarState.elevationResolution > 0
+    ? elRange / vbapPolarState.elevationResolution
+    : null;
+  const dStep = (vbapPolarState.distanceRes && vbapPolarState.distanceRes > 0 && vbapPolarState.distanceMax && vbapPolarState.distanceMax > 0)
+    ? vbapPolarState.distanceMax / vbapPolarState.distanceRes
+    : null;
+  if (vbapPolarAzStepInfoEl) vbapPolarAzStepInfoEl.textContent = azStep === null ? '—' : `${formatNumber(azStep, 2)}°`;
+  if (vbapPolarElStepInfoEl) vbapPolarElStepInfoEl.textContent = elStep === null ? '—' : `${formatNumber(elStep, 2)}°`;
+  if (vbapPolarDistStepInfoEl) vbapPolarDistStepInfoEl.textContent = dStep === null ? '—' : `${formatNumber(dStep, 3)}`;
+}
+
+function updateVbapPolar() {
+  dirtyVbapPolar = true;
+  scheduleUIFlush();
+}
+
+function renderLoudnessDisplay() {
+  if (!loudnessInfoEl) return;
+  const enabledText = loudnessEnabled === null ? '—' : loudnessEnabled ? 'on' : 'off';
+  const sourceText = loudnessSource === null ? '—' : `${formatNumber(loudnessSource, 0)} dBFS`;
+  const correctionDbValue =
+    loudnessGain === null || Number(loudnessGain) <= 0
+      ? null
+      : 20 * Math.log10(Number(loudnessGain));
+  const targetValue =
+    loudnessSource !== null && correctionDbValue !== null
+      ? loudnessSource + correctionDbValue
+      : null;
+  const targetText = targetValue === null ? '—' : `${formatNumber(targetValue, 0)} dBFS`;
+  const gainText =
+    loudnessGain === null
+      ? '—'
+      : `${formatNumber(loudnessGain, 2)} (${linearToDb(loudnessGain)})`;
+  loudnessInfoEl.textContent = `source loudness: ${sourceText} | target loudness: ${targetText} | correction: ${gainText} | ${enabledText}`;
+  if (loudnessToggleEl) {
+    loudnessToggleEl.checked = loudnessEnabled === true;
+  }
+}
+
+function updateLoudnessDisplay() {
+  dirtyLoudness = true;
+  scheduleUIFlush();
+}
+
+function renderAdaptiveResamplingUI() {
+  if (!adaptiveResamplingToggleEl) return;
+  adaptiveResamplingToggleEl.checked = adaptiveResamplingEnabled === true;
+}
+
+function updateAdaptiveResamplingUI() {
+  dirtyAdaptiveResampling = true;
+  dirtyResample = true;
   scheduleUIFlush();
 }
 
 function renderDistanceDiffuseUI() {
   if (distanceDiffuseToggleEl) {
     distanceDiffuseToggleEl.checked = distanceDiffuseState.enabled === true;
+  }
+  if (distanceDiffuseParamsEl) {
+    distanceDiffuseParamsEl.classList.toggle('open', distanceDiffuseState.enabled === true);
   }
   if (distanceDiffuseThresholdSliderEl && distanceDiffuseState.threshold !== null) {
     distanceDiffuseThresholdSliderEl.value = String(distanceDiffuseState.threshold);
@@ -1655,6 +2594,21 @@ function updateDistanceDiffuseUI() {
   scheduleUIFlush();
 }
 
+function setDistanceDiffuseInfoModalOpen(open) {
+  if (!distanceDiffuseInfoModalEl) return;
+  distanceDiffuseInfoModalEl.classList.toggle('open', Boolean(open));
+}
+
+function setSpreadFromDistanceInfoModalOpen(open) {
+  if (!spreadFromDistanceInfoModalEl) return;
+  spreadFromDistanceInfoModalEl.classList.toggle('open', Boolean(open));
+}
+
+function setTrailInfoModalOpen(open) {
+  if (!trailInfoModalEl) return;
+  trailInfoModalEl.classList.toggle('open', Boolean(open));
+}
+
 function renderConfigSavedUI() {
   if (!configSavedIndicatorEl) return;
   configSavedIndicatorEl.textContent = '';
@@ -1673,9 +2627,13 @@ function updateConfigSavedUI() {
 
 function renderLatencyDisplay() {
   if (!latencyInfoEl) return;
-  latencyInfoEl.textContent = latencyMs === null
-    ? 'latency: —'
-    : `latency: ${formatNumber(latencyMs, 0)} ms`;
+  const instantShown = latencyInstantTrendMs ?? latencyInstantMs;
+  const instantText = instantShown === null ? '—' : `${formatNumber(instantShown, 0)} ms`;
+  latencyInfoEl.textContent = `latency:   ${instantText}`;
+  if (latencyTargetInputEl && !latencyTargetEditing && !latencyTargetDirty) {
+    const targetValue = latencyTargetMs ?? latencyMs;
+    latencyTargetInputEl.value = targetValue === null ? '' : String(Math.max(1, Math.round(targetValue)));
+  }
 }
 
 function updateLatencyDisplay() {
@@ -1685,6 +2643,11 @@ function updateLatencyDisplay() {
 
 function renderResampleRatioDisplay() {
   if (!resampleRatioInfoEl) return;
+  if (adaptiveResamplingEnabled !== true) {
+    resampleRatioInfoEl.style.display = 'none';
+    return;
+  }
+  resampleRatioInfoEl.style.display = '';
   if (resampleRatio === null) {
     resampleRatioInfoEl.textContent = 'resample: —';
     return;
@@ -1749,11 +2712,12 @@ function updateAudioFormatDisplay() {
 
 function renderLatencyMeterUI() {
   if (!latencyMeterFillEl) return;
-  if (latencyMs === null) {
+  const displayed = latencyInstantTrendMs ?? latencyInstantMs ?? latencyTargetMs ?? latencyMs;
+  if (displayed === null) {
     latencyMeterFillEl.style.setProperty('--level', '0%');
     return;
   }
-  const value = Math.max(0, Number(latencyMs));
+  const value = Math.max(0, Number(displayed));
   const maxMs = 2000;
   const percent = Math.min(100, (value / maxMs) * 100);
   latencyMeterFillEl.style.setProperty('--level', `${percent.toFixed(1)}%`);
@@ -1842,21 +2806,30 @@ function applyRoomRatioToScene() {
   roomFaces.negZ.scale.set(depthHalfX, yMax, 1);
 
   fitScreenToUpperHalf();
+  updateRoomDimensionGuides();
+  updateVbapCartesianFaceGrid();
 }
 
-function smoothstep01(t) {
-  const x = Math.max(0, Math.min(1, Number(t) || 0));
-  return x * x * (3 - 2 * x);
+function depthWarpWithRatios(rawDepth, frontRatio, rearRatio, centerBlend = 0.5) {
+  const d = Math.max(-1, Math.min(1, Number(rawDepth) || 0));
+  const f = Number(frontRatio) || 1;
+  const r = Number(rearRatio) || 1;
+  const blend = Math.max(0, Math.min(1, Number(centerBlend)));
+  const center = r + (f - r) * blend;
+  if (d >= 0) {
+    const t = d;
+    const a = center - f;
+    const b = 2 * (f - center);
+    return a * t * t * t + b * t * t + center * t;
+  }
+  const t = -d;
+  const a = center - r;
+  const b = 2 * (r - center);
+  return -(a * t * t * t + b * t * t + center * t);
 }
 
 function mapRoomDepth(rawX) {
-  const x = Math.max(-1, Math.min(1, Number(rawX) || 0));
-  if (x >= 0) {
-    const ratio = 1 + (roomRatio.length - 1) * smoothstep01(x);
-    return x * ratio;
-  }
-  const ratio = 1 + (roomRatio.rear - 1) * smoothstep01(-x);
-  return x * ratio;
+  return depthWarpWithRatios(rawX, roomRatio.length, roomRatio.rear, roomRatio.centerBlend);
 }
 
 function cartesianToSpherical(position) {
@@ -1892,6 +2865,58 @@ function snapAngleDeg(angle, step, threshold) {
 
 function clampNumber(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function setupNumericWheelEditing() {
+  const decimalsFromStep = (stepAttr) => {
+    if (!stepAttr || stepAttr === 'any') return null;
+    const step = Number(stepAttr);
+    if (!Number.isFinite(step) || step <= 0) return null;
+    const raw = String(stepAttr).toLowerCase();
+    if (raw.includes('e')) {
+      const [mantissa, expRaw] = raw.split('e');
+      const exp = Number(expRaw);
+      if (!Number.isFinite(exp)) return null;
+      const fracLen = (mantissa.split('.')[1] || '').length;
+      return Math.max(0, fracLen - exp);
+    }
+    return (raw.split('.')[1] || '').length;
+  };
+
+  const numberInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+  numberInputs.forEach((inputEl) => {
+    inputEl.addEventListener('wheel', (event) => {
+      if (inputEl.disabled || inputEl.readOnly) return;
+      const delta = Math.sign(event.deltaY);
+      if (delta === 0) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      if (document.activeElement !== inputEl) {
+        inputEl.focus({ preventScroll: true });
+      }
+
+      const before = inputEl.value;
+      const repeats = event.shiftKey ? 10 : 1;
+      try {
+        for (let i = 0; i < repeats; i += 1) {
+          if (delta < 0) inputEl.stepUp();
+          else inputEl.stepDown();
+        }
+      } catch (_e) {
+        return;
+      }
+      if (inputEl.value === before) return;
+      const decimals = decimalsFromStep(inputEl.getAttribute('step'));
+      if (decimals !== null) {
+        const v = Number(inputEl.value);
+        if (Number.isFinite(v)) {
+          inputEl.value = v.toFixed(decimals);
+        }
+      }
+      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+    }, { passive: false });
+  });
 }
 
 function projectRayOntoAxis(rayOrigin, rayDirection, axisOrigin, axisDirection) {
@@ -2073,6 +3098,7 @@ function updateRoomFaceVisibility() {
     const camSide = entry.inward.dot(tempToCamera);
     entry.mesh.visible = camSide > 0;
   });
+  syncVbapCartesianFaceGridVisibility();
 
   const screenFace = roomFaceDefs.find((entry) => entry.key === 'posX');
   if (screenFace) {
@@ -2755,13 +3781,141 @@ function requestMoveSpeaker(delta) {
   if (!layout || selectedSpeakerIndex === null) return;
   const from = selectedSpeakerIndex;
   const to = Math.max(0, Math.min(layout.speakers.length - 1, from + delta));
+  requestMoveSpeakerTo(from, to, true);
+}
+
+function markDraggedSpeakerItem() {
+  speakerItems.forEach((item) => {
+    item.root.classList.toggle('is-dragging', draggedSpeakerRoot !== null && item.root === draggedSpeakerRoot);
+  });
+}
+
+function animateSpeakerListReorder(mutate) {
+  if (!speakersListEl) {
+    mutate();
+    return;
+  }
+  const items = Array.from(speakersListEl.querySelectorAll('.speaker-item'));
+  const beforeTop = new Map();
+  items.forEach((el) => {
+    beforeTop.set(el, el.getBoundingClientRect().top);
+  });
+
+  mutate();
+
+  const afterItems = Array.from(speakersListEl.querySelectorAll('.speaker-item'));
+  afterItems.forEach((el) => {
+    if (draggedSpeakerRoot && el === draggedSpeakerRoot) return;
+    const prev = beforeTop.get(el);
+    if (prev === undefined) return;
+    const next = el.getBoundingClientRect().top;
+    const dy = prev - next;
+    if (Math.abs(dy) < 0.5) return;
+    const prevAnim = speakerReorderAnimations.get(el);
+    if (prevAnim) {
+      prevAnim.cancel();
+    }
+    const anim = el.animate(
+      [
+        { transform: `translateY(${dy}px)` },
+        { transform: 'translateY(0px)' }
+      ],
+      {
+        duration: 120,
+        easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+        fill: 'none'
+      }
+    );
+    speakerReorderAnimations.set(el, anim);
+    anim.onfinish = () => {
+      if (speakerReorderAnimations.get(el) === anim) {
+        speakerReorderAnimations.delete(el);
+      }
+    };
+  });
+}
+
+function requestMoveSpeakerTo(from, to, sendOsc = true) {
+  const layout = currentLayoutRef();
+  if (!layout) return;
+  if (!Number.isInteger(from) || !Number.isInteger(to)) return;
+  if (from < 0 || to < 0 || from >= layout.speakers.length || to >= layout.speakers.length) return;
   if (from === to) return;
+
   const moved = layout.speakers.splice(from, 1)[0];
   layout.speakers.splice(to, 0, moved);
+
+  let nextSelected = selectedSpeakerIndex;
+  if (nextSelected === from) {
+    nextSelected = to;
+  } else if (nextSelected !== null) {
+    if (from < to && nextSelected > from && nextSelected <= to) {
+      nextSelected -= 1;
+    } else if (to < from && nextSelected >= to && nextSelected < from) {
+      nextSelected += 1;
+    }
+  }
+
   renderLayout(currentLayoutKey);
-  setSelectedSpeaker(to);
-  invoke('control_speakers_move', { from, to });
+  setSelectedSpeaker(nextSelected);
+  if (sendOsc) {
+    invoke('control_speakers_move', { from, to });
+  }
+  markDraggedSpeakerItem();
 }
+
+if (speakersListEl) {
+  speakersListEl.addEventListener('dragenter', (event) => {
+    if (draggedSpeakerRoot === null) return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  });
+
+  speakersListEl.addEventListener('dragover', (event) => {
+    if (draggedSpeakerIndex === null || !draggedSpeakerRoot) return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    // Let per-item handlers manage direct item hover. This path handles gaps.
+    const target = event.target;
+    if (target instanceof Element && target.closest('.speaker-item')) return;
+    const items = Array.from(speakersListEl.querySelectorAll('.speaker-item'));
+    let insertBefore = null;
+    for (const item of items) {
+      if (item === draggedSpeakerRoot) continue;
+      const rect = item.getBoundingClientRect();
+      if (event.clientY < rect.top + rect.height * 0.5) {
+        insertBefore = item;
+        break;
+      }
+    }
+    animateSpeakerListReorder(() => {
+      speakersListEl.insertBefore(draggedSpeakerRoot, insertBefore);
+    });
+    draggedSpeakerIndex = Array.from(speakersListEl.querySelectorAll('.speaker-item')).indexOf(draggedSpeakerRoot);
+    markDraggedSpeakerItem();
+  });
+
+  speakersListEl.addEventListener('drop', (event) => {
+    if (draggedSpeakerIndex === null) return;
+    event.preventDefault();
+    draggedSpeakerDidDrop = true;
+  });
+}
+
+// Ensure the browser keeps "drop allowed" cursor over any child node inside the speakers list.
+document.addEventListener('dragover', (event) => {
+  if (!draggedSpeakerRoot || !speakersListEl) return;
+  const target = event.target;
+  if (!(target instanceof Node) || !speakersListEl.contains(target)) return;
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move';
+  }
+});
 
 function renderLayout(key) {
   clearSpeakers();
@@ -2905,6 +4059,10 @@ function applyRoomRatio(nextRatio) {
   roomRatio.height = Number(nextRatio.height) || 1;
   const rearValue = Number(nextRatio.rear);
   roomRatio.rear = Number.isFinite(rearValue) && rearValue > 0 ? rearValue : roomRatio.rear;
+  const centerBlendValue = Number(nextRatio.centerBlend);
+  roomRatio.centerBlend = Number.isFinite(centerBlendValue)
+    ? Math.max(0, Math.min(1, centerBlendValue))
+    : roomRatio.centerBlend;
   updateRoomRatioDisplay();
   applyRoomRatioToScene();
 
@@ -3279,24 +4437,36 @@ if (masterGainSliderEl) {
   });
 }
 
-if (dialogNormToggleEl) {
-  dialogNormToggleEl.addEventListener('change', () => {
-    const enabled = dialogNormToggleEl.checked ? 1 : 0;
-    dialogNormEnabled = enabled === 1;
-    updateDialogNormDisplay();
-    invoke('control_dialog_norm', { enable: enabled });
+if (loudnessToggleEl) {
+  loudnessToggleEl.addEventListener('change', () => {
+    const enabled = loudnessToggleEl.checked ? 1 : 0;
+    loudnessEnabled = enabled === 1;
+    updateLoudnessDisplay();
+    invoke('control_loudness', { enable: enabled });
+  });
+}
+
+if (adaptiveResamplingToggleEl) {
+  adaptiveResamplingToggleEl.addEventListener('change', () => {
+    const enabled = adaptiveResamplingToggleEl.checked ? 1 : 0;
+    adaptiveResamplingEnabled = enabled === 1;
+    updateAdaptiveResamplingUI();
+    invoke('control_adaptive_resampling', { enable: enabled });
   });
 }
 
 if (spreadMinSliderEl) {
   spreadMinSliderEl.addEventListener('input', () => {
-    const value = Number(spreadMinSliderEl.value);
-    if (!Number.isFinite(value)) {
+    const valueDeg = Number(spreadMinSliderEl.value);
+    if (!Number.isFinite(valueDeg)) {
       return;
     }
+    const valueNorm = Math.max(0, Math.min(180, valueDeg)) / 180.0;
     const maxValue = spreadState.max === null ? 1 : spreadState.max;
-    spreadState.min = Math.min(value, maxValue);
-    spreadMinSliderEl.value = String(spreadState.min);
+    spreadState.min = Math.min(valueNorm, maxValue);
+    spreadMinSliderEl.value = String((spreadState.min ?? 0) * 180.0);
+    vbapRecomputing = true;
+    renderVbapStatus();
     updateSpreadDisplay();
     invoke('control_spread_min', { value: spreadState.min });
   });
@@ -3304,15 +4474,138 @@ if (spreadMinSliderEl) {
 
 if (spreadMaxSliderEl) {
   spreadMaxSliderEl.addEventListener('input', () => {
-    const value = Number(spreadMaxSliderEl.value);
-    if (!Number.isFinite(value)) {
+    const valueDeg = Number(spreadMaxSliderEl.value);
+    if (!Number.isFinite(valueDeg)) {
       return;
     }
+    const valueNorm = Math.max(0, Math.min(180, valueDeg)) / 180.0;
     const minValue = spreadState.min === null ? 0 : spreadState.min;
-    spreadState.max = Math.max(value, minValue);
-    spreadMaxSliderEl.value = String(spreadState.max);
+    spreadState.max = Math.max(valueNorm, minValue);
+    spreadMaxSliderEl.value = String((spreadState.max ?? 1) * 180.0);
+    vbapRecomputing = true;
+    renderVbapStatus();
     updateSpreadDisplay();
     invoke('control_spread_max', { value: spreadState.max });
+  });
+}
+
+if (spreadFromDistanceToggleEl) {
+  spreadFromDistanceToggleEl.addEventListener('change', () => {
+    const enabled = spreadFromDistanceToggleEl.checked;
+    spreadState.fromDistance = enabled;
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateSpreadDisplay();
+    invoke('control_spread_from_distance', { enable: enabled ? 1 : 0 });
+  });
+}
+
+if (spreadDistanceRangeSliderEl) {
+  spreadDistanceRangeSliderEl.addEventListener('input', () => {
+    const value = Number(spreadDistanceRangeSliderEl.value);
+    if (!Number.isFinite(value)) return;
+    spreadState.distanceRange = Math.max(0.01, value);
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateSpreadDisplay();
+    invoke('control_spread_distance_range', { value: spreadState.distanceRange });
+  });
+}
+
+if (spreadDistanceCurveSliderEl) {
+  spreadDistanceCurveSliderEl.addEventListener('input', () => {
+    const value = Number(spreadDistanceCurveSliderEl.value);
+    if (!Number.isFinite(value)) return;
+    spreadState.distanceCurve = Math.max(0, value);
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateSpreadDisplay();
+    invoke('control_spread_distance_curve', { value: spreadState.distanceCurve });
+  });
+}
+
+if (vbapCartXSizeInputEl) {
+  vbapCartXSizeInputEl.addEventListener('change', () => {
+    const value = Math.max(1, Math.round(Number(vbapCartXSizeInputEl.value) || 1));
+    vbapCartesianState.xSize = value;
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateVbapCartesian();
+    invoke('control_vbap_cart_x_size', { value });
+  });
+}
+
+if (vbapCartYSizeInputEl) {
+  vbapCartYSizeInputEl.addEventListener('change', () => {
+    const value = Math.max(1, Math.round(Number(vbapCartYSizeInputEl.value) || 1));
+    vbapCartesianState.ySize = value;
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateVbapCartesian();
+    invoke('control_vbap_cart_y_size', { value });
+  });
+}
+
+if (vbapCartZSizeInputEl) {
+  vbapCartZSizeInputEl.addEventListener('change', () => {
+    const value = Math.max(1, Math.round(Number(vbapCartZSizeInputEl.value) || 1));
+    vbapCartesianState.zSize = value;
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateVbapCartesian();
+    invoke('control_vbap_cart_z_size', { value });
+  });
+}
+
+if (vbapCartesianGridToggleBtnEl) {
+  vbapCartesianGridToggleBtnEl.addEventListener('click', () => {
+    vbapCartesianFaceGridEnabled = !vbapCartesianFaceGridEnabled;
+    renderVbapCartesianGridToggle();
+    updateVbapCartesianFaceGrid();
+  });
+}
+
+if (vbapPolarAzimuthResolutionInputEl) {
+  vbapPolarAzimuthResolutionInputEl.addEventListener('change', () => {
+    const value = Math.max(1, Math.round(Number(vbapPolarAzimuthResolutionInputEl.value) || 1));
+    vbapPolarState.azimuthResolution = value;
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateVbapPolar();
+    invoke('control_vbap_polar_azimuth_resolution', { value });
+  });
+}
+
+if (vbapPolarElevationResolutionInputEl) {
+  vbapPolarElevationResolutionInputEl.addEventListener('change', () => {
+    const value = Math.max(1, Math.round(Number(vbapPolarElevationResolutionInputEl.value) || 1));
+    vbapPolarState.elevationResolution = value;
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateVbapPolar();
+    invoke('control_vbap_polar_elevation_resolution', { value });
+  });
+}
+
+if (vbapPolarDistanceResInputEl) {
+  vbapPolarDistanceResInputEl.addEventListener('change', () => {
+    const value = Math.max(1, Math.round(Number(vbapPolarDistanceResInputEl.value) || 1));
+    vbapPolarState.distanceRes = value;
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateVbapPolar();
+    invoke('control_vbap_polar_distance_res', { value });
+  });
+}
+
+if (vbapPolarDistanceMaxInputEl) {
+  vbapPolarDistanceMaxInputEl.addEventListener('change', () => {
+    const value = Math.max(0.01, Number(vbapPolarDistanceMaxInputEl.value) || 2);
+    vbapPolarState.distanceMax = value;
+    vbapRecomputing = true;
+    renderVbapStatus();
+    updateVbapPolar();
+    invoke('control_vbap_polar_distance_max', { value });
   });
 }
 
@@ -3320,6 +4613,7 @@ if (distanceDiffuseToggleEl) {
   distanceDiffuseToggleEl.addEventListener('change', () => {
     const enabled = distanceDiffuseToggleEl.checked;
     distanceDiffuseState.enabled = enabled;
+    updateDistanceDiffuseUI();
     invoke('control_distance_diffuse_enabled', { enable: enabled ? 1 : 0 });
   });
 }
@@ -3344,43 +4638,182 @@ if (distanceDiffuseCurveSliderEl) {
   });
 }
 
-if (roomRatioApplyBtnEl) {
-  roomRatioApplyBtnEl.addEventListener('click', () => {
-    const width = Math.max(0.01, Number(roomRatioWidthInputEl?.value) || 1);
-    const length = Math.max(0.01, Number(roomRatioLengthInputEl?.value) || 1);
-    const height = Math.max(0.01, Number(roomRatioHeightInputEl?.value) || 1);
-    const rear = Math.max(0.01, Number(roomRatioRearInputEl?.value) || width);
-    applyRoomRatio({ width, length, height, rear });
-    invoke('control_room_ratio', { width, length, height });
-    invoke('control_room_ratio_rear', { value: rear });
+if (spreadFromDistanceInfoBtnEl) {
+  spreadFromDistanceInfoBtnEl.addEventListener('click', () => {
+    setSpreadFromDistanceInfoModalOpen(true);
   });
 }
 
-if (metersPerUnitInputEl) {
-  metersPerUnitInputEl.addEventListener('change', () => {
-    const next = Math.max(0.01, Number(metersPerUnitInputEl.value) || 1);
-    metersPerUnit = next;
+if (spreadFromDistanceInfoCloseBtnEl) {
+  spreadFromDistanceInfoCloseBtnEl.addEventListener('click', () => {
+    setSpreadFromDistanceInfoModalOpen(false);
+  });
+}
+
+if (spreadFromDistanceInfoModalEl) {
+  spreadFromDistanceInfoModalEl.addEventListener('click', (event) => {
+    if (event.target === spreadFromDistanceInfoModalEl) {
+      setSpreadFromDistanceInfoModalOpen(false);
+    }
+  });
+}
+
+if (distanceDiffuseInfoBtnEl) {
+  distanceDiffuseInfoBtnEl.addEventListener('click', () => {
+    setDistanceDiffuseInfoModalOpen(true);
+  });
+}
+
+if (distanceDiffuseInfoCloseBtnEl) {
+  distanceDiffuseInfoCloseBtnEl.addEventListener('click', () => {
+    setDistanceDiffuseInfoModalOpen(false);
+  });
+}
+
+if (distanceDiffuseInfoModalEl) {
+  distanceDiffuseInfoModalEl.addEventListener('click', (event) => {
+    if (event.target === distanceDiffuseInfoModalEl) {
+      setDistanceDiffuseInfoModalOpen(false);
+    }
+  });
+}
+
+if (trailInfoBtnEl) {
+  trailInfoBtnEl.addEventListener('click', () => {
+    setTrailInfoModalOpen(true);
+  });
+}
+
+if (trailInfoCloseBtnEl) {
+  trailInfoCloseBtnEl.addEventListener('click', () => {
+    setTrailInfoModalOpen(false);
+  });
+}
+
+if (trailInfoModalEl) {
+  trailInfoModalEl.addEventListener('click', (event) => {
+    if (event.target === trailInfoModalEl) {
+      setTrailInfoModalOpen(false);
+    }
+  });
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    setDistanceDiffuseInfoModalOpen(false);
+    setTrailInfoModalOpen(false);
+  }
+});
+
+if (roomGeometryApplyBtnEl) {
+  roomGeometryApplyBtnEl.addEventListener('click', () => {
+    if (roomGeometryApplyBtnEl.disabled) return;
+    const preview = computeRoomGeometryFromInputs();
+    roomMasterAxis = preview.master;
+    const width = preview.ratio.width;
+    const length = preview.ratio.length;
+    const height = preview.ratio.height;
+    const rear = preview.ratio.rear;
+    const centerBlend = getRoomCenterBlendFromInput();
+    const mpu = preview.mpu;
+
+    metersPerUnit = mpu;
     const layout = currentLayoutKey ? layoutsByKey.get(currentLayoutKey) : null;
     if (layout) {
-      layout.radius_m = next;
+      layout.radius_m = mpu;
     }
-    invoke('control_layout_radius_m', { value: next });
-    updateRoomRatioDisplay();
+
+    applyRoomRatio({ width, length, height, rear, centerBlend });
+    invoke('control_layout_radius_m', { value: mpu });
+    invoke('control_room_ratio_center_blend', { value: centerBlend });
+    invoke('control_room_ratio', { width, length, height });
+    invoke('control_room_ratio_rear', { value: rear });
     renderSpeakerEditor();
+    normalizeRoomGeometryInputDisplays();
+    setRoomGeometryBaselineFromInputs();
   });
 }
 
-if (roomDimApplyBtnEl) {
-  roomDimApplyBtnEl.addEventListener('click', () => {
-    const mpu = Math.max(0.01, Number(metersPerUnit) || 1);
-    const dimW = Math.max(0.01, Number(roomDimWidthInputEl?.value) || (mpu * 2));
-    const dimL = Math.max(0.01, Number(roomDimLengthInputEl?.value) || (mpu * 4));
-    const dimH = Math.max(0.01, Number(roomDimHeightInputEl?.value) || (mpu * 2));
-    const width = dimW / (mpu * 2);
-    const length = dimL / (mpu * 2);
-    const height = dimH / (mpu * 2);
-    applyRoomRatio({ width, length, height, rear: roomRatio.rear });
-    invoke('control_room_ratio', { width, length, height });
+if (roomGeometryCancelBtnEl) {
+  roomGeometryCancelBtnEl.addEventListener('click', () => {
+    if (roomGeometryCancelBtnEl.disabled || !roomGeometryBaselineKey) return;
+    try {
+      const baseline = JSON.parse(roomGeometryBaselineKey);
+      applyRoomGeometryStateToInputs(baseline);
+    } catch (_e) {
+      // Ignore invalid baseline payload.
+    }
+  });
+}
+
+roomMasterAxisInputs.forEach((input) => {
+  input.addEventListener('change', () => {
+    if (!input.checked) return;
+    roomMasterAxis = input.value;
+    refreshRoomGeometryInputState();
+    persistRoomGeometryPrefs();
+  });
+});
+
+[
+  ['width', roomDriverWidthEl],
+  ['length', roomDriverLengthEl],
+  ['height', roomDriverHeightEl],
+  ['rear', roomDriverRearEl]
+].forEach(([axis, el]) => {
+  if (!el) return;
+  el.addEventListener('change', () => {
+    roomAxisDrivers[axis] = getRoomDriverValue(axis);
+    refreshRoomGeometryInputState();
+    persistRoomGeometryPrefs();
+  });
+});
+
+[
+  roomDimWidthInputEl,
+  roomDimLengthInputEl,
+  roomDimHeightInputEl,
+  roomDimRearInputEl,
+  roomRatioWidthInputEl,
+  roomRatioLengthInputEl,
+  roomRatioHeightInputEl,
+  roomRatioRearInputEl
+].forEach((el) => {
+  if (!el) return;
+  el.addEventListener('input', () => {
+    updateRoomGeometryLivePreview();
+    updateRoomGeometryButtonsState();
+  });
+  el.addEventListener('change', () => {
+    normalizeRoomGeometryInputDisplays();
+    updateRoomGeometryLivePreview();
+    updateRoomGeometryButtonsState();
+  });
+});
+
+if (roomRatioCenterBlendSliderEl) {
+  roomRatioCenterBlendSliderEl.addEventListener('input', () => {
+    renderRoomCenterBlendControl(getRoomCenterBlendFromInput());
+    updateRoomGeometryLivePreview();
+    updateRoomGeometryButtonsState();
+  });
+  roomRatioCenterBlendSliderEl.addEventListener('change', () => {
+    renderRoomCenterBlendControl(getRoomCenterBlendFromInput());
+    updateRoomGeometryLivePreview();
+    updateRoomGeometryButtonsState();
+  });
+  roomRatioCenterBlendSliderEl.addEventListener('dblclick', () => {
+    renderRoomCenterBlendControl(0.5);
+    updateRoomGeometryLivePreview();
+    updateRoomGeometryButtonsState();
+  });
+}
+
+if (roomRatioCenterBlendValueEl) {
+  roomRatioCenterBlendValueEl.addEventListener('dblclick', () => {
+    renderRoomCenterBlendControl(0.5);
+    updateRoomGeometryLivePreview();
+    updateRoomGeometryButtonsState();
   });
 }
 
@@ -3399,6 +4832,33 @@ if (audioSampleRateApplyBtnEl) {
     invoke('control_audio_sample_rate', { sampleRate: requested });
     audioSampleRateEditing = false;
     closeAudioSampleRateMenu();
+  });
+}
+
+if (latencyTargetApplyBtnEl) {
+  latencyTargetApplyBtnEl.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+  });
+  latencyTargetApplyBtnEl.addEventListener('click', () => {
+    const requested = Math.max(1, Math.round(Number(latencyTargetInputEl?.value) || 0));
+    latencyTargetMs = requested;
+    latencyMs = requested;
+    updateLatencyDisplay();
+    updateLatencyMeterUI();
+    invoke('control_latency_target', { value: requested });
+    latencyTargetDirty = false;
+    latencyTargetEditing = false;
+  });
+}
+
+if (latencyTargetInputEl) {
+  latencyTargetInputEl.addEventListener('focus', () => {
+    latencyTargetEditing = true;
+    latencyTargetInputEl.select();
+  });
+  latencyTargetInputEl.addEventListener('input', () => {
+    latencyTargetEditing = true;
+    latencyTargetDirty = true;
   });
 }
 
@@ -3435,6 +4895,15 @@ document.addEventListener('pointerdown', (event) => {
   if (!(target instanceof Node)) return;
   if (!audioSampleRateControlEl.contains(target) && target !== audioSampleRateApplyBtnEl) {
     audioSampleRateEditing = false;
+  }
+});
+
+document.addEventListener('pointerdown', (event) => {
+  if (!latencyTargetInputEl) return;
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+  if (target !== latencyTargetInputEl && target !== latencyTargetApplyBtnEl) {
+    latencyTargetEditing = false;
   }
 });
 
@@ -3610,24 +5079,27 @@ function bindSpeakerCoordChange(inputEl, getter) {
 }
 
 bindSpeakerCoordChange(speakerEditXInputEl, (idx) => {
-  const x = Number(speakerEditXInputEl?.value);
-  const y = Number(speakerEditYInputEl?.value);
-  const z = Number(speakerEditZInputEl?.value);
-  applySpeakerCartesianEdit(idx, x, y, z, true);
+  const gx = Number(speakerEditXInputEl?.value);
+  const gy = Number(speakerEditYInputEl?.value);
+  const gz = Number(speakerEditZInputEl?.value);
+  const scene = gsrdToSceneCartesian({ x: gx, y: gy, z: gz });
+  applySpeakerCartesianEdit(idx, scene.x, scene.y, scene.z, true);
 });
 
 bindSpeakerCoordChange(speakerEditYInputEl, (idx) => {
-  const x = Number(speakerEditXInputEl?.value);
-  const y = Number(speakerEditYInputEl?.value);
-  const z = Number(speakerEditZInputEl?.value);
-  applySpeakerCartesianEdit(idx, x, y, z, true);
+  const gx = Number(speakerEditXInputEl?.value);
+  const gy = Number(speakerEditYInputEl?.value);
+  const gz = Number(speakerEditZInputEl?.value);
+  const scene = gsrdToSceneCartesian({ x: gx, y: gy, z: gz });
+  applySpeakerCartesianEdit(idx, scene.x, scene.y, scene.z, true);
 });
 
 bindSpeakerCoordChange(speakerEditZInputEl, (idx) => {
-  const x = Number(speakerEditXInputEl?.value);
-  const y = Number(speakerEditYInputEl?.value);
-  const z = Number(speakerEditZInputEl?.value);
-  applySpeakerCartesianEdit(idx, x, y, z, true);
+  const gx = Number(speakerEditXInputEl?.value);
+  const gy = Number(speakerEditYInputEl?.value);
+  const gz = Number(speakerEditZInputEl?.value);
+  const scene = gsrdToSceneCartesian({ x: gx, y: gy, z: gz });
+  applySpeakerCartesianEdit(idx, scene.x, scene.y, scene.z, true);
 });
 
 bindSpeakerCoordChange(speakerEditAzInputEl, (idx) => {
@@ -3730,6 +5202,15 @@ if (oscConfigApplyBtnEl) {
   });
 }
 
+if (roomGeometryToggleBtnEl && roomGeometryFormEl) {
+  roomGeometryToggleBtnEl.addEventListener('click', () => {
+    setRoomGeometryExpanded(!roomGeometryExpanded);
+  });
+}
+loadRoomGeometryPrefs();
+refreshRoomGeometryInputState();
+setRoomGeometryExpanded(false);
+
 // ── layout select ──────────────────────────────────────────────────────────
 
 if (layoutSelectEl) {
@@ -3788,18 +5269,61 @@ function applyInitState(payload) {
     if (typeof payload.spread.max === 'number') {
       spreadState.max = payload.spread.max;
     }
+    if (typeof payload.spread.fromDistance === 'boolean') {
+      spreadState.fromDistance = payload.spread.fromDistance;
+    }
+    if (typeof payload.spread.distanceRange === 'number') {
+      spreadState.distanceRange = payload.spread.distanceRange;
+    }
+    if (typeof payload.spread.distanceCurve === 'number') {
+      spreadState.distanceCurve = payload.spread.distanceCurve;
+    }
   }
   updateSpreadDisplay();
-  if (typeof payload.dialogNorm === 'number') {
-    dialogNormEnabled = payload.dialogNorm !== 0;
+  if (payload.vbapCartesian) {
+    if (typeof payload.vbapCartesian.xSize === 'number') {
+      vbapCartesianState.xSize = payload.vbapCartesian.xSize > 0 ? payload.vbapCartesian.xSize : null;
+    }
+    if (typeof payload.vbapCartesian.ySize === 'number') {
+      vbapCartesianState.ySize = payload.vbapCartesian.ySize > 0 ? payload.vbapCartesian.ySize : null;
+    }
+    if (typeof payload.vbapCartesian.zSize === 'number') {
+      vbapCartesianState.zSize = payload.vbapCartesian.zSize > 0 ? payload.vbapCartesian.zSize : null;
+    }
   }
-  if (typeof payload.dialogNormLevel === 'number') {
-    dialogNormLevel = payload.dialogNormLevel;
+  updateVbapCartesian();
+  if (payload.vbapPolar) {
+    if (typeof payload.vbapPolar.azimuthResolution === 'number') {
+      vbapPolarState.azimuthResolution = payload.vbapPolar.azimuthResolution > 0 ? payload.vbapPolar.azimuthResolution : null;
+    }
+    if (typeof payload.vbapPolar.elevationResolution === 'number') {
+      vbapPolarState.elevationResolution = payload.vbapPolar.elevationResolution > 0 ? payload.vbapPolar.elevationResolution : null;
+    }
+    if (typeof payload.vbapPolar.distanceRes === 'number') {
+      vbapPolarState.distanceRes = payload.vbapPolar.distanceRes > 0 ? payload.vbapPolar.distanceRes : null;
+    }
+    if (typeof payload.vbapPolar.distanceMax === 'number') {
+      vbapPolarState.distanceMax = payload.vbapPolar.distanceMax > 0 ? payload.vbapPolar.distanceMax : null;
+    }
   }
-  if (typeof payload.dialogNormGain === 'number') {
-    dialogNormGain = payload.dialogNormGain;
+  if (typeof payload.vbapAllowNegativeZ === 'boolean') {
+    vbapAllowNegativeZ = payload.vbapAllowNegativeZ;
   }
-  updateDialogNormDisplay();
+  updateVbapPolar();
+  if (typeof payload.vbapRecomputing === 'boolean') {
+    vbapRecomputing = payload.vbapRecomputing;
+  }
+  renderVbapStatus();
+  if (typeof payload.loudness === 'number') {
+    loudnessEnabled = payload.loudness !== 0;
+  }
+  if (typeof payload.loudnessSource === 'number') {
+    loudnessSource = payload.loudnessSource;
+  }
+  if (typeof payload.loudnessGain === 'number') {
+    loudnessGain = payload.loudnessGain;
+  }
+  updateLoudnessDisplay();
   if (typeof payload.masterGain === 'number') {
     masterGain = payload.masterGain;
   }
@@ -3816,12 +5340,22 @@ function applyInitState(payload) {
     }
   }
   updateDistanceDiffuseUI();
+  if (typeof payload.adaptiveResampling === 'number') {
+    adaptiveResamplingEnabled = payload.adaptiveResampling !== 0;
+  }
+  updateAdaptiveResamplingUI();
   if (typeof payload.configSaved === 'number') {
     configSaved = payload.configSaved !== 0;
   }
   updateConfigSavedUI();
   if (typeof payload.latencyMs === 'number') {
     latencyMs = payload.latencyMs;
+  }
+  if (typeof payload.latencyInstantMs === 'number') {
+    setLatencyInstantMs(payload.latencyInstantMs);
+  }
+  if (typeof payload.latencyTargetMs === 'number') {
+    latencyTargetMs = payload.latencyTargetMs;
   }
   if (typeof payload.resampleRatio === 'number') {
     resampleRatio = payload.resampleRatio;
@@ -4011,19 +5545,86 @@ listen('spread:max', ({ payload }) => {
   updateSpreadDisplay();
 });
 
-listen('dialog_norm', ({ payload }) => {
-  dialogNormEnabled = Number(payload.enabled) !== 0;
-  updateDialogNormDisplay();
+listen('spread:from_distance', ({ payload }) => {
+  spreadState.fromDistance = payload.enabled === true;
+  updateSpreadDisplay();
 });
 
-listen('dialog_norm:level', ({ payload }) => {
-  dialogNormLevel = Number(payload.value);
-  updateDialogNormDisplay();
+listen('spread:distance_range', ({ payload }) => {
+  spreadState.distanceRange = Number(payload.value);
+  updateSpreadDisplay();
 });
 
-listen('dialog_norm:gain', ({ payload }) => {
-  dialogNormGain = Number(payload.value);
-  updateDialogNormDisplay();
+listen('spread:distance_curve', ({ payload }) => {
+  spreadState.distanceCurve = Number(payload.value);
+  updateSpreadDisplay();
+});
+
+listen('vbap:recomputing', ({ payload }) => {
+  vbapRecomputing = payload.enabled === true;
+  renderVbapStatus();
+});
+
+listen('vbap:cart:x_size', ({ payload }) => {
+  const value = Number(payload.value);
+  vbapCartesianState.xSize = value > 0 ? value : null;
+  updateVbapCartesian();
+});
+
+listen('vbap:cart:y_size', ({ payload }) => {
+  const value = Number(payload.value);
+  vbapCartesianState.ySize = value > 0 ? value : null;
+  updateVbapCartesian();
+});
+
+listen('vbap:cart:z_size', ({ payload }) => {
+  const value = Number(payload.value);
+  vbapCartesianState.zSize = value > 0 ? value : null;
+  updateVbapCartesian();
+});
+
+listen('vbap:polar:azimuth_resolution', ({ payload }) => {
+  const value = Number(payload.value);
+  vbapPolarState.azimuthResolution = value > 0 ? value : null;
+  updateVbapPolar();
+});
+
+listen('vbap:polar:elevation_resolution', ({ payload }) => {
+  const value = Number(payload.value);
+  vbapPolarState.elevationResolution = value > 0 ? value : null;
+  updateVbapPolar();
+});
+
+listen('vbap:polar:distance_res', ({ payload }) => {
+  const value = Number(payload.value);
+  vbapPolarState.distanceRes = value > 0 ? value : null;
+  updateVbapPolar();
+});
+
+listen('vbap:polar:distance_max', ({ payload }) => {
+  const value = Number(payload.value);
+  vbapPolarState.distanceMax = value > 0 ? value : null;
+  updateVbapPolar();
+});
+
+listen('vbap:allow_negative_z', ({ payload }) => {
+  vbapAllowNegativeZ = payload.enabled === true;
+  updateVbapPolar();
+});
+
+listen('loudness', ({ payload }) => {
+  loudnessEnabled = Number(payload.enabled) !== 0;
+  updateLoudnessDisplay();
+});
+
+listen('loudness:source', ({ payload }) => {
+  loudnessSource = Number(payload.value);
+  updateLoudnessDisplay();
+});
+
+listen('loudness:gain', ({ payload }) => {
+  loudnessGain = Number(payload.value);
+  updateLoudnessDisplay();
 });
 
 listen('master:gain', ({ payload }) => {
@@ -4046,12 +5647,30 @@ listen('distance_diffuse:curve', ({ payload }) => {
   updateDistanceDiffuseUI();
 });
 
+listen('adaptive_resampling', ({ payload }) => {
+  adaptiveResamplingEnabled = Number(payload.enabled) !== 0;
+  updateAdaptiveResamplingUI();
+});
+
 listen('config:saved', ({ payload }) => {
   configSaved = payload.saved !== 0;
   updateConfigSavedUI();
 });
 
 listen('latency', ({ payload }) => {
+  latencyMs = Number(payload.value);
+  updateLatencyDisplay();
+  updateLatencyMeterUI();
+});
+
+listen('latency:instant', ({ payload }) => {
+  setLatencyInstantMs(payload.value);
+  updateLatencyDisplay();
+  updateLatencyMeterUI();
+});
+
+listen('latency:target', ({ payload }) => {
+  latencyTargetMs = Number(payload.value);
   latencyMs = Number(payload.value);
   updateLatencyDisplay();
   updateLatencyMeterUI();
@@ -4076,6 +5695,8 @@ listen('audio:sample_format', ({ payload }) => {
 listen('source:remove', ({ payload }) => {
   removeSource(payload.id);
 });
+
+setupNumericWheelEditing();
 
 function animate() {
   requestAnimationFrame(animate);

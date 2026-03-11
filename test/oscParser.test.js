@@ -128,6 +128,25 @@ test('parses gsrd object xyz mapping', () => {
   });
 });
 
+test('parses gsrd spatial frame and switches object xyz decoding to polar', () => {
+  const ctx = { gsrdCoordinateFormat: 0 };
+  const frame = parseOscMessage(msg('/gsrd/spatial/frame', [1024, 3, 1]), ctx);
+  assert.deepEqual(frame, {
+    type: 'spatial:frame',
+    samplePos: 1024,
+    objectCount: 3,
+    coordinateFormat: 1
+  });
+  assert.equal(ctx.gsrdCoordinateFormat, 1);
+
+  const parsed = parseOscMessage(msg('/gsrd/object/7/xyz', [90, 0, 1]), ctx);
+  assert.equal(parsed.type, 'update');
+  assert.equal(parsed.id, '7');
+  assert.ok(Math.abs(parsed.position.x - 0) < 1e-6);
+  assert.ok(Math.abs(parsed.position.y - 0) < 1e-6);
+  assert.ok(Math.abs(parsed.position.z - 1) < 1e-6);
+});
+
 test('parses gsrd state messages', () => {
   assert.deepEqual(
     parseOscMessage(msg('/gsrd/state/latency', [12.5])),
@@ -145,18 +164,18 @@ test('parses gsrd state messages', () => {
   );
 
   assert.deepEqual(
-    parseOscMessage(msg('/gsrd/state/dialog_norm', [1])),
-    { type: 'state:dialog_norm', enabled: true }
+    parseOscMessage(msg('/gsrd/state/loudness', [1])),
+    { type: 'state:loudness', enabled: true }
   );
 
   assert.deepEqual(
-    parseOscMessage(msg('/gsrd/state/dialog_norm/level', [-24])),
-    { type: 'state:dialog_norm:level', value: -24 }
+    parseOscMessage(msg('/gsrd/state/loudness/source', [-24])),
+    { type: 'state:loudness:source', value: -24 }
   );
 
   assert.deepEqual(
-    parseOscMessage(msg('/gsrd/state/dialog_norm/gain', [0.8])),
-    { type: 'state:dialog_norm:gain', value: 0.8 }
+    parseOscMessage(msg('/gsrd/state/loudness/gain', [0.8])),
+    { type: 'state:loudness:gain', value: 0.8 }
   );
 
   assert.deepEqual(

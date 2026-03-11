@@ -63,9 +63,30 @@
         width: 100%;
       }
 
-      #roomRatio {
-        margin-top: 0.35rem;
-        font-size: 12px;
+      .room-geometry-summary {
+        margin-top: 0.3rem;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        padding: 0.35rem 0.45rem;
+        display: grid;
+        gap: 0.22rem;
+        font-size: 11px;
+      }
+
+      .room-geometry-summary-row {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.4rem;
+        align-items: center;
+      }
+
+      .room-geometry-summary-label {
+        color: rgba(217, 236, 255, 0.75);
+        font-weight: 600;
+      }
+
+      .room-geometry-summary-value {
         color: #d9ecff;
       }
 
@@ -75,7 +96,7 @@
         color: #d9ecff;
       }
 
-      #dialogNormInfo {
+      #loudnessInfo {
         margin-top: 0.2rem;
         font-size: 12px;
         color: #d9ecff;
@@ -213,6 +234,17 @@
         display: flex;
       }
 
+      .room-geometry-form {
+        display: none;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-top: 0.2rem;
+      }
+
+      .room-geometry-form.open {
+        display: flex;
+      }
+
       .osc-config-row {
         display: grid;
         grid-template-columns: 6rem 1fr;
@@ -259,6 +291,20 @@
         color: #d9ecff;
       }
 
+      #roomGeometryToggleBtn {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0;
+        line-height: 1;
+      }
+
+      #roomGeometryToggleBtn:hover {
+        color: #d9ecff;
+      }
+
       .osc-status-dot {
         display: inline-block;
         width: 7px;
@@ -274,6 +320,81 @@
         margin-bottom: 0.35rem;
       }
 
+      .title-with-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.4rem;
+      }
+
+      .info-icon-btn {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.08);
+        color: #d9ecff;
+        font-size: 11px;
+        line-height: 1;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .info-icon-btn:hover {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .info-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 70;
+      }
+
+      .info-modal.open {
+        display: flex;
+      }
+
+      .info-modal-card {
+        width: min(460px, calc(100vw - 2rem));
+        background: rgba(14, 16, 22, 0.96);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 0.8rem 0.9rem;
+        color: #d9ecff;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+      }
+
+      .info-modal-title {
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 0.45rem;
+      }
+
+      .info-modal-text {
+        font-size: 12px;
+        line-height: 1.45;
+        color: rgba(217, 236, 255, 0.92);
+      }
+
+      .info-modal-actions {
+        margin-top: 0.7rem;
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .conditional-params {
+        display: none;
+      }
+
+      .conditional-params.open {
+        display: grid;
+        gap: 0.2rem;
+      }
+
       .info-list {
         max-height: none;
         overflow: auto;
@@ -282,6 +403,8 @@
         font-size: 12.5px;
         display: grid;
         gap: 0.25rem;
+        align-content: start;
+        grid-auto-rows: max-content;
         flex: 1 1 auto;
         min-height: 0;
       }
@@ -310,6 +433,18 @@
         grid-template-columns: auto 1fr;
         align-items: center;
         gap: 0.4rem;
+      }
+
+      .fixed-metric {
+        width: 20ch;
+        min-width: 20ch;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-variant-numeric: tabular-nums;
+        white-space: pre;
+      }
+
+      .fixed-metric-line {
+        margin-top: 0.15rem;
       }
 
       .meter-bar {
@@ -361,6 +496,112 @@
       .delay-input:focus {
         outline: none;
         border-color: rgba(255, 255, 255, 0.45);
+      }
+
+      .vbap-polar-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: auto auto;
+        column-gap: 0.25rem;
+        row-gap: 0.15rem;
+        align-items: center;
+        width: 13.1rem;
+        min-width: 0;
+      }
+
+      .vbap-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: 0.25rem;
+        align-items: center;
+        width: 13.1rem;
+        min-width: 0;
+      }
+
+      .vbap-grid-3 .delay-input {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+
+      .vbap-polar-grid .delay-input {
+        width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+
+      .vbap-polar-meta {
+        font-size: 10px;
+        color: #9eb4c8;
+        line-height: 1;
+        text-align: center;
+      }
+
+      .vbap-step {
+        font-size: 10px;
+        color: #86a7c3;
+        line-height: 1;
+        text-align: center;
+      }
+
+      .derived-field {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+
+      .derived-field::-webkit-outer-spin-button,
+      .derived-field::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+
+      .axis-driver {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-items: center;
+        min-width: 2rem;
+        justify-self: center;
+        width: 100%;
+      }
+
+      .axis-driver input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 1.8rem;
+        height: 1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.12);
+        position: relative;
+        cursor: pointer;
+        transition: border-color 0.12s ease;
+      }
+
+      .axis-driver input[type="checkbox"]::after {
+        content: "";
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        width: 0.75rem;
+        height: 0.75rem;
+        border-radius: 50%;
+        background: #dfe8f3;
+        transition: transform 0.12s ease;
+      }
+
+      .axis-driver input[type="checkbox"]:checked {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .axis-driver input[type="checkbox"]:checked::after {
+        transform: translateX(0.8rem);
+      }
+
+      .axis-driver input[type="checkbox"]:disabled {
+        opacity: 0.45;
+        cursor: default;
       }
 
       .delay-label {
@@ -424,9 +665,25 @@
 
       .speaker-item {
         display: grid;
-        grid-template-columns: 1fr 18px;
+        grid-template-columns: 18px 1fr;
         gap: 0.45rem;
         align-items: stretch;
+        position: relative;
+      }
+
+      .speaker-item .id-strip {
+        cursor: grab;
+        user-select: none;
+      }
+
+      .speaker-item .id-strip:active {
+        cursor: grabbing;
+      }
+
+      .speaker-item.is-dragging {
+        opacity: 1;
+        background: rgba(72, 140, 92, 0.55);
+        border: 1px solid rgba(120, 225, 150, 0.65);
       }
 
       .id-strip {
@@ -522,6 +779,20 @@
         font-size: 12px;
         padding: 0.2rem 0.4rem;
       }
+
+      .vbap-status {
+        margin-top: 0.25rem;
+        font-size: 12px;
+        color: #d9ecff;
+      }
+
+      .vbap-status.computing {
+        color: #ffbf66;
+      }
+
+      .vbap-status.ready {
+        color: #78e08f;
+      }
     </style>
   </head>
   <body>
@@ -548,42 +819,97 @@
           <button id="oscConfigApplyBtn" data-i18n="osc.apply" style="background:rgba(80,200,120,0.2);border:1px solid rgba(80,200,120,0.4);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.7rem;cursor:pointer">Apply</button>
         </div>
       </div>
-      <div id="roomRatio">room_ratio: —</div>
-      <div class="control-row" style="margin-top:0.2rem;grid-template-columns:auto auto auto auto auto auto">
-        <label style="font-size:12px;white-space:nowrap">Room ratio</label>
-        <input id="roomRatioWidthInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" />
-        <input id="roomRatioLengthInput" class="delay-input" type="number" min="0.01" step="0.01" value="2.00" style="width:4.2rem" />
-        <input id="roomRatioHeightInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" />
-        <input id="roomRatioRearInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" title="Rear Z ratio" placeholder="rear" />
-        <button id="roomRatioApplyBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Apply</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.25rem">
+        <div style="font-size:12px;font-weight:600">Room Geometry</div>
+        <button id="roomGeometryToggleBtn" title="Room Geometry">▸</button>
       </div>
-      <div class="control-row" style="margin-top:0.2rem">
-        <label for="metersPerUnitInput" style="font-size:12px;white-space:nowrap">Meters / unit</label>
-        <input id="metersPerUnitInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:5.5rem" />
+      <div id="roomGeometrySummary" class="room-geometry-summary">
+        <div class="room-geometry-summary-row">
+          <div class="room-geometry-summary-label">Scale</div>
+          <div id="roomGeometrySummaryScale" class="room-geometry-summary-value">m/u: —</div>
+        </div>
+        <div class="room-geometry-summary-row">
+          <div class="room-geometry-summary-label">Size</div>
+          <div id="roomGeometrySummarySize" class="room-geometry-summary-value">X: — | Y+: — | Y-: — | Z+: —</div>
+        </div>
+        <div class="room-geometry-summary-row">
+          <div class="room-geometry-summary-label">Ratio</div>
+          <div id="roomGeometrySummaryRatio" class="room-geometry-summary-value">X: — | Y+: — | Y-: — | Z+: —</div>
+        </div>
       </div>
-      <div class="control-row" style="margin-top:0.2rem">
-        <label style="font-size:12px;white-space:nowrap">Room size (m)</label>
-        <input id="roomDimWidthInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" />
-        <input id="roomDimLengthInput" class="delay-input" type="number" min="0.01" step="0.01" value="2.00" style="width:4.2rem" />
-        <input id="roomDimHeightInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" style="width:4.2rem" />
-        <button id="roomDimApplyBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Apply</button>
-      </div>
-      <div class="spread-row">
-        <div id="spreadInfo">spread: — / —</div>
-        <div class="dual-range">
-          <input id="spreadMinSlider" type="range" min="0" max="1" step="0.01" value="0" />
-          <input id="spreadMaxSlider" type="range" min="0" max="1" step="0.01" value="1" />
+      <div id="roomGeometryForm" class="room-geometry-form">
+        <div style="margin-top:0.25rem;display:grid;grid-template-columns:3.2rem 4.8rem max-content max-content max-content max-content;gap:0.2rem 0.35rem;align-items:center">
+        <div style="font-size:11px;opacity:0.72;text-align:center">Master</div>
+        <div style="font-size:11px;opacity:0.72">Axis</div>
+        <div style="font-size:11px;opacity:0.72">Size (m)</div>
+        <div></div>
+        <div style="font-size:11px;opacity:0.72">Ratio</div>
+        <div style="font-size:11px;opacity:0.72">m/u</div>
+
+        <div style="text-align:center"><input id="roomMasterWidth" type="radio" name="roomMasterAxis" value="width" /></div>
+        <label for="roomMasterWidth" style="font-size:11px;opacity:0.9">X +/-</label>
+        <input id="roomDimWidthInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" />
+        <div class="axis-driver">
+          <input id="roomDriverWidth" type="checkbox" aria-label="Driver width (S/R)" />
+        </div>
+        <input id="roomRatioWidthInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" />
+        <div id="roomMasterMpuWidth" style="font-size:11px;color:#d9ecff"></div>
+
+        <div style="text-align:center"><input id="roomMasterLength" type="radio" name="roomMasterAxis" value="length" /></div>
+        <label for="roomMasterLength" style="font-size:11px;opacity:0.9">Y+ front</label>
+        <input id="roomDimLengthInput" class="delay-input" type="number" min="0.01" step="0.01" value="2.00" />
+        <div class="axis-driver">
+          <input id="roomDriverLength" type="checkbox" aria-label="Driver length (S/R)" />
+        </div>
+        <input id="roomRatioLengthInput" class="delay-input" type="number" min="0.01" step="0.01" value="2.00" />
+        <div id="roomMasterMpuLength" style="font-size:11px;color:#d9ecff"></div>
+
+        <div style="text-align:center"><input id="roomMasterRear" type="radio" name="roomMasterAxis" value="rear" /></div>
+        <label for="roomMasterRear" style="font-size:11px;opacity:0.9">Y- rear</label>
+        <input id="roomDimRearInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" title="Rear depth (m)" />
+        <div class="axis-driver">
+          <input id="roomDriverRear" type="checkbox" aria-label="Driver rear (S/R)" />
+        </div>
+        <input id="roomRatioRearInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" />
+        <div id="roomMasterMpuRear" style="font-size:11px;color:#d9ecff"></div>
+
+        <div style="text-align:center"><input id="roomMasterHeight" type="radio" name="roomMasterAxis" value="height" /></div>
+        <label for="roomMasterHeight" style="font-size:11px;opacity:0.9">Z+ height</label>
+        <input id="roomDimHeightInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" />
+        <div class="axis-driver">
+          <input id="roomDriverHeight" type="checkbox" aria-label="Driver height (S/R)" />
+        </div>
+        <input id="roomRatioHeightInput" class="delay-input" type="number" min="0.01" step="0.01" value="1.00" />
+        <div id="roomMasterMpuHeight" style="font-size:11px;color:#d9ecff"></div>
+        </div>
+        <div style="margin-top:0.25rem;display:flex;align-items:center;gap:0.45rem">
+          <label for="roomRatioCenterBlendSlider" style="font-size:12px;white-space:nowrap;opacity:0.9">Y center blend</label>
+          <input id="roomRatioCenterBlendSlider" type="range" min="0" max="100" step="1" value="50" class="gain-slider" style="flex:1 1 auto;min-width:0" />
+          <span id="roomRatioCenterBlendValue" style="min-width:3.5rem;text-align:right;font-size:11px;color:#d9ecff;cursor:default" title="Double click to reset 50/50">50/50</span>
+        </div>
+        <div style="margin-top:0.2rem;display:flex;justify-content:flex-end;gap:0.35rem">
+          <button id="roomGeometryCancelBtn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:#cfd9e8;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Cancel</button>
+          <button id="roomGeometryApplyBtn" disabled style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Apply geometry</button>
         </div>
       </div>
       <div class="inline-toggle">
-        <div id="dialogNormInfo">dialog_norm: —</div>
-        <input id="dialogNormToggle" type="checkbox" />
+        <div id="loudnessInfo">source loudness: — | target loudness: — | correction: —</div>
+        <input id="loudnessToggle" type="checkbox" />
+      </div>
+      <div class="inline-toggle">
+        <div>adaptive resampling</div>
+        <input id="adaptiveResamplingToggle" type="checkbox" />
       </div>
       <div class="meter-row">
-        <div id="latencyInfo">latency: —</div>
+        <div id="latencyInfo" class="fixed-metric">latency: —</div>
         <div class="meter-bar">
           <div id="latencyMeterFill" class="meter-fill latency"></div>
         </div>
+      </div>
+      <div class="control-row" style="margin-top:0.2rem">
+        <label for="latencyTargetInput" style="font-size:12px;white-space:nowrap">Target latency</label>
+        <input id="latencyTargetInput" class="delay-input" type="number" min="1" step="1" value="500" style="width:5.5rem" />
+        <button id="latencyTargetApplyBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Apply</button>
       </div>
       <div id="resampleRatioInfo">resample: —</div>
       <div id="audioFormatInfo">audio: — / —</div>
@@ -602,10 +928,12 @@
         <div id="objectsList" class="info-list">No objects.</div>
       </div>
       <div class="info-section" id="trailSection">
-        <div class="info-title" data-i18n="trail.title">Trails</div>
-        <div class="inline-toggle">
-          <label for="trailToggle" data-i18n="trail.show">Show</label>
-          <input id="trailToggle" type="checkbox" checked />
+        <div class="info-title title-with-info">
+          <span data-i18n="trail.title">Trails</span>
+          <div class="inline-toggle" style="display:flex;align-items:center;gap:0.35rem">
+            <button id="trailInfoBtn" type="button" class="info-icon-btn" title="Trails info">i</button>
+            <input id="trailToggle" type="checkbox" checked />
+          </div>
         </div>
         <div class="control-row" style="margin-top:0.3rem">
           <label style="font-size:12px;white-space:nowrap"><span data-i18n="trail.points">Points</span> <span id="trailLengthVal">80</span></label>
@@ -621,7 +949,7 @@
       <div class="info-section" id="masterSection">
         <div class="info-title">Master</div>
         <div class="meter-row">
-          <div id="masterMeterText">— dB</div>
+          <div id="masterMeterText" class="fixed-metric">— dB</div>
           <div class="meter-bar">
             <div id="masterMeterFill" class="meter-fill"></div>
           </div>
@@ -641,19 +969,94 @@
           </div>
         </div>
       </div>
-      <div class="info-section" id="distanceDiffuseSection">
-        <div class="info-title">Distance Diffuse</div>
-        <div class="inline-toggle">
-          <label for="distanceDiffuseToggle" data-i18n="distance.enable">Enable</label>
-          <input id="distanceDiffuseToggle" type="checkbox" />
+      <div class="info-section" id="vbapSection">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem">
+          <div class="info-title" style="margin:0">VBAP</div>
+          <button id="vbapCartesianGridToggleBtn" type="button" class="toggle-btn" style="padding:0.1rem 0.45rem;font-size:11px">Grid</button>
         </div>
-        <div class="control-row" style="margin-top:0.3rem">
-          <label style="font-size:12px;white-space:nowrap"><span data-i18n="distance.threshold">Threshold</span> <span id="distanceDiffuseThresholdVal">1.00</span></label>
-          <input id="distanceDiffuseThresholdSlider" type="range" min="0.1" max="2.0" step="0.01" value="1.0" class="gain-slider" />
+        <div id="vbapStatus" class="vbap-status">VBAP status: —</div>
+        <div class="control-row" style="margin-top:0.25rem;grid-template-columns:1fr auto;align-items:start">
+          <label style="font-size:12px;white-space:nowrap">VBAP cart</label>
+          <div style="display:flex;flex-direction:column;gap:0.15rem;align-items:stretch">
+            <div class="vbap-grid-3">
+              <input id="vbapCartXSizeInput" class="delay-input" type="number" min="1" step="1" placeholder="X" />
+              <input id="vbapCartYSizeInput" class="delay-input" type="number" min="1" step="1" placeholder="Y" />
+              <input id="vbapCartZSizeInput" class="delay-input" type="number" min="1" step="1" placeholder="Z" />
+            </div>
+            <div class="vbap-grid-3">
+              <div id="vbapCartXStepInfo" class="vbap-step">—</div>
+              <div id="vbapCartYStepInfo" class="vbap-step">—</div>
+              <div id="vbapCartZStepInfo" class="vbap-step">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="control-row" style="margin-top:0.2rem;grid-template-columns:1fr auto;align-items:start">
+          <label style="font-size:12px;white-space:nowrap">VBAP polar</label>
+          <div style="display:flex;flex-direction:column;gap:0.15rem;align-items:stretch">
+            <div class="vbap-polar-grid">
+              <input id="vbapPolarAzimuthResolutionInput" class="delay-input" type="number" min="1" step="1" placeholder="az n" style="grid-column:1;grid-row:1" />
+              <input id="vbapPolarElevationResolutionInput" class="delay-input" type="number" min="1" step="1" placeholder="el n" style="grid-column:2;grid-row:1" />
+              <input id="vbapPolarDistanceResInput" class="delay-input" type="number" min="1" step="1" placeholder="d n" style="grid-column:3;grid-row:1" />
+              <div id="vbapAzimuthRangeInfo" class="vbap-polar-meta" style="grid-column:1;grid-row:2">-180..180</div>
+              <div id="vbapElevationRangeInfo" class="vbap-polar-meta" style="grid-column:2;grid-row:2">—</div>
+              <input id="vbapPolarDistanceMaxInput" class="delay-input" type="number" min="0.01" step="0.01" placeholder="d max" style="grid-column:3;grid-row:2" />
+            </div>
+            <div class="vbap-grid-3">
+              <div id="vbapPolarAzStepInfo" class="vbap-step">—</div>
+              <div id="vbapPolarElStepInfo" class="vbap-step">—</div>
+              <div id="vbapPolarDistStepInfo" class="vbap-step">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="info-section" id="spreadSection">
+        <div class="info-title">Spread</div>
+        <div id="spreadInfo">spread: —° / —°</div>
+        <div class="control-row" style="margin-top:0.25rem">
+          <label style="font-size:12px;white-space:nowrap">Min <span id="spreadMinVal">0°</span></label>
+          <input id="spreadMinSlider" type="range" min="0" max="180" step="1" value="0" class="gain-slider" />
         </div>
         <div class="control-row" style="margin-top:0.2rem">
-          <label style="font-size:12px;white-space:nowrap"><span data-i18n="distance.curve">Curve</span> <span id="distanceDiffuseCurveVal">1.00</span></label>
-          <input id="distanceDiffuseCurveSlider" type="range" min="0.5" max="2.0" step="0.05" value="1.0" class="gain-slider" />
+          <label style="font-size:12px;white-space:nowrap">Max <span id="spreadMaxVal">180°</span></label>
+          <input id="spreadMaxSlider" type="range" min="0" max="180" step="1" value="180" class="gain-slider" />
+        </div>
+      </div>
+      <div class="info-section" id="distanceDiffuseSection">
+        <div class="info-title title-with-info">
+          <span>Distance Diffuse</span>
+          <div class="inline-toggle" style="display:flex;align-items:center;gap:0.35rem">
+            <button id="distanceDiffuseInfoBtn" type="button" class="info-icon-btn" title="Distance diffuse info">i</button>
+            <input id="distanceDiffuseToggle" type="checkbox" />
+          </div>
+        </div>
+        <div id="distanceDiffuseParams" class="conditional-params">
+          <div class="control-row" style="margin-top:0.3rem">
+            <label style="font-size:12px;white-space:nowrap"><span data-i18n="distance.threshold">Threshold</span> <span id="distanceDiffuseThresholdVal">1.00</span></label>
+            <input id="distanceDiffuseThresholdSlider" type="range" min="0.1" max="2.0" step="0.01" value="1.0" class="gain-slider" />
+          </div>
+          <div class="control-row" style="margin-top:0.2rem">
+            <label style="font-size:12px;white-space:nowrap"><span data-i18n="distance.curve">Curve</span> <span id="distanceDiffuseCurveVal">1.00</span></label>
+            <input id="distanceDiffuseCurveSlider" type="range" min="0.5" max="2.0" step="0.05" value="1.0" class="gain-slider" />
+          </div>
+        </div>
+      </div>
+      <div class="info-section" id="spreadFromDistanceSection">
+        <div class="info-title title-with-info">
+          <span>Spread from Distance</span>
+          <div class="inline-toggle" style="display:flex;align-items:center;gap:0.35rem">
+            <button id="spreadFromDistanceInfoBtn" type="button" class="info-icon-btn" title="Spread from distance info">i</button>
+            <input id="spreadFromDistanceToggle" type="checkbox" />
+          </div>
+        </div>
+        <div id="spreadFromDistanceParams" class="conditional-params">
+          <div class="meter-row" style="margin-top:0.2rem">
+            <label style="font-size:12px;white-space:nowrap">spread range <span id="spreadDistanceRangeVal">1.00</span></label>
+            <input id="spreadDistanceRangeSlider" type="range" min="0.1" max="3.0" step="0.01" value="1.0" class="gain-slider" />
+          </div>
+          <div class="meter-row" style="margin-top:0.2rem">
+            <label style="font-size:12px;white-space:nowrap">spread curve <span id="spreadDistanceCurveVal">1.00</span></label>
+            <input id="spreadDistanceCurveSlider" type="range" min="0.1" max="3.0" step="0.05" value="1.0" class="gain-slider" />
+          </div>
         </div>
       </div>
       <div class="info-section" id="speakersSection">
@@ -676,15 +1079,15 @@
           <div class="editor-meta">
             <div><strong>Name:</strong></div>
             <input id="speakerEditNameInput" class="name-input" type="text" value="" />
-            <div><strong>XYZ:</strong></div>
+            <div><strong>XYZ (GSRD):</strong></div>
             <div class="editor-row" style="grid-template-columns:1fr auto">
               <strong>Cartesian:</strong>
               <button id="speakerEditCartesianGizmoBtn" type="button" class="toggle-btn">3D Edit</button>
             </div>
             <div class="coord-grid">
-              <input id="speakerEditXInput" type="number" step="0.001" />
-              <input id="speakerEditYInput" type="number" step="0.001" />
-              <input id="speakerEditZInput" type="number" step="0.001" />
+              <input id="speakerEditXInput" type="number" step="0.001" placeholder="X" title="GSRD X (left/right)" />
+              <input id="speakerEditYInput" type="number" step="0.001" placeholder="Y" title="GSRD Y (rear/front)" />
+              <input id="speakerEditZInput" type="number" step="0.001" placeholder="Z" title="GSRD Z (down/up)" />
             </div>
             <div class="editor-row" style="grid-template-columns:1fr auto">
               <strong>Polar:</strong>
@@ -720,6 +1123,51 @@
             <label for="speakerEditSpatializeToggle">Spatialize</label>
             <input id="speakerEditSpatializeToggle" type="checkbox" />
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="distanceDiffuseInfoModal" class="info-modal" aria-hidden="true">
+      <div class="info-modal-card">
+        <div class="info-modal-title">Distance Diffuse</div>
+        <div class="info-modal-text">
+          Distance Diffuse blends each object with a mirrored version of itself (opposite horizontal
+          direction) depending on distance. Close objects become wider/more diffuse, while far
+          objects stay mostly direct.<br /><br />
+          <strong>Threshold</strong>: distance where the blend reaches 100% direct.<br />
+          <strong>Curve</strong>: transition shape (faster or slower near-field blend).
+        </div>
+        <div class="info-modal-actions">
+          <button id="distanceDiffuseInfoCloseBtn" type="button" class="toggle-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="spreadFromDistanceInfoModal" class="info-modal" aria-hidden="true">
+      <div class="info-modal-card">
+        <div class="info-modal-title">Spread from Distance</div>
+        <div class="info-modal-text">
+          Spread from Distance replaces object_size spread with a distance-driven spread value.<br /><br />
+          Formula: <strong>spread = (1 - distance/range)^curve</strong>, clamped to [0, 1], then mapped to the global spread min/max range.<br /><br />
+          <strong>Range</strong>: distance where spread reaches 0.<br />
+          <strong>Curve</strong>: transition shape (higher = less spread near listener, more collapse farther away).
+        </div>
+        <div class="info-modal-actions">
+          <button id="spreadFromDistanceInfoCloseBtn" type="button" class="toggle-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="trailInfoModal" class="info-modal" aria-hidden="true">
+      <div class="info-modal-card">
+        <div class="info-modal-title">Trails</div>
+        <div class="info-modal-text">
+          Trails show each object's recent movement history in the 3D view.<br /><br />
+          <strong>Points</strong>: maximum number of stored positions per object.<br />
+          <strong>Duration</strong>: how long trail points stay visible before fading out.
+        </div>
+        <div class="info-modal-actions">
+          <button id="trailInfoCloseBtn" type="button" class="toggle-btn">Close</button>
         </div>
       </div>
     </div>

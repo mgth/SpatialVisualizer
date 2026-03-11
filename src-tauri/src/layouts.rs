@@ -15,8 +15,12 @@ pub struct Speaker {
     pub delay_ms: f64,
 }
 
-fn default_radius_m() -> f64 { 1.0 }
-fn default_spatialize() -> u8 { 1 }
+fn default_radius_m() -> f64 {
+    1.0
+}
+fn default_spatialize() -> u8 {
+    1
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Layout {
@@ -103,13 +107,25 @@ fn normalize_speaker(raw: RawSpeaker) -> Speaker {
     let delay_ms = raw.delay_ms.or(raw.delay).unwrap_or(0.0).max(0.0);
     let spatialize = match raw.spatialize {
         Some(serde_json::Value::Bool(v)) => {
-            if v { 1 } else { 0 }
+            if v {
+                1
+            } else {
+                0
+            }
         }
         Some(serde_json::Value::Number(v)) => {
-            if v.as_f64().unwrap_or(1.0) != 0.0 { 1 } else { 0 }
+            if v.as_f64().unwrap_or(1.0) != 0.0 {
+                1
+            } else {
+                0
+            }
         }
         Some(serde_json::Value::String(v)) => {
-            if v == "0" || v.eq_ignore_ascii_case("false") { 0 } else { 1 }
+            if v == "0" || v.eq_ignore_ascii_case("false") {
+                0
+            } else {
+                1
+            }
         }
         _ => 1,
     };
@@ -236,15 +252,20 @@ fn parse_yaml_layout(text: &str) -> RawLayout {
 
     let raw_speakers = speakers
         .into_iter()
-        .map(|map| {
-            serde_json::from_value(serde_json::Value::Object(map)).unwrap_or_default()
-        })
+        .map(|map| serde_json::from_value(serde_json::Value::Object(map)).unwrap_or_default())
         .collect();
 
-    let name = top_level.get("name").and_then(|v| v.as_str()).map(str::to_owned);
+    let name = top_level
+        .get("name")
+        .and_then(|v| v.as_str())
+        .map(str::to_owned);
     let radius_m = top_level.get("radius_m").and_then(|v| v.as_f64());
 
-    RawLayout { name, radius_m, speakers: raw_speakers }
+    RawLayout {
+        name,
+        radius_m,
+        speakers: raw_speakers,
+    }
 }
 
 // ── public API ────────────────────────────────────────────────────────────
@@ -263,7 +284,10 @@ pub fn load_layouts(layouts_dir: &Path) -> Vec<Layout> {
         .filter_map(|e| e.ok().map(|e| e.path()))
         .filter(|p| {
             matches!(
-                p.extension().and_then(|e| e.to_str()).map(|e| e.to_lowercase()).as_deref(),
+                p.extension()
+                    .and_then(|e| e.to_str())
+                    .map(|e| e.to_lowercase())
+                    .as_deref(),
                 Some("json") | Some("yaml") | Some("yml")
             )
         })
@@ -272,10 +296,19 @@ pub fn load_layouts(layouts_dir: &Path) -> Vec<Layout> {
     files.sort_by_key(|p| p.file_name().map(|n| n.to_os_string()));
 
     // detect duplicate stems
-    let mut stem_counts: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    let mut stem_counts: std::collections::HashMap<String, usize> =
+        std::collections::HashMap::new();
     for path in &files {
-        let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase();
-        let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
+        let ext = path
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+        let stem = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("")
+            .to_string();
         let stem_key = format!("{stem}.{ext}");
         *stem_counts.entry(stem.clone()).or_insert(0) += 1;
         let _ = stem_key;
@@ -310,7 +343,12 @@ pub fn load_layouts(layouts_dir: &Path) -> Vec<Layout> {
 
             let speakers = raw.speakers.into_iter().map(normalize_speaker).collect();
             let radius_m = raw.radius_m.unwrap_or(1.0).max(0.01);
-            Some(Layout { key, name, speakers, radius_m })
+            Some(Layout {
+                key,
+                name,
+                speakers,
+                radius_m,
+            })
         })
         .collect();
 

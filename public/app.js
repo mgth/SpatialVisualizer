@@ -9,12 +9,14 @@ const speakersSectionEl = document.getElementById('speakersSection');
 const objectsSectionEl = document.getElementById('objectsSection');
 const roomRatioEl = document.getElementById('roomRatio');
 const spreadInfoEl = document.getElementById('spreadInfo');
-const dialogNormInfoEl = document.getElementById('dialogNormInfo');
+const loudnessInfoEl = document.getElementById('loudnessInfo');
 const latencyInfoEl = document.getElementById('latencyInfo');
 const resampleRatioInfoEl = document.getElementById('resampleRatioInfo');
-const dialogNormToggleEl = document.getElementById('dialogNormToggle');
+const loudnessToggleEl = document.getElementById('loudnessToggle');
 const spreadMinSliderEl = document.getElementById('spreadMinSlider');
 const spreadMaxSliderEl = document.getElementById('spreadMaxSlider');
+const spreadMinValEl = document.getElementById('spreadMinVal');
+const spreadMaxValEl = document.getElementById('spreadMaxVal');
 const latencyMeterFillEl = document.getElementById('latencyMeterFill');
 const masterGainSliderEl = document.getElementById('masterGainSlider');
 const masterGainBoxEl = document.getElementById('masterGainBox');
@@ -156,9 +158,9 @@ const roomRatio = { width: 1, length: 2, height: 1 };
 const spreadState = { min: null, max: null };
 const distanceDiffuseState = { enabled: null, threshold: null, curve: null };
 let configSaved = null;
-let dialogNormEnabled = null;
-let dialogNormLevel = null;
-let dialogNormGain = null;
+let loudnessEnabled = null;
+let loudnessSource = null;
+let loudnessGain = null;
 let latencyMs = null;
 let resampleRatio = null;
 let masterGain = 1;
@@ -1038,16 +1040,24 @@ function updateRoomRatioDisplay() {
 
 function renderSpreadDisplay() {
   if (!spreadInfoEl) return;
-  const minText = spreadState.min === null ? '—' : formatNumber(spreadState.min, 2);
-  const maxText = spreadState.max === null ? '—' : formatNumber(spreadState.max, 2);
-  spreadInfoEl.textContent = `spread: ${minText} / ${maxText}`;
+  const minDeg = spreadState.min === null ? null : spreadState.min * 180.0;
+  const maxDeg = spreadState.max === null ? null : spreadState.max * 180.0;
+  const minText = minDeg === null ? '—' : formatNumber(minDeg, 0);
+  const maxText = maxDeg === null ? '—' : formatNumber(maxDeg, 0);
+  spreadInfoEl.textContent = `spread: ${minText}° / ${maxText}°`;
   if (spreadMinSliderEl) {
-    const value = spreadState.min === null ? 0 : spreadState.min;
+    const value = minDeg === null ? 0 : minDeg;
     spreadMinSliderEl.value = String(value);
   }
   if (spreadMaxSliderEl) {
-    const value = spreadState.max === null ? 1 : spreadState.max;
+    const value = maxDeg === null ? 180 : maxDeg;
     spreadMaxSliderEl.value = String(value);
+  }
+  if (spreadMinValEl) {
+    spreadMinValEl.textContent = minDeg === null ? '—' : `${formatNumber(minDeg, 0)}°`;
+  }
+  if (spreadMaxValEl) {
+    spreadMaxValEl.textContent = maxDeg === null ? '—' : `${formatNumber(maxDeg, 0)}°`;
   }
 }
 
@@ -1057,16 +1067,16 @@ function updateSpreadDisplay() {
 }
 
 function renderDialogNormDisplay() {
-  if (!dialogNormInfoEl) return;
-  const enabledText = dialogNormEnabled === null ? '—' : dialogNormEnabled ? 'on' : 'off';
-  const levelText = dialogNormLevel === null ? '—' : `${formatNumber(dialogNormLevel, 0)} dBFS`;
+  if (!loudnessInfoEl) return;
+  const enabledText = loudnessEnabled === null ? '—' : loudnessEnabled ? 'on' : 'off';
+  const levelText = loudnessSource === null ? '—' : `${formatNumber(loudnessSource, 0)} dBFS`;
   const gainText =
-    dialogNormGain === null
+    loudnessGain === null
       ? '—'
-      : `${formatNumber(dialogNormGain, 2)} (${linearToDb(dialogNormGain)})`;
-  dialogNormInfoEl.textContent = `dialog_norm: ${enabledText} | level: ${levelText} | gain: ${gainText}`;
-  if (dialogNormToggleEl) {
-    dialogNormToggleEl.checked = dialogNormEnabled === true;
+      : `${formatNumber(loudnessGain, 2)} (${linearToDb(loudnessGain)})`;
+  loudnessInfoEl.textContent = `source loudness: ${levelText} | correction: ${gainText} | ${enabledText}`;
+  if (loudnessToggleEl) {
+    loudnessToggleEl.checked = loudnessEnabled === true;
   }
 }
 
@@ -2286,15 +2296,15 @@ if (masterGainSliderEl) {
   });
 }
 
-if (dialogNormToggleEl) {
-  dialogNormToggleEl.addEventListener('change', () => {
-    const enabled = dialogNormToggleEl.checked ? 1 : 0;
-    dialogNormEnabled = enabled === 1;
+if (loudnessToggleEl) {
+  loudnessToggleEl.addEventListener('change', () => {
+    const enabled = loudnessToggleEl.checked ? 1 : 0;
+    loudnessEnabled = enabled === 1;
     updateDialogNormDisplay();
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(
         JSON.stringify({
-          type: 'control:dialog_norm',
+          type: 'control:loudness',
           enable: enabled
         })
       );
@@ -2304,13 +2314,14 @@ if (dialogNormToggleEl) {
 
 if (spreadMinSliderEl) {
   spreadMinSliderEl.addEventListener('input', () => {
-    const value = Number(spreadMinSliderEl.value);
-    if (!Number.isFinite(value)) {
+    const valueDeg = Number(spreadMinSliderEl.value);
+    if (!Number.isFinite(valueDeg)) {
       return;
     }
+    const valueNorm = Math.max(0, Math.min(180, valueDeg)) / 180.0;
     const maxValue = spreadState.max === null ? 1 : spreadState.max;
-    spreadState.min = Math.min(value, maxValue);
-    spreadMinSliderEl.value = String(spreadState.min);
+    spreadState.min = Math.min(valueNorm, maxValue);
+    spreadMinSliderEl.value = String((spreadState.min ?? 0) * 180.0);
     updateSpreadDisplay();
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(
@@ -2325,13 +2336,14 @@ if (spreadMinSliderEl) {
 
 if (spreadMaxSliderEl) {
   spreadMaxSliderEl.addEventListener('input', () => {
-    const value = Number(spreadMaxSliderEl.value);
-    if (!Number.isFinite(value)) {
+    const valueDeg = Number(spreadMaxSliderEl.value);
+    if (!Number.isFinite(valueDeg)) {
       return;
     }
+    const valueNorm = Math.max(0, Math.min(180, valueDeg)) / 180.0;
     const minValue = spreadState.min === null ? 0 : spreadState.min;
-    spreadState.max = Math.max(value, minValue);
-    spreadMaxSliderEl.value = String(spreadState.max);
+    spreadState.max = Math.max(valueNorm, minValue);
+    spreadMaxSliderEl.value = String((spreadState.max ?? 1) * 180.0);
     updateSpreadDisplay();
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(
@@ -2495,14 +2507,14 @@ ws.onmessage = (event) => {
       }
     }
     updateSpreadDisplay();
-    if (typeof payload.dialogNorm === 'number') {
-      dialogNormEnabled = payload.dialogNorm !== 0;
+    if (typeof payload.loudness === 'number') {
+      loudnessEnabled = payload.loudness !== 0;
     }
-    if (typeof payload.dialogNormLevel === 'number') {
-      dialogNormLevel = payload.dialogNormLevel;
+    if (typeof payload.loudnessSource === 'number') {
+      loudnessSource = payload.loudnessSource;
     }
-    if (typeof payload.dialogNormGain === 'number') {
-      dialogNormGain = payload.dialogNormGain;
+    if (typeof payload.loudnessGain === 'number') {
+      loudnessGain = payload.loudnessGain;
     }
     updateDialogNormDisplay();
     if (typeof payload.masterGain === 'number') {
@@ -2615,18 +2627,18 @@ ws.onmessage = (event) => {
     updateSpreadDisplay();
   }
 
-  if (payload.type === 'dialog_norm') {
-    dialogNormEnabled = Number(payload.enabled) !== 0;
+  if (payload.type === 'loudness') {
+    loudnessEnabled = Number(payload.enabled) !== 0;
     updateDialogNormDisplay();
   }
 
-  if (payload.type === 'dialog_norm:level') {
-    dialogNormLevel = Number(payload.value);
+  if (payload.type === 'loudness:source') {
+    loudnessSource = Number(payload.value);
     updateDialogNormDisplay();
   }
 
-  if (payload.type === 'dialog_norm:gain') {
-    dialogNormGain = Number(payload.value);
+  if (payload.type === 'loudness:gain') {
+    loudnessGain = Number(payload.value);
     updateDialogNormDisplay();
   }
 

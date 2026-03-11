@@ -1,6 +1,12 @@
 use rosc::OscType;
 use serde::Serialize;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CoordinateFormat {
+    Cartesian = 0,
+    Polar = 1,
+}
+
 // ── helpers ─────────────────────────────────────────────────────────────────
 
 fn unwrap_arg(arg: &OscType) -> f64 {
@@ -105,6 +111,8 @@ pub enum OscEvent {
         sample_pos: i64,
         #[serde(rename = "objectCount")]
         object_count: u32,
+        #[serde(rename = "coordinateFormat")]
+        coordinate_format: u8,
     },
 
     #[serde(rename = "update")]
@@ -180,22 +188,34 @@ pub enum OscEvent {
     },
     #[serde(rename = "state:room_ratio:rear")]
     StateRoomRatioRear { value: f64 },
+    #[serde(rename = "state:room_ratio:center_blend")]
+    StateRoomRatioCenterBlend { value: f64 },
     #[serde(rename = "state:layout:radius_m")]
     StateLayoutRadiusM { value: f64 },
     #[serde(rename = "state:spread:min")]
     StateSpreadMin { value: f64 },
     #[serde(rename = "state:spread:max")]
     StateSpreadMax { value: f64 },
-    #[serde(rename = "state:dialog_norm")]
-    StateDialogNorm { enabled: bool },
-    #[serde(rename = "state:dialog_norm:level")]
-    StateDialogNormLevel { value: f64 },
-    #[serde(rename = "state:dialog_norm:gain")]
-    StateDialogNormGain { value: f64 },
+    #[serde(rename = "state:spread:from_distance")]
+    StateSpreadFromDistance { enabled: bool },
+    #[serde(rename = "state:spread:distance_range")]
+    StateSpreadDistanceRange { value: f64 },
+    #[serde(rename = "state:spread:distance_curve")]
+    StateSpreadDistanceCurve { value: f64 },
+    #[serde(rename = "state:loudness")]
+    StateLoudness { enabled: bool },
+    #[serde(rename = "state:loudness:source")]
+    StateLoudnessSource { value: f64 },
+    #[serde(rename = "state:loudness:gain")]
+    StateLoudnessGain { value: f64 },
     #[serde(rename = "state:master:gain")]
     StateMasterGain { value: f64 },
     #[serde(rename = "state:latency")]
     StateLatency { value: f64 },
+    #[serde(rename = "state:latency:instant")]
+    StateLatencyInstant { value: f64 },
+    #[serde(rename = "state:latency:target")]
+    StateLatencyTarget { value: f64 },
     #[serde(rename = "state:resample_ratio")]
     StateResampleRatio { value: f64 },
     #[serde(rename = "state:audio:sample_rate")]
@@ -208,6 +228,26 @@ pub enum OscEvent {
     StateDistanceDiffuseThreshold { value: f64 },
     #[serde(rename = "state:distance_diffuse:curve")]
     StateDistanceDiffuseCurve { value: f64 },
+    #[serde(rename = "state:vbap:cart:x_size")]
+    StateVbapCartXSize { value: u32 },
+    #[serde(rename = "state:vbap:cart:y_size")]
+    StateVbapCartYSize { value: u32 },
+    #[serde(rename = "state:vbap:cart:z_size")]
+    StateVbapCartZSize { value: u32 },
+    #[serde(rename = "state:vbap:polar:azimuth_resolution")]
+    StateVbapPolarAzimuthResolution { value: u32 },
+    #[serde(rename = "state:vbap:polar:elevation_resolution")]
+    StateVbapPolarElevationResolution { value: u32 },
+    #[serde(rename = "state:vbap:polar:distance_res")]
+    StateVbapPolarDistanceRes { value: u32 },
+    #[serde(rename = "state:vbap:polar:distance_max")]
+    StateVbapPolarDistanceMax { value: f64 },
+    #[serde(rename = "state:vbap:allow_negative_z")]
+    StateVbapAllowNegativeZ { enabled: bool },
+    #[serde(rename = "state:speakers:recomputing")]
+    StateSpeakersRecomputing { enabled: bool },
+    #[serde(rename = "state:adaptive_resampling")]
+    StateAdaptiveResampling { enabled: bool },
     #[serde(rename = "state:config:saved")]
     StateConfigSaved { saved: bool },
 }
@@ -275,7 +315,12 @@ fn parse_gsrd_config(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Opti
     None
 }
 
-fn parse_gsrd_object_xyz(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Option<OscEvent> {
+fn parse_gsrd_object_xyz(
+    parts: &[&str],
+    args: &[f64],
+    raw_args: &[OscType],
+    coordinate_format: CoordinateFormat,
+) -> Option<OscEvent> {
     if !parts.contains(&"gsrd") || !parts.contains(&"object") || !parts.contains(&"xyz") {
         return None;
     }
@@ -291,8 +336,12 @@ fn parse_gsrd_object_xyz(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> 
         .and_then(|a| unwrap_string(a))
         .filter(|s| !s.trim().is_empty());
 
-    // gsrd xyz: x=right, y=front, z=up → scene: x=front, y=up, z=right
-    let (mx, my, mz) = (y, z, x);
+    let (mx, my, mz) = match coordinate_format {
+        // gsrd xyz: x=right, y=front, z=up → scene: x=front, y=up, z=right
+        CoordinateFormat::Cartesian => (y, z, x),
+        // In polar mode payload is [azimuth_deg, elevation_deg, distance]
+        CoordinateFormat::Polar => spherical_to_cartesian(x, y, z),
+    };
 
     Some(OscEvent::Update {
         id,
@@ -312,9 +361,14 @@ fn parse_gsrd_spatial_frame(parts: &[&str], args: &[f64]) -> Option<OscEvent> {
     let sample_pos = to_number(args[0])? as i64;
     let object_count_raw = to_number(args[1])?;
     let object_count = object_count_raw.max(0.0) as u32;
+    let coordinate_format = match args.get(2).copied().and_then(to_number).unwrap_or(0.0) as i64 {
+        1 => 1u8,
+        _ => 0u8,
+    };
     Some(OscEvent::SpatialFrame {
         sample_pos,
         object_count,
+        coordinate_format,
     })
 }
 
@@ -327,13 +381,19 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Optio
         (3, "latency") => Some(OscEvent::StateLatency {
             value: to_number(args[0])?,
         }),
+        (3, "latency_instant") => Some(OscEvent::StateLatencyInstant {
+            value: to_number(args[0])?,
+        }),
+        (3, "latency_target") => Some(OscEvent::StateLatencyTarget {
+            value: to_number(args[0])?,
+        }),
         (3, "resample_ratio") => Some(OscEvent::StateResampleRatio {
             value: to_number(args[0])?,
         }),
         (3, "gain") => Some(OscEvent::StateMasterGain {
             value: to_number(args[0])?,
         }),
-        (3, "dialog_norm") => Some(OscEvent::StateDialogNorm {
+        (3, "loudness") => Some(OscEvent::StateLoudness {
             enabled: to_number(args[0])? != 0.0,
         }),
         (3, "room_ratio") => {
@@ -349,14 +409,17 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Optio
         (3, "room_ratio_rear") => Some(OscEvent::StateRoomRatioRear {
             value: to_number(args[0])?,
         }),
+        (3, "room_ratio_center_blend") => Some(OscEvent::StateRoomRatioCenterBlend {
+            value: to_number(args[0])?,
+        }),
         (4, "layout") if parts[3] == "radius_m" => Some(OscEvent::StateLayoutRadiusM {
             value: to_number(args[0])?,
         }),
-        (4, "dialog_norm") => {
+        (4, "loudness") => {
             let value = to_number(args[0])?;
             match parts[3] {
-                "level" => Some(OscEvent::StateDialogNormLevel { value }),
-                "gain" => Some(OscEvent::StateDialogNormGain { value }),
+                "source" => Some(OscEvent::StateLoudnessSource { value }),
+                "gain" => Some(OscEvent::StateLoudnessGain { value }),
                 _ => None,
             }
         }
@@ -365,6 +428,11 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Optio
             match parts[3] {
                 "min" => Some(OscEvent::StateSpreadMin { value }),
                 "max" => Some(OscEvent::StateSpreadMax { value }),
+                "from_distance" => Some(OscEvent::StateSpreadFromDistance {
+                    enabled: value != 0.0,
+                }),
+                "distance_range" => Some(OscEvent::StateSpreadDistanceRange { value }),
+                "distance_curve" => Some(OscEvent::StateSpreadDistanceCurve { value }),
                 _ => None,
             }
         }
@@ -380,6 +448,43 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Optio
             }),
             _ => None,
         },
+        (5, "vbap") if parts[3] == "cart" => {
+            let value = to_number(args[0])?.max(0.0) as u32;
+            match parts[4] {
+                "x_size" => Some(OscEvent::StateVbapCartXSize { value }),
+                "y_size" => Some(OscEvent::StateVbapCartYSize { value }),
+                "z_size" => Some(OscEvent::StateVbapCartZSize { value }),
+                _ => None,
+            }
+        }
+        (5, "vbap") if parts[3] == "polar" => {
+            match parts[4] {
+                "azimuth_resolution" => {
+                    let value = to_number(args[0])?.max(0.0) as u32;
+                    Some(OscEvent::StateVbapPolarAzimuthResolution { value })
+                }
+                "elevation_resolution" => {
+                    let value = to_number(args[0])?.max(0.0) as u32;
+                    Some(OscEvent::StateVbapPolarElevationResolution { value })
+                }
+                "distance_res" => Some(OscEvent::StateVbapPolarDistanceRes {
+                    value: to_number(args[0])?.max(0.0) as u32,
+                }),
+                "distance_max" => Some(OscEvent::StateVbapPolarDistanceMax {
+                    value: to_number(args[0])?.max(0.0),
+                }),
+                _ => None,
+            }
+        }
+        (4, "vbap") if parts[3] == "allow_negative_z" => Some(OscEvent::StateVbapAllowNegativeZ {
+            enabled: to_number(args[0])? != 0.0,
+        }),
+        (4, "speakers") if parts[3] == "recomputing" => Some(OscEvent::StateSpeakersRecomputing {
+            enabled: to_number(args[0])? != 0.0,
+        }),
+        (3, "adaptive_resampling") => Some(OscEvent::StateAdaptiveResampling {
+            enabled: to_number(args[0])? != 0.0,
+        }),
         (4, "config") if parts[3] == "saved" => Some(OscEvent::StateConfigSaved {
             saved: to_number(args[0])? != 0.0,
         }),
@@ -473,7 +578,11 @@ fn parse_meter(parts: &[&str], args: &[f64]) -> Option<OscEvent> {
 
 // ── public entry point ───────────────────────────────────────────────────────
 
-pub fn parse_osc_message(address: &str, raw_args: &[OscType]) -> Option<OscEvent> {
+pub fn parse_osc_message(
+    address: &str,
+    raw_args: &[OscType],
+    coordinate_format: CoordinateFormat,
+) -> Option<OscEvent> {
     let parts_owned: Vec<String> = address
         .split('/')
         .filter(|s| !s.is_empty())
@@ -489,7 +598,7 @@ pub fn parse_osc_message(address: &str, raw_args: &[OscType]) -> Option<OscEvent
     }
 
     // gsrd object xyz
-    if let Some(ev) = parse_gsrd_object_xyz(&parts, &args, raw_args) {
+    if let Some(ev) = parse_gsrd_object_xyz(&parts, &args, raw_args, coordinate_format) {
         return Some(ev);
     }
 

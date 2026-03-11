@@ -38,6 +38,10 @@ function gsrdSpeakerToSceneCartesian(azimuthDeg, elevationDeg, distance) {
   };
 }
 
+function getGsrdCoordinateFormat(context) {
+  return context && Number(context.gsrdCoordinateFormat) === 1 ? 1 : 0;
+}
+
 function findIdInAddress(parts) {
   const anchors = ['source', 'sources', 'object', 'obj', 'track', 'channel'];
   const reserved = new Set(['position', 'pos', 'xyz', 'aed', 'spherical', 'polar', 'angles', 'remove', 'delete', 'off']);
@@ -107,7 +111,7 @@ function parseGsrdConfigMessage(parts, args) {
   return null;
 }
 
-function parseGsrdObjectXyz(parts, args) {
+function parseGsrdObjectXyz(parts, args, context) {
   if (!parts.includes('gsrd') || !parts.includes('object') || !parts.includes('xyz')) {
     return null;
   }
@@ -127,7 +131,10 @@ function parseGsrdObjectXyz(parts, args) {
   const nameRaw = args[7];
   const name = typeof nameRaw === 'string' && nameRaw.trim() ? nameRaw.trim() : null;
 
-  const mappedPosition = mapCartesianByAddress(parts, { x, y, z });
+  const coordinateFormat = getGsrdCoordinateFormat(context);
+  const mappedPosition = coordinateFormat === 1
+    ? sphericalToCartesian(x, y, z)
+    : mapCartesianByAddress(parts, { x, y, z });
 
   const result = {
     type: 'update',
@@ -142,6 +149,30 @@ function parseGsrdObjectXyz(parts, args) {
   return result;
 }
 
+function parseGsrdSpatialFrame(parts, args, context) {
+  if (parts.length !== 3 || parts[0] !== 'gsrd' || parts[1] !== 'spatial' || parts[2] !== 'frame') {
+    return null;
+  }
+
+  const samplePos = toNumber(args[0]);
+  const objectCount = toNumber(args[1]);
+  if (samplePos === null || objectCount === null) {
+    return null;
+  }
+
+  const coordinateFormat = toNumber(args[2]) === 1 ? 1 : 0;
+  if (context) {
+    context.gsrdCoordinateFormat = coordinateFormat;
+  }
+
+  return {
+    type: 'spatial:frame',
+    samplePos: Math.floor(samplePos),
+    objectCount: Math.max(0, Math.floor(objectCount)),
+    coordinateFormat
+  };
+}
+
 function parseGsrdStateMessage(parts, args) {
   if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'latency') {
     const value = toNumber(args[0]);
@@ -150,6 +181,26 @@ function parseGsrdStateMessage(parts, args) {
     }
     return {
       type: 'state:latency',
+      value
+    };
+  }
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'latency_instant') {
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: 'state:latency:instant',
+      value
+    };
+  }
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'latency_target') {
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: 'state:latency:target',
       value
     };
   }
@@ -164,6 +215,16 @@ function parseGsrdStateMessage(parts, args) {
       value
     };
   }
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'adaptive_resampling') {
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    return {
+      type: 'state:adaptive_resampling',
+      enabled: value !== 0
+    };
+  }
 
   if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'gain') {
     const value = toNumber(args[0]);
@@ -176,20 +237,20 @@ function parseGsrdStateMessage(parts, args) {
     };
   }
 
-  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'dialog_norm') {
+  if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'loudness') {
     const value = toNumber(args[0]);
     if (value === null) {
       return null;
     }
     return {
-      type: 'state:dialog_norm',
+      type: 'state:loudness',
       enabled: value !== 0
     };
   }
 
-  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'dialog_norm') {
+  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'loudness') {
     const kind = parts[3];
-    if (!['level', 'gain'].includes(kind)) {
+    if (!['source', 'gain'].includes(kind)) {
       return null;
     }
     const value = toNumber(args[0]);
@@ -197,19 +258,28 @@ function parseGsrdStateMessage(parts, args) {
       return null;
     }
     return {
-      type: kind === 'level' ? 'state:dialog_norm:level' : 'state:dialog_norm:gain',
+      type: kind === 'source' ? 'state:loudness:source' : 'state:loudness:gain',
       value
     };
   }
 
   if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'spread') {
     const kind = parts[3];
-    if (!['min', 'max'].includes(kind)) {
+    if (!['min', 'max', 'from_distance', 'distance_range', 'distance_curve'].includes(kind)) {
       return null;
     }
     const value = toNumber(args[0]);
     if (value === null) {
       return null;
+    }
+    if (kind === 'from_distance') {
+      return { type: 'state:spread:from_distance', enabled: value !== 0 };
+    }
+    if (kind === 'distance_range') {
+      return { type: 'state:spread:distance_range', value };
+    }
+    if (kind === 'distance_curve') {
+      return { type: 'state:spread:distance_curve', value };
     }
     return {
       type: kind === 'min' ? 'state:spread:min' : 'state:spread:max',
@@ -399,7 +469,7 @@ function mapCartesianByAddress(parts, position) {
   };
 }
 
-function parseOscMessage(oscMsg) {
+function parseOscMessage(oscMsg, context = null) {
   const address = String(oscMsg.address || '');
   const parts = address.split('/').filter(Boolean).map((p) => p.toLowerCase());
   const args = (oscMsg.args || []).map(unwrapArg);
@@ -409,9 +479,14 @@ function parseOscMessage(oscMsg) {
     return parsedGsrdConfig;
   }
 
-  const parsedGsrdObjectXyz = parseGsrdObjectXyz(parts, args);
+  const parsedGsrdObjectXyz = parseGsrdObjectXyz(parts, args, context);
   if (parsedGsrdObjectXyz) {
     return parsedGsrdObjectXyz;
+  }
+
+  const parsedGsrdSpatialFrame = parseGsrdSpatialFrame(parts, args, context);
+  if (parsedGsrdSpatialFrame) {
+    return parsedGsrdSpatialFrame;
   }
 
   const parsedGsrdState = parseGsrdStateMessage(parts, args);

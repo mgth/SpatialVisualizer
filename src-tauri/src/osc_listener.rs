@@ -7,11 +7,12 @@ use tokio::sync::mpsc::UnboundedReceiver;
 
 use crate::app_state::{AppState, Meter};
 use crate::layouts::build_live_layout;
-use crate::osc_parser::{is_heartbeat_address, parse_osc_message, HeartbeatResponse, OscEvent};
+use crate::osc_parser::{
+    is_heartbeat_address, parse_osc_message, CoordinateFormat, HeartbeatResponse, OscEvent,
+};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const HEARTBEAT_ACK_TIMEOUT: Duration = Duration::from_secs(10);
-const LATENCY_EMA_ALPHA: f64 = 0.03;
 
 // ── control messages (frontend → OSC listener) ────────────────────────────
 
@@ -232,7 +233,6 @@ fn osc_thread(
 
     let mut last_ack_at = Instant::now();
     let mut last_heartbeat_at = Instant::now();
-    let mut latency_ema: Option<f64> = None;
     let mut is_connected = false;
 
     let mut buf = [0u8; 65536];
@@ -287,7 +287,6 @@ fn osc_thread(
                     } => {
                         host = h;
                         osc_rx_port = rx_port;
-                        latency_ema = None;
                         send_register(&socket, &host, osc_rx_port, lp);
                         last_ack_at = Instant::now();
                         if is_connected {
@@ -308,7 +307,6 @@ fn osc_thread(
 
             if last_ack_at.elapsed() >= HEARTBEAT_ACK_TIMEOUT {
                 log::warn!("[osc] heartbeat timeout, re-registering");
-                latency_ema = None;
                 if is_connected {
                     is_connected = false;
                     emit_osc_status(&app, &state, "reconnecting");
@@ -335,7 +333,6 @@ fn osc_thread(
                     listen_port,
                     &mut last_ack_at,
                     &mut is_connected,
-                    &mut latency_ema,
                 );
             }
             Err(_) => {}
@@ -353,7 +350,6 @@ fn handle_packet(
     listen_port: u16,
     last_ack_at: &mut Instant,
     is_connected: &mut bool,
-    latency_ema: &mut Option<f64>,
 ) {
     match packet {
         OscPacket::Message(msg) => {
@@ -379,12 +375,21 @@ fn handle_packet(
                 HeartbeatResponse::None => {}
             }
 
-            if let Some(ev) = parse_osc_message(&msg.addr, &msg.args) {
+            let coordinate_format = {
+                let s = state.lock().unwrap();
+                if s.current_coordinate_format == 1 {
+                    CoordinateFormat::Polar
+                } else {
+                    CoordinateFormat::Cartesian
+                }
+            };
+
+            if let Some(ev) = parse_osc_message(&msg.addr, &msg.args, coordinate_format) {
                 if !*is_connected {
                     *is_connected = true;
                     emit_osc_status(app, state, "connected");
                 }
-                handle_event(ev, app, state, latency_ema);
+                handle_event(ev, app, state);
             }
         }
         OscPacket::Bundle(bundle) => {
@@ -414,11 +419,21 @@ fn handle_packet(
                             HeartbeatResponse::None => {}
                         }
 
-                            if let Some(ev) = parse_osc_message(&msg.addr, &msg.args) {
-                                if !*is_connected {
-                                    *is_connected = true;
-                                    emit_osc_status(app, state, "connected");
-                                }
+                        let coordinate_format = {
+                            let s = state.lock().unwrap();
+                            if s.current_coordinate_format == 1 {
+                                CoordinateFormat::Polar
+                            } else {
+                                CoordinateFormat::Cartesian
+                            }
+                        };
+
+                        if let Some(ev) = parse_osc_message(&msg.addr, &msg.args, coordinate_format)
+                        {
+                            if !*is_connected {
+                                *is_connected = true;
+                                emit_osc_status(app, state, "connected");
+                            }
                             let is_config = matches!(
                                 &ev,
                                 OscEvent::ConfigSpeakersCount { .. }
@@ -427,19 +442,30 @@ fn handle_packet(
                             if is_config {
                                 config_events.push(ev);
                             } else {
-                                handle_event(ev, app, state, latency_ema);
+                                handle_event(ev, app, state);
                             }
                         }
                     }
                     OscPacket::Bundle(inner) => {
                         for pkt2 in inner.content {
                             if let OscPacket::Message(msg) = pkt2 {
-                                if let Some(ev) = parse_osc_message(&msg.addr, &msg.args) {
+                                let coordinate_format = {
+                                    let s = state.lock().unwrap();
+                                    if s.current_coordinate_format == 1 {
+                                        CoordinateFormat::Polar
+                                    } else {
+                                        CoordinateFormat::Cartesian
+                                    }
+                                };
+
+                                if let Some(ev) =
+                                    parse_osc_message(&msg.addr, &msg.args, coordinate_format)
+                                {
                                     if !*is_connected {
                                         *is_connected = true;
                                         emit_osc_status(app, state, "connected");
                                     }
-                                    handle_event(ev, app, state, latency_ema);
+                                    handle_event(ev, app, state);
                                 }
                             }
                         }
@@ -470,12 +496,7 @@ fn apply_speaker_config(events: Vec<OscEvent>, app: &AppHandle, state: &Arc<Mute
     }
 }
 
-fn handle_event(
-    ev: OscEvent,
-    app: &AppHandle,
-    state: &Arc<Mutex<AppState>>,
-    latency_ema: &mut Option<f64>,
-) {
+fn handle_event(ev: OscEvent, app: &AppHandle, state: &Arc<Mutex<AppState>>) {
     // Update state under the lock, collect emit data, then release before emitting.
     let (to_emit, removed_ids): (Option<(&'static str, serde_json::Value)>, Vec<String>) = {
         let mut s = state.lock().unwrap();
@@ -484,11 +505,13 @@ fn handle_event(
             OscEvent::SpatialFrame {
                 sample_pos,
                 object_count,
+                coordinate_format,
             } => {
                 let is_reset = s
                     .last_spatial_sample_pos
                     .is_some_and(|prev| sample_pos < prev);
                 s.last_spatial_sample_pos = Some(sample_pos);
+                s.current_coordinate_format = coordinate_format;
 
                 let stale_ids: Vec<String> = if is_reset {
                     s.sources.keys().cloned().collect()
@@ -521,6 +544,7 @@ fn handle_event(
                         serde_json::json!({
                             "samplePos": sample_pos,
                             "objectCount": object_count,
+                            "coordinateFormat": coordinate_format,
                             "reset": is_reset
                         }),
                     )),
@@ -755,6 +779,24 @@ fn handle_event(
                     removed_ids,
                 )
             }
+            OscEvent::StateRoomRatioCenterBlend { value } => {
+                s.room_ratio.center_blend = value.clamp(0.0, 1.0);
+                (
+                    Some((
+                        "room_ratio",
+                        serde_json::json!({
+                            "roomRatio": {
+                                "width": s.room_ratio.width,
+                                "length": s.room_ratio.length,
+                                "height": s.room_ratio.height,
+                                "rear": s.room_ratio.rear,
+                                "centerBlend": s.room_ratio.center_blend
+                            }
+                        }),
+                    )),
+                    removed_ids,
+                )
+            }
             OscEvent::StateLayoutRadiusM { value } => {
                 if let Some(layout_key) = s.selected_layout_key.clone() {
                     if let Some(layout) = s.layouts.iter_mut().find(|l| l.key == layout_key) {
@@ -785,30 +827,60 @@ fn handle_event(
                     removed_ids,
                 )
             }
-
-            OscEvent::StateDialogNorm { enabled } => {
-                s.dialog_norm = Some(if enabled { 1 } else { 0 });
+            OscEvent::StateSpreadFromDistance { enabled } => {
+                s.spread.from_distance = Some(enabled);
                 (
                     Some((
-                        "dialog_norm",
+                        "spread:from_distance",
+                        serde_json::json!({ "enabled": enabled }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateSpreadDistanceRange { value } => {
+                s.spread.distance_range = Some(value);
+                (
+                    Some((
+                        "spread:distance_range",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateSpreadDistanceCurve { value } => {
+                s.spread.distance_curve = Some(value);
+                (
+                    Some((
+                        "spread:distance_curve",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+
+            OscEvent::StateLoudness { enabled } => {
+                s.loudness = Some(if enabled { 1 } else { 0 });
+                (
+                    Some((
+                        "loudness",
                         serde_json::json!({ "enabled": if enabled { 1 } else { 0 } }),
                     )),
                     removed_ids,
                 )
             }
 
-            OscEvent::StateDialogNormLevel { value } => {
-                s.dialog_norm_level = Some(value);
+            OscEvent::StateLoudnessSource { value } => {
+                s.loudness_source = Some(value);
                 (
-                    Some(("dialog_norm:level", serde_json::json!({ "value": value }))),
+                    Some(("loudness:source", serde_json::json!({ "value": value }))),
                     removed_ids,
                 )
             }
 
-            OscEvent::StateDialogNormGain { value } => {
-                s.dialog_norm_gain = Some(value);
+            OscEvent::StateLoudnessGain { value } => {
+                s.loudness_gain = Some(value);
                 (
-                    Some(("dialog_norm:gain", serde_json::json!({ "value": value }))),
+                    Some(("loudness:gain", serde_json::json!({ "value": value }))),
                     removed_ids,
                 )
             }
@@ -822,13 +894,30 @@ fn handle_event(
             }
 
             OscEvent::StateLatency { value } => {
-                let ema = latency_ema.map_or(value, |prev| {
-                    LATENCY_EMA_ALPHA * value + (1.0 - LATENCY_EMA_ALPHA) * prev
-                });
-                *latency_ema = Some(ema);
-                s.latency_ms = Some(ema.round() as i64);
+                s.latency_ms = Some(value.round() as i64);
                 (
                     Some(("latency", serde_json::json!({ "value": s.latency_ms }))),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateLatencyInstant { value } => {
+                s.latency_instant_ms = Some(value.round() as i64);
+                (
+                    Some((
+                        "latency:instant",
+                        serde_json::json!({ "value": s.latency_instant_ms }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateLatencyTarget { value } => {
+                s.latency_target_ms = Some(value.round() as i64);
+                s.latency_ms = Some(value.round() as i64);
+                (
+                    Some((
+                        "latency:target",
+                        serde_json::json!({ "value": s.latency_target_ms }),
+                    )),
                     removed_ids,
                 )
             }
@@ -843,20 +932,14 @@ fn handle_event(
             OscEvent::StateAudioSampleRate { value } => {
                 s.audio_sample_rate = if value == 0 { None } else { Some(value) };
                 (
-                    Some((
-                        "audio:sample_rate",
-                        serde_json::json!({ "value": value }),
-                    )),
+                    Some(("audio:sample_rate", serde_json::json!({ "value": value }))),
                     removed_ids,
                 )
             }
             OscEvent::StateAudioSampleFormat { value } => {
                 s.audio_sample_format = Some(value.clone());
                 (
-                    Some((
-                        "audio:sample_format",
-                        serde_json::json!({ "value": value }),
-                    )),
+                    Some(("audio:sample_format", serde_json::json!({ "value": value }))),
                     removed_ids,
                 )
             }
@@ -889,6 +972,94 @@ fn handle_event(
                     Some((
                         "distance_diffuse:curve",
                         serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapCartXSize { value } => {
+                s.vbap_cartesian.x_size = Some(value);
+                (
+                    Some(("vbap:cart:x_size", serde_json::json!({ "value": value }))),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapCartYSize { value } => {
+                s.vbap_cartesian.y_size = Some(value);
+                (
+                    Some(("vbap:cart:y_size", serde_json::json!({ "value": value }))),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapCartZSize { value } => {
+                s.vbap_cartesian.z_size = Some(value);
+                (
+                    Some(("vbap:cart:z_size", serde_json::json!({ "value": value }))),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapPolarAzimuthResolution { value } => {
+                s.vbap_polar.azimuth_resolution = Some(value);
+                (
+                    Some((
+                        "vbap:polar:azimuth_resolution",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapPolarElevationResolution { value } => {
+                s.vbap_polar.elevation_resolution = Some(value);
+                (
+                    Some((
+                        "vbap:polar:elevation_resolution",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapPolarDistanceRes { value } => {
+                s.vbap_polar.distance_res = Some(value);
+                (
+                    Some((
+                        "vbap:polar:distance_res",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapPolarDistanceMax { value } => {
+                s.vbap_polar.distance_max = Some(value);
+                (
+                    Some((
+                        "vbap:polar:distance_max",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapAllowNegativeZ { enabled } => {
+                s.vbap_allow_negative_z = Some(enabled);
+                (
+                    Some((
+                        "vbap:allow_negative_z",
+                        serde_json::json!({ "enabled": enabled }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateSpeakersRecomputing { enabled } => {
+                s.vbap_recomputing = Some(enabled);
+                (
+                    Some(("vbap:recomputing", serde_json::json!({ "enabled": enabled }))),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResampling { enabled } => {
+                s.adaptive_resampling = Some(if enabled { 1 } else { 0 });
+                (
+                    Some((
+                        "adaptive_resampling",
+                        serde_json::json!({ "enabled": if enabled { 1 } else { 0 } }),
                     )),
                     removed_ids,
                 )

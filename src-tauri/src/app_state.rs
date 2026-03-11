@@ -26,6 +26,8 @@ pub struct RoomRatio {
     pub length: f64,
     pub height: f64,
     pub rear: f64,
+    #[serde(rename = "centerBlend")]
+    pub center_blend: f64,
 }
 
 impl Default for RoomRatio {
@@ -35,6 +37,7 @@ impl Default for RoomRatio {
             length: 2.0,
             height: 1.0,
             rear: 1.0,
+            center_blend: 0.5,
         }
     }
 }
@@ -43,6 +46,12 @@ impl Default for RoomRatio {
 pub struct SpreadState {
     pub min: Option<f64>,
     pub max: Option<f64>,
+    #[serde(rename = "fromDistance")]
+    pub from_distance: Option<bool>,
+    #[serde(rename = "distanceRange")]
+    pub distance_range: Option<f64>,
+    #[serde(rename = "distanceCurve")]
+    pub distance_curve: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -50,6 +59,28 @@ pub struct DistanceDiffuse {
     pub enabled: Option<bool>,
     pub threshold: Option<f64>,
     pub curve: Option<f64>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct VbapCartesian {
+    #[serde(rename = "xSize")]
+    pub x_size: Option<u32>,
+    #[serde(rename = "ySize")]
+    pub y_size: Option<u32>,
+    #[serde(rename = "zSize")]
+    pub z_size: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct VbapPolar {
+    #[serde(rename = "azimuthResolution")]
+    pub azimuth_resolution: Option<u32>,
+    #[serde(rename = "elevationResolution")]
+    pub elevation_resolution: Option<u32>,
+    #[serde(rename = "distanceRes")]
+    pub distance_res: Option<u32>,
+    #[serde(rename = "distanceMax")]
+    pub distance_max: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -72,20 +103,34 @@ pub struct AppState {
     #[serde(rename = "roomRatio")]
     pub room_ratio: RoomRatio,
     pub spread: SpreadState,
-    #[serde(rename = "dialogNorm")]
-    pub dialog_norm: Option<u8>,
-    #[serde(rename = "dialogNormLevel")]
-    pub dialog_norm_level: Option<f64>,
-    #[serde(rename = "dialogNormGain")]
-    pub dialog_norm_gain: Option<f64>,
+    #[serde(rename = "loudness")]
+    pub loudness: Option<u8>,
+    #[serde(rename = "loudnessSource")]
+    pub loudness_source: Option<f64>,
+    #[serde(rename = "loudnessGain")]
+    pub loudness_gain: Option<f64>,
     #[serde(rename = "masterGain")]
     pub master_gain: Option<f64>,
     #[serde(rename = "distanceDiffuse")]
     pub distance_diffuse: DistanceDiffuse,
+    #[serde(rename = "vbapCartesian")]
+    pub vbap_cartesian: VbapCartesian,
+    #[serde(rename = "vbapPolar")]
+    pub vbap_polar: VbapPolar,
+    #[serde(rename = "vbapAllowNegativeZ")]
+    pub vbap_allow_negative_z: Option<bool>,
+    #[serde(rename = "adaptiveResampling")]
+    pub adaptive_resampling: Option<u8>,
+    #[serde(rename = "vbapRecomputing")]
+    pub vbap_recomputing: Option<bool>,
     #[serde(rename = "configSaved")]
     pub config_saved: Option<u8>,
     #[serde(rename = "latencyMs")]
     pub latency_ms: Option<i64>,
+    #[serde(rename = "latencyInstantMs")]
+    pub latency_instant_ms: Option<i64>,
+    #[serde(rename = "latencyTargetMs")]
+    pub latency_target_ms: Option<i64>,
     #[serde(rename = "resampleRatio")]
     pub resample_ratio: Option<f64>,
     #[serde(rename = "audioSampleRate")]
@@ -96,6 +141,8 @@ pub struct AppState {
     pub osc_status: Option<String>,
     #[serde(rename = "lastSpatialSamplePos")]
     pub last_spatial_sample_pos: Option<i64>,
+    #[serde(rename = "currentCoordinateFormat")]
+    pub current_coordinate_format: u8,
     pub layouts: Vec<Layout>,
     #[serde(rename = "selectedLayoutKey")]
     pub selected_layout_key: Option<String>,
@@ -112,6 +159,7 @@ impl AppState {
                 length: 2.0,
                 height: 1.0,
                 rear: 1.0,
+                center_blend: 0.5,
             },
             ..Default::default()
         }
@@ -131,18 +179,26 @@ impl Default for AppState {
             speaker_mutes: HashMap::new(),
             room_ratio: RoomRatio::default(),
             spread: SpreadState::default(),
-            dialog_norm: None,
-            dialog_norm_level: None,
-            dialog_norm_gain: None,
+            loudness: None,
+            loudness_source: None,
+            loudness_gain: None,
             master_gain: None,
             distance_diffuse: DistanceDiffuse::default(),
+            vbap_cartesian: VbapCartesian::default(),
+            vbap_polar: VbapPolar::default(),
+            vbap_allow_negative_z: None,
+            adaptive_resampling: None,
+            vbap_recomputing: None,
             config_saved: None,
             latency_ms: None,
+            latency_instant_ms: None,
+            latency_target_ms: None,
             resample_ratio: None,
             audio_sample_rate: None,
             audio_sample_format: None,
             osc_status: Some("initializing".to_string()),
             last_spatial_sample_pos: None,
+            current_coordinate_format: 0,
             layouts: Vec::new(),
             selected_layout_key: None,
         }

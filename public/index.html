@@ -75,7 +75,7 @@
         color: #d9ecff;
       }
 
-      #dialogNormInfo {
+      #loudnessInfo {
         margin-top: 0.2rem;
         font-size: 12px;
         color: #d9ecff;
@@ -100,61 +100,6 @@
         gap: 0.5rem;
         margin-top: 0.2rem;
         justify-content: space-between;
-      }
-
-      .spread-row {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-top: 0.25rem;
-      }
-
-      .dual-range {
-        position: relative;
-        flex: 1 1 auto;
-        height: 18px;
-      }
-
-      .dual-range input[type="range"] {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 18px;
-        background: transparent;
-        pointer-events: none;
-        -webkit-appearance: none;
-      }
-
-      .dual-range input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #d9ecff;
-        border: 1px solid rgba(0, 0, 0, 0.4);
-        pointer-events: auto;
-      }
-
-      .dual-range input[type="range"]::-moz-range-thumb {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #d9ecff;
-        border: 1px solid rgba(0, 0, 0, 0.4);
-        pointer-events: auto;
-      }
-
-      .dual-range input[type="range"]::-webkit-slider-runnable-track {
-        height: 4px;
-        background: rgba(255, 255, 255, 0.12);
-        border-radius: 999px;
-      }
-
-      .dual-range input[type="range"]::-moz-range-track {
-        height: 4px;
-        background: rgba(255, 255, 255, 0.12);
-        border-radius: 999px;
       }
 
       .switch-row input[type="checkbox"],
@@ -362,16 +307,9 @@
       <div><strong>Spatial Visualizer</strong></div>
       <div>WS: <span id="status">connexion...</span></div>
       <div id="roomRatio">room_ratio: —</div>
-      <div class="spread-row">
-        <div id="spreadInfo">spread: — / —</div>
-        <div class="dual-range">
-          <input id="spreadMinSlider" type="range" min="0" max="1" step="0.01" value="0" />
-          <input id="spreadMaxSlider" type="range" min="0" max="1" step="0.01" value="1" />
-        </div>
-      </div>
       <div class="inline-toggle">
-        <div id="dialogNormInfo">dialog_norm: —</div>
-        <input id="dialogNormToggle" type="checkbox" />
+        <div id="loudnessInfo">source loudness: — | target loudness: — | correction: —</div>
+        <input id="loudnessToggle" type="checkbox" />
       </div>
       <div class="meter-row">
         <div id="latencyInfo">latency: —</div>
@@ -414,6 +352,18 @@
         <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
           <span id="configSavedIndicator" style="font-size:12px;color:#d9ecff">—</span>
           <button id="saveConfigBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.6rem;cursor:pointer">Sauvegarder</button>
+        </div>
+      </div>
+      <div class="info-section" id="spreadSection">
+        <div class="info-title">Spread</div>
+        <div id="spreadInfo">spread: —° / —°</div>
+        <div class="control-row" style="margin-top:0.25rem">
+          <label style="font-size:12px;white-space:nowrap">Min <span id="spreadMinVal">0°</span></label>
+          <input id="spreadMinSlider" type="range" min="0" max="180" step="1" value="0" class="gain-slider" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label style="font-size:12px;white-space:nowrap">Max <span id="spreadMaxVal">180°</span></label>
+          <input id="spreadMaxSlider" type="range" min="0" max="180" step="1" value="180" class="gain-slider" />
         </div>
       </div>
       <div class="info-section" id="distanceDiffuseSection">
