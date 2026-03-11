@@ -2770,11 +2770,13 @@ function updateMasterMeterUI() {
 }
 
 function applyRoomRatioToScene() {
-  const maxDim = Math.max(roomRatio.width, roomRatio.length, roomRatio.height, roomRatio.rear, 1e-6);
-  const xMax = (roomRatio.length / maxDim) * 2;
-  const xMin = -(roomRatio.rear / maxDim) * 2;
-  const yMax = (roomRatio.height / maxDim) * 2;
-  const halfZ = (roomRatio.width / maxDim) * 2;
+  // Use the same scaled coordinate space as rendered objects:
+  // front depth is mapped to [0, roomRatio.length], rear depth to [-roomRatio.rear, 0],
+  // width to [-roomRatio.width, roomRatio.width], height to [0, roomRatio.height].
+  const xMax = Math.max(0.001, Number(roomRatio.length) || 1);
+  const xMin = -Math.max(0.001, Number(roomRatio.rear) || 1);
+  const yMax = Math.max(0.001, Number(roomRatio.height) || 1);
+  const halfZ = Math.max(0.001, Number(roomRatio.width) || 1);
   const depthHalfX = Math.max(0.001, (xMax - xMin) * 0.5);
   const xCenter = (xMin + xMax) * 0.5;
 
