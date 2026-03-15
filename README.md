@@ -2,6 +2,8 @@
 
 Prototype d'application de visualisation 3D des objets d'un flux audio spatialisé.
 
+Le projet est conçu pour fonctionner avec [Generic Spatial Renderer Daemon (gsrd)](https://github.com/mgth/Generic-Spatial-Renderer-Daemon), qui fournit le moteur temps réel, l’état OSC et les contrôles audio utilisés par le visualizer. Le visualizer seul ne produit pas de rendu audio: il sert d’interface de supervision et de pilotage pour `gsrd`.
+
 ## Principe
 
 - Le serveur écoute des messages OSC en UDP (port dynamique par défaut pour éviter les conflits avec gsrd sur `9000`).
