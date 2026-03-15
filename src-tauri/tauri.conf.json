@@ -10,6 +10,7 @@
   },
   "bundle": {
     "active": true,
+    "icon": ["icons/icon.png"],
     "resources": ["../layouts/*"]
   },
   "app": {

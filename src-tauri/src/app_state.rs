@@ -83,6 +83,13 @@ pub struct VbapPolar {
     pub distance_max: Option<f64>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct VbapMode {
+    pub selection: Option<String>,
+    #[serde(rename = "effectiveMode")]
+    pub effective_mode: Option<String>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AppState {
     pub sources: HashMap<String, SourcePosition>,
@@ -117,10 +124,30 @@ pub struct AppState {
     pub vbap_cartesian: VbapCartesian,
     #[serde(rename = "vbapPolar")]
     pub vbap_polar: VbapPolar,
+    #[serde(rename = "vbapMode")]
+    pub vbap_mode: VbapMode,
     #[serde(rename = "vbapAllowNegativeZ")]
     pub vbap_allow_negative_z: Option<bool>,
     #[serde(rename = "adaptiveResampling")]
     pub adaptive_resampling: Option<u8>,
+    #[serde(rename = "adaptiveResamplingKpNear")]
+    pub adaptive_resampling_kp_near: Option<f64>,
+    #[serde(rename = "adaptiveResamplingKpFar")]
+    pub adaptive_resampling_kp_far: Option<f64>,
+    #[serde(rename = "adaptiveResamplingKi")]
+    pub adaptive_resampling_ki: Option<f64>,
+    #[serde(rename = "adaptiveResamplingMaxAdjust")]
+    pub adaptive_resampling_max_adjust: Option<f64>,
+    #[serde(rename = "adaptiveResamplingMaxAdjustFar")]
+    pub adaptive_resampling_max_adjust_far: Option<f64>,
+    #[serde(rename = "adaptiveResamplingNearFarThresholdMs")]
+    pub adaptive_resampling_near_far_threshold_ms: Option<i64>,
+    #[serde(rename = "adaptiveResamplingHardCorrectionThresholdMs")]
+    pub adaptive_resampling_hard_correction_threshold_ms: Option<i64>,
+    #[serde(rename = "adaptiveResamplingMeasurementSmoothingAlpha")]
+    pub adaptive_resampling_measurement_smoothing_alpha: Option<f64>,
+    #[serde(rename = "adaptiveResamplingBand")]
+    pub adaptive_resampling_band: Option<String>,
     #[serde(rename = "vbapRecomputing")]
     pub vbap_recomputing: Option<bool>,
     #[serde(rename = "configSaved")]
@@ -129,6 +156,8 @@ pub struct AppState {
     pub latency_ms: Option<i64>,
     #[serde(rename = "latencyInstantMs")]
     pub latency_instant_ms: Option<i64>,
+    #[serde(rename = "latencyControlMs")]
+    pub latency_control_ms: Option<i64>,
     #[serde(rename = "latencyTargetMs")]
     pub latency_target_ms: Option<i64>,
     #[serde(rename = "resampleRatio")]
@@ -186,12 +215,23 @@ impl Default for AppState {
             distance_diffuse: DistanceDiffuse::default(),
             vbap_cartesian: VbapCartesian::default(),
             vbap_polar: VbapPolar::default(),
+            vbap_mode: VbapMode::default(),
             vbap_allow_negative_z: None,
             adaptive_resampling: None,
+            adaptive_resampling_kp_near: Some(0.00001),
+            adaptive_resampling_kp_far: Some(0.00002),
+            adaptive_resampling_ki: Some(0.0000005),
+            adaptive_resampling_max_adjust: Some(0.01),
+            adaptive_resampling_max_adjust_far: Some(0.02),
+            adaptive_resampling_near_far_threshold_ms: Some(120),
+            adaptive_resampling_hard_correction_threshold_ms: Some(0),
+            adaptive_resampling_measurement_smoothing_alpha: Some(0.15),
+            adaptive_resampling_band: None,
             vbap_recomputing: None,
             config_saved: None,
             latency_ms: None,
             latency_instant_ms: None,
+            latency_control_ms: None,
             latency_target_ms: None,
             resample_ratio: None,
             audio_sample_rate: None,

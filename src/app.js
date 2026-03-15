@@ -37,6 +37,12 @@ const roomGeometrySummaryEl = document.getElementById('roomGeometrySummary');
 const roomGeometrySummaryScaleEl = document.getElementById('roomGeometrySummaryScale');
 const roomGeometrySummarySizeEl = document.getElementById('roomGeometrySummarySize');
 const roomGeometrySummaryRatioEl = document.getElementById('roomGeometrySummaryRatio');
+const oscInfoBtnEl = document.getElementById('oscInfoBtn');
+const oscInfoModalEl = document.getElementById('oscInfoModal');
+const oscInfoCloseBtnEl = document.getElementById('oscInfoCloseBtn');
+const roomGeometryInfoBtnEl = document.getElementById('roomGeometryInfoBtn');
+const roomGeometryInfoModalEl = document.getElementById('roomGeometryInfoModal');
+const roomGeometryInfoCloseBtnEl = document.getElementById('roomGeometryInfoCloseBtn');
 const roomGeometryToggleBtnEl = document.getElementById('roomGeometryToggleBtn');
 const roomGeometryFormEl = document.getElementById('roomGeometryForm');
 const roomDimWidthInputEl = document.getElementById('roomDimWidthInput');
@@ -61,8 +67,17 @@ const roomMasterMpuHeightEl = document.getElementById('roomMasterMpuHeight');
 const roomGeometryCancelBtnEl = document.getElementById('roomGeometryCancelBtn');
 const roomGeometryApplyBtnEl = document.getElementById('roomGeometryApplyBtn');
 const spreadInfoEl = document.getElementById('spreadInfo');
+const trailSectionToggleBtnEl = document.getElementById('trailSectionToggleBtn');
+const trailSectionContentEl = document.getElementById('trailSectionContent');
+const vbapSectionToggleBtnEl = document.getElementById('vbapSectionToggleBtn');
+const vbapSectionContentEl = document.getElementById('vbapSectionContent');
+const spreadSectionToggleBtnEl = document.getElementById('spreadSectionToggleBtn');
+const spreadSectionContentEl = document.getElementById('spreadSectionContent');
 const vbapStatusEl = document.getElementById('vbapStatus');
 const vbapCartesianGridToggleBtnEl = document.getElementById('vbapCartesianGridToggleBtn');
+const vbapModeAutoBtnEl = document.getElementById('vbapModeAutoBtn');
+const vbapModePolarBtnEl = document.getElementById('vbapModePolarBtn');
+const vbapModeCartesianBtnEl = document.getElementById('vbapModeCartesianBtn');
 const vbapCartXSizeInputEl = document.getElementById('vbapCartXSizeInput');
 const vbapCartYSizeInputEl = document.getElementById('vbapCartYSizeInput');
 const vbapCartZSizeInputEl = document.getElementById('vbapCartZSizeInput');
@@ -80,9 +95,35 @@ const vbapPolarElStepInfoEl = document.getElementById('vbapPolarElStepInfo');
 const vbapPolarDistStepInfoEl = document.getElementById('vbapPolarDistStepInfo');
 const loudnessInfoEl = document.getElementById('loudnessInfo');
 const latencyInfoEl = document.getElementById('latencyInfo');
+const latencyRawInfoEl = document.getElementById('latencyRawInfo');
+const latencyCtrlInfoEl = document.getElementById('latencyCtrlInfo');
 const latencyTargetInputEl = document.getElementById('latencyTargetInput');
 const latencyTargetApplyBtnEl = document.getElementById('latencyTargetApplyBtn');
+const adaptiveKpNearInputEl = document.getElementById('adaptiveKpNearInput');
+const adaptiveKpFarInputEl = document.getElementById('adaptiveKpFarInput');
+const adaptiveKiInputEl = document.getElementById('adaptiveKiInput');
+const adaptiveMaxAdjustInputEl = document.getElementById('adaptiveMaxAdjustInput');
+const adaptiveMaxAdjustFarInputEl = document.getElementById('adaptiveMaxAdjustFarInput');
+const adaptiveNearFarThresholdInputEl = document.getElementById('adaptiveNearFarThresholdInput');
+const adaptiveHardCorrectionThresholdInputEl = document.getElementById('adaptiveHardCorrectionThresholdInput');
+const adaptiveMeasurementSmoothingAlphaInputEl = document.getElementById('adaptiveMeasurementSmoothingAlphaInput');
+const adaptiveResamplingAdvancedApplyBtnEl = document.getElementById('adaptiveResamplingAdvancedApplyBtn');
+const adaptiveResamplingAdvancedToggleBtnEl = document.getElementById('adaptiveResamplingAdvancedToggleBtn');
+const adaptiveResamplingAdvancedFormEl = document.getElementById('adaptiveResamplingAdvancedForm');
+const adaptiveResamplingInfoBtnEl = document.getElementById('adaptiveResamplingInfoBtn');
+const adaptiveResamplingInfoModalEl = document.getElementById('adaptiveResamplingInfoModal');
+const adaptiveResamplingInfoCloseBtnEl = document.getElementById('adaptiveResamplingInfoCloseBtn');
+const telemetryGaugesToggleBtnEl = document.getElementById('telemetryGaugesToggleBtn');
+const telemetryGaugesFormEl = document.getElementById('telemetryGaugesForm');
+const telemetryGaugesInfoBtnEl = document.getElementById('telemetryGaugesInfoBtn');
+const telemetryGaugesInfoModalEl = document.getElementById('telemetryGaugesInfoModal');
+const telemetryGaugesInfoCloseBtnEl = document.getElementById('telemetryGaugesInfoCloseBtn');
+const adaptiveBandDotEl = document.getElementById('adaptiveBandDot');
+const adaptiveBandTextEl = document.getElementById('adaptiveBandText');
 const resampleRatioInfoEl = document.getElementById('resampleRatioInfo');
+const resampleMeterRowEl = document.getElementById('resampleMeterRow');
+const resampleNegMeterFillEl = document.getElementById('resampleNegMeterFill');
+const resamplePosMeterFillEl = document.getElementById('resamplePosMeterFill');
 const audioFormatInfoEl = document.getElementById('audioFormatInfo');
 const audioSampleRateControlEl = document.getElementById('audioSampleRateControl');
 const audioSampleRateInputEl = document.getElementById('audioSampleRateInput');
@@ -102,6 +143,13 @@ const spreadDistanceRangeValEl = document.getElementById('spreadDistanceRangeVal
 const spreadDistanceCurveSliderEl = document.getElementById('spreadDistanceCurveSlider');
 const spreadDistanceCurveValEl = document.getElementById('spreadDistanceCurveVal');
 const latencyMeterFillEl = document.getElementById('latencyMeterFill');
+const latencyRawMinMaskEl = document.getElementById('latencyRawMinMask');
+const latencyRawMaxMaskEl = document.getElementById('latencyRawMaxMask');
+const latencyCtrlMeterFillEl = document.getElementById('latencyCtrlMeterFill');
+const latencyRawMinMarkerEl = document.getElementById('latencyRawMinMarker');
+const latencyRawMaxMarkerEl = document.getElementById('latencyRawMaxMarker');
+const latencyRawMinValueEl = document.getElementById('latencyRawMinValue');
+const latencyRawMaxValueEl = document.getElementById('latencyRawMaxValue');
 const masterGainSliderEl = document.getElementById('masterGainSlider');
 const masterGainBoxEl = document.getElementById('masterGainBox');
 const masterMeterTextEl = document.getElementById('masterMeterText');
@@ -426,6 +474,7 @@ let metersPerUnit = 1.0;
 const spreadState = { min: null, max: null, fromDistance: null, distanceRange: null, distanceCurve: null };
 const vbapCartesianState = { xSize: null, ySize: null, zSize: null };
 const vbapPolarState = { azimuthResolution: null, elevationResolution: null, distanceRes: null, distanceMax: null };
+const vbapModeState = { selection: null, effectiveMode: null };
 let vbapAllowNegativeZ = null;
 const distanceDiffuseState = { enabled: null, threshold: null, curve: null };
 let configSaved = null;
@@ -433,17 +482,48 @@ let loudnessEnabled = null;
 let loudnessSource = null;
 let loudnessGain = null;
 let adaptiveResamplingEnabled = null;
+let adaptiveResamplingKpNear = 0.00001;
+let adaptiveResamplingKpFar = 0.00002;
+let adaptiveResamplingKi = 0.0000005;
+let adaptiveResamplingMaxAdjust = 0.01;
+let adaptiveResamplingMaxAdjustFar = 0.02;
+let adaptiveResamplingNearFarThresholdMs = 120;
+let adaptiveResamplingHardCorrectionThresholdMs = 0;
+let adaptiveResamplingMeasurementSmoothingAlpha = 0.15;
+let adaptiveResamplingBand = null;
 let vbapRecomputing = null;
 let latencyMs = null;
 let latencyInstantMs = null;
-let latencyInstantTrendMs = null;
+let latencyControlMs = null;
 let latencyTargetMs = null;
+let latencyRawWindow = [];
 let resampleRatio = null;
 let audioSampleRate = null;
 let audioSampleFormat = null;
 let audioSampleRateEditing = false;
 let latencyTargetEditing = false;
 let latencyTargetDirty = false;
+let adaptiveKpNearEditing = false;
+let adaptiveKpNearDirty = false;
+let adaptiveKpFarEditing = false;
+let adaptiveKpFarDirty = false;
+let adaptiveKiEditing = false;
+let adaptiveKiDirty = false;
+let adaptiveMaxAdjustEditing = false;
+let adaptiveMaxAdjustDirty = false;
+let adaptiveMaxAdjustFarEditing = false;
+let adaptiveMaxAdjustFarDirty = false;
+let adaptiveNearFarThresholdEditing = false;
+let adaptiveNearFarThresholdDirty = false;
+let adaptiveHardCorrectionThresholdEditing = false;
+let adaptiveHardCorrectionThresholdDirty = false;
+let adaptiveMeasurementSmoothingAlphaEditing = false;
+let adaptiveMeasurementSmoothingAlphaDirty = false;
+let adaptiveResamplingAdvancedOpen = false;
+let telemetryGaugesOpen = false;
+let trailSectionOpen = false;
+let vbapSectionOpen = false;
+let spreadSectionOpen = false;
 let masterGain = 1;
 let oscStatusState = 'initializing';
 let roomMasterAxis = 'width';
@@ -453,10 +533,10 @@ const roomAxisDrivers = {
   height: 'size',
   rear: 'size'
 };
-const LATENCY_TREND_ALPHA = 0.06;
 let roomGeometryExpanded = false;
 let roomGeometryBaselineKey = '';
 let vbapCartesianFaceGridEnabled = false;
+const LATENCY_RAW_WINDOW_MS = 4000;
 
 const vbapCartesianFaceGridMaterial = new THREE.LineBasicMaterial({
   color: 0x66d8ff,
@@ -704,12 +784,12 @@ function setLatencyInstantMs(value) {
     return;
   }
   latencyInstantMs = next;
-  if (latencyInstantTrendMs === null) {
-    latencyInstantTrendMs = next;
-    return;
+  const now = performance.now();
+  latencyRawWindow.push({ t: now, v: next });
+  const cutoff = now - LATENCY_RAW_WINDOW_MS;
+  while (latencyRawWindow.length > 0 && latencyRawWindow[0].t < cutoff) {
+    latencyRawWindow.shift();
   }
-  latencyInstantTrendMs =
-    LATENCY_TREND_ALPHA * next + (1 - LATENCY_TREND_ALPHA) * latencyInstantTrendMs;
 }
 
 function renderOscStatus() {
@@ -1027,6 +1107,7 @@ const dirtyObjectLabels = new Set();
 let dirtyMasterMeter = false;
 let dirtyRoomRatio = false;
 let dirtySpread = false;
+let dirtyVbapMode = false;
 let dirtyVbapCartesian = false;
 let dirtyVbapPolar = false;
 let dirtyLoudness = false;
@@ -1346,6 +1427,11 @@ function flushUI() {
   if (dirtySpread) {
     renderSpreadDisplay();
     dirtySpread = false;
+  }
+
+  if (dirtyVbapMode) {
+    renderVbapMode();
+    dirtyVbapMode = false;
   }
 
   if (dirtyVbapCartesian) {
@@ -1696,7 +1782,7 @@ function renderSpeakerEditor() {
     if (speakerMoveUpBtnEl) speakerMoveUpBtnEl.disabled = true;
     if (speakerMoveDownBtnEl) speakerMoveDownBtnEl.disabled = true;
     if (speakerRemoveBtnEl) speakerRemoveBtnEl.disabled = true;
-    speakerEditEmptyEl.style.display = '';
+    speakerEditSectionEl.style.display = 'none';
     speakerEditBodyEl.style.display = 'none';
     return;
   }
@@ -1714,6 +1800,7 @@ function renderSpeakerEditor() {
   const el = Number.isFinite(Number(speaker.elevationDeg)) ? Number(speaker.elevationDeg) : spherical.el;
   const r = Number.isFinite(Number(speaker.distanceM)) ? Number(speaker.distanceM) : spherical.dist;
 
+  speakerEditSectionEl.style.display = '';
   speakerEditEmptyEl.style.display = 'none';
   speakerEditBodyEl.style.display = '';
 
@@ -2444,6 +2531,25 @@ function renderVbapStatus() {
   }
 }
 
+function renderVbapMode() {
+  const selection = typeof vbapModeState.selection === 'string' ? vbapModeState.selection : null;
+  const effectiveMode = typeof vbapModeState.effectiveMode === 'string' ? vbapModeState.effectiveMode : null;
+  if (vbapModeAutoBtnEl) vbapModeAutoBtnEl.classList.toggle('active', selection === 'auto');
+  if (vbapModePolarBtnEl) {
+    vbapModePolarBtnEl.classList.toggle('active', selection === 'polar');
+    vbapModePolarBtnEl.classList.toggle('effective', effectiveMode === 'polar');
+  }
+  if (vbapModeCartesianBtnEl) {
+    vbapModeCartesianBtnEl.classList.toggle('active', selection === 'cartesian');
+    vbapModeCartesianBtnEl.classList.toggle('effective', effectiveMode === 'cartesian');
+  }
+}
+
+function updateVbapMode() {
+  dirtyVbapMode = true;
+  scheduleUIFlush();
+}
+
 function renderVbapCartesian() {
   if (vbapCartXSizeInputEl) {
     vbapCartXSizeInputEl.value = vbapCartesianState.xSize === null ? '' : String(vbapCartesianState.xSize);
@@ -2558,6 +2664,45 @@ function updateLoudnessDisplay() {
 function renderAdaptiveResamplingUI() {
   if (!adaptiveResamplingToggleEl) return;
   adaptiveResamplingToggleEl.checked = adaptiveResamplingEnabled === true;
+  if (adaptiveKpNearInputEl && !adaptiveKpNearEditing && !adaptiveKpNearDirty) {
+    adaptiveKpNearInputEl.value = adaptiveResamplingKpNear === null ? '' : Number(adaptiveResamplingKpNear).toFixed(8);
+  }
+  if (adaptiveKpFarInputEl && !adaptiveKpFarEditing && !adaptiveKpFarDirty) {
+    adaptiveKpFarInputEl.value = adaptiveResamplingKpFar === null ? '' : Number(adaptiveResamplingKpFar).toFixed(8);
+  }
+  if (adaptiveKiInputEl && !adaptiveKiEditing && !adaptiveKiDirty) {
+    adaptiveKiInputEl.value = adaptiveResamplingKi === null ? '' : Number(adaptiveResamplingKi).toFixed(8);
+  }
+  if (adaptiveMaxAdjustInputEl && !adaptiveMaxAdjustEditing && !adaptiveMaxAdjustDirty) {
+    adaptiveMaxAdjustInputEl.value = adaptiveResamplingMaxAdjust === null ? '' : Number(adaptiveResamplingMaxAdjust).toFixed(6);
+  }
+  if (adaptiveMaxAdjustFarInputEl && !adaptiveMaxAdjustFarEditing && !adaptiveMaxAdjustFarDirty) {
+    adaptiveMaxAdjustFarInputEl.value = adaptiveResamplingMaxAdjustFar === null ? '' : Number(adaptiveResamplingMaxAdjustFar).toFixed(6);
+  }
+  if (adaptiveNearFarThresholdInputEl && !adaptiveNearFarThresholdEditing && !adaptiveNearFarThresholdDirty) {
+    adaptiveNearFarThresholdInputEl.value = adaptiveResamplingNearFarThresholdMs === null ? '' : String(Math.max(1, Math.round(adaptiveResamplingNearFarThresholdMs)));
+  }
+  if (adaptiveHardCorrectionThresholdInputEl && !adaptiveHardCorrectionThresholdEditing && !adaptiveHardCorrectionThresholdDirty) {
+    adaptiveHardCorrectionThresholdInputEl.value = adaptiveResamplingHardCorrectionThresholdMs === null ? '' : String(Math.max(0, Math.round(adaptiveResamplingHardCorrectionThresholdMs)));
+  }
+  if (adaptiveMeasurementSmoothingAlphaInputEl && !adaptiveMeasurementSmoothingAlphaEditing && !adaptiveMeasurementSmoothingAlphaDirty) {
+    adaptiveMeasurementSmoothingAlphaInputEl.value =
+      adaptiveResamplingMeasurementSmoothingAlpha === null ? '' : Number(adaptiveResamplingMeasurementSmoothingAlpha).toFixed(2);
+  }
+  if (adaptiveBandTextEl) {
+    adaptiveBandTextEl.textContent = adaptiveResamplingBand ?? '—';
+  }
+  if (adaptiveBandDotEl) {
+    adaptiveBandDotEl.style.background =
+      adaptiveResamplingBand === 'hard'
+        ? '#ff4d4d'
+        : 
+      adaptiveResamplingBand === 'far'
+        ? '#ff9a5c'
+        : adaptiveResamplingBand === 'near'
+          ? '#52e2a2'
+          : 'rgba(255,255,255,0.25)';
+  }
 }
 
 function updateAdaptiveResamplingUI() {
@@ -2609,6 +2754,80 @@ function setTrailInfoModalOpen(open) {
   trailInfoModalEl.classList.toggle('open', Boolean(open));
 }
 
+function setOscInfoModalOpen(open) {
+  if (!oscInfoModalEl) return;
+  oscInfoModalEl.classList.toggle('open', Boolean(open));
+}
+
+function setRoomGeometryInfoModalOpen(open) {
+  if (!roomGeometryInfoModalEl) return;
+  roomGeometryInfoModalEl.classList.toggle('open', Boolean(open));
+}
+
+function setAdaptiveResamplingInfoModalOpen(open) {
+  if (!adaptiveResamplingInfoModalEl) return;
+  adaptiveResamplingInfoModalEl.classList.toggle('open', Boolean(open));
+}
+
+function setTelemetryGaugesInfoModalOpen(open) {
+  if (!telemetryGaugesInfoModalEl) return;
+  telemetryGaugesInfoModalEl.classList.toggle('open', Boolean(open));
+}
+
+function setAdaptiveResamplingAdvancedOpen(open) {
+  adaptiveResamplingAdvancedOpen = Boolean(open);
+  if (adaptiveResamplingAdvancedFormEl) {
+    adaptiveResamplingAdvancedFormEl.classList.toggle('open', adaptiveResamplingAdvancedOpen);
+  }
+  if (adaptiveResamplingAdvancedToggleBtnEl) {
+    adaptiveResamplingAdvancedToggleBtnEl.style.background = adaptiveResamplingAdvancedOpen
+      ? 'rgba(255, 255, 255, 0.18)'
+      : 'rgba(255, 255, 255, 0.08)';
+  }
+}
+
+function setTelemetryGaugesOpen(open) {
+  telemetryGaugesOpen = Boolean(open);
+  if (telemetryGaugesFormEl) {
+    telemetryGaugesFormEl.classList.toggle('open', telemetryGaugesOpen);
+  }
+  if (telemetryGaugesToggleBtnEl) {
+    telemetryGaugesToggleBtnEl.style.background = telemetryGaugesOpen
+      ? 'rgba(255, 255, 255, 0.18)'
+      : 'rgba(255, 255, 255, 0.08)';
+  }
+}
+
+function setTrailSectionOpen(open) {
+  trailSectionOpen = Boolean(open);
+  if (trailSectionContentEl) {
+    trailSectionContentEl.classList.toggle('open', trailSectionOpen);
+  }
+  if (trailSectionToggleBtnEl) {
+    trailSectionToggleBtnEl.textContent = trailSectionOpen ? '▾' : '▸';
+  }
+}
+
+function setVbapSectionOpen(open) {
+  vbapSectionOpen = Boolean(open);
+  if (vbapSectionContentEl) {
+    vbapSectionContentEl.classList.toggle('open', vbapSectionOpen);
+  }
+  if (vbapSectionToggleBtnEl) {
+    vbapSectionToggleBtnEl.textContent = vbapSectionOpen ? '▾' : '▸';
+  }
+}
+
+function setSpreadSectionOpen(open) {
+  spreadSectionOpen = Boolean(open);
+  if (spreadSectionContentEl) {
+    spreadSectionContentEl.classList.toggle('open', spreadSectionOpen);
+  }
+  if (spreadSectionToggleBtnEl) {
+    spreadSectionToggleBtnEl.textContent = spreadSectionOpen ? '▾' : '▸';
+  }
+}
+
 function renderConfigSavedUI() {
   if (!configSavedIndicatorEl) return;
   configSavedIndicatorEl.textContent = '';
@@ -2626,10 +2845,15 @@ function updateConfigSavedUI() {
 }
 
 function renderLatencyDisplay() {
-  if (!latencyInfoEl) return;
-  const instantShown = latencyInstantTrendMs ?? latencyInstantMs;
-  const instantText = instantShown === null ? '—' : `${formatNumber(instantShown, 0)} ms`;
-  latencyInfoEl.textContent = `latency:   ${instantText}`;
+  if (!latencyRawInfoEl && !latencyCtrlInfoEl && !latencyInfoEl) return;
+  const instantText = latencyInstantMs === null ? '—' : `${formatNumber(latencyInstantMs, 0)} ms`;
+  const controlText = latencyControlMs === null ? '—' : `${formatNumber(latencyControlMs, 0)} ms`;
+  if (latencyRawInfoEl && latencyCtrlInfoEl) {
+    latencyRawInfoEl.textContent = instantText;
+    latencyCtrlInfoEl.textContent = controlText;
+  } else {
+    latencyInfoEl.textContent = `latency: raw ${instantText} | ctrl ${controlText}`;
+  }
   if (latencyTargetInputEl && !latencyTargetEditing && !latencyTargetDirty) {
     const targetValue = latencyTargetMs ?? latencyMs;
     latencyTargetInputEl.value = targetValue === null ? '' : String(Math.max(1, Math.round(targetValue)));
@@ -2645,17 +2869,37 @@ function renderResampleRatioDisplay() {
   if (!resampleRatioInfoEl) return;
   if (adaptiveResamplingEnabled !== true) {
     resampleRatioInfoEl.style.display = 'none';
+    if (resampleMeterRowEl) resampleMeterRowEl.style.display = 'none';
     return;
   }
   resampleRatioInfoEl.style.display = '';
+  if (resampleMeterRowEl) resampleMeterRowEl.style.display = '';
   if (resampleRatio === null) {
-    resampleRatioInfoEl.textContent = 'resample: —';
+    resampleRatioInfoEl.textContent = '—';
+    if (resampleNegMeterFillEl) resampleNegMeterFillEl.style.clipPath = 'inset(0 50% 0 50%)';
+    if (resamplePosMeterFillEl) resamplePosMeterFillEl.style.clipPath = 'inset(0 50% 0 50%)';
     return;
   }
   // Express as ppm deviation from nominal (1.0)
   const ppm = Math.round((resampleRatio - 1.0) * 1e6);
   const sign = ppm >= 0 ? '+' : '';
-  resampleRatioInfoEl.textContent = `resample: ${sign}${ppm} ppm`;
+  resampleRatioInfoEl.textContent = `${sign}${ppm} ppm`;
+  const maxPpm = 20000;
+  const magnitude = Math.min(50, (Math.abs(ppm) / maxPpm) * 50);
+  if (resampleNegMeterFillEl) {
+    if (ppm < 0) {
+      resampleNegMeterFillEl.style.clipPath = `inset(0 50% 0 ${Number((50 - magnitude).toFixed(1))}%)`;
+    } else {
+      resampleNegMeterFillEl.style.clipPath = 'inset(0 50% 0 50%)';
+    }
+  }
+  if (resamplePosMeterFillEl) {
+    if (ppm > 0) {
+      resamplePosMeterFillEl.style.clipPath = `inset(0 ${Number((50 - magnitude).toFixed(1))}% 0 50%)`;
+    } else {
+      resamplePosMeterFillEl.style.clipPath = 'inset(0 50% 0 50%)';
+    }
+  }
 }
 
 function updateResampleRatioDisplay() {
@@ -2711,16 +2955,71 @@ function updateAudioFormatDisplay() {
 }
 
 function renderLatencyMeterUI() {
-  if (!latencyMeterFillEl) return;
-  const displayed = latencyInstantTrendMs ?? latencyInstantMs ?? latencyTargetMs ?? latencyMs;
-  if (displayed === null) {
-    latencyMeterFillEl.style.setProperty('--level', '0%');
-    return;
-  }
-  const value = Math.max(0, Number(displayed));
   const maxMs = 2000;
-  const percent = Math.min(100, (value / maxMs) * 100);
-  latencyMeterFillEl.style.setProperty('--level', `${percent.toFixed(1)}%`);
+  if (latencyMeterFillEl) {
+    const raw = latencyInstantMs ?? latencyTargetMs ?? latencyMs;
+    if (raw === null) {
+      latencyMeterFillEl.style.setProperty('--level', '0%');
+    } else {
+      const percent = Math.min(100, (Math.max(0, Number(raw)) / maxMs) * 100);
+      latencyMeterFillEl.style.setProperty('--level', `${percent.toFixed(1)}%`);
+    }
+  }
+  const rawMin =
+    latencyRawWindow.length > 0 ? Math.min(...latencyRawWindow.map((entry) => entry.v)) : null;
+  const rawMax =
+    latencyRawWindow.length > 0 ? Math.max(...latencyRawWindow.map((entry) => entry.v)) : null;
+  if (latencyRawMinMaskEl) {
+    if (rawMin === null || rawMax === null || rawMax < rawMin) {
+      latencyRawMinMaskEl.style.display = 'none';
+    } else {
+      const percent = Math.min(100, (Math.max(0, rawMin) / maxMs) * 100);
+      latencyRawMinMaskEl.style.display = '';
+      latencyRawMinMaskEl.style.width = `${percent.toFixed(1)}%`;
+    }
+  }
+  if (latencyRawMaxMaskEl) {
+    if (rawMin === null || rawMax === null || rawMax < rawMin) {
+      latencyRawMaxMaskEl.style.display = 'none';
+    } else {
+      const percent = Math.min(100, (Math.max(0, rawMax) / maxMs) * 100);
+      latencyRawMaxMaskEl.style.display = '';
+      latencyRawMaxMaskEl.style.width = `${Math.max(0, 100 - percent).toFixed(1)}%`;
+    }
+  }
+  if (latencyRawMinMarkerEl) {
+    if (rawMin === null) {
+      latencyRawMinMarkerEl.style.display = 'none';
+    } else {
+      const percent = Math.min(100, (Math.max(0, rawMin) / maxMs) * 100);
+      latencyRawMinMarkerEl.style.display = '';
+      latencyRawMinMarkerEl.style.left = `calc(${percent.toFixed(1)}% - 1px)`;
+    }
+  }
+  if (latencyRawMinValueEl) {
+    latencyRawMinValueEl.textContent = rawMin === null ? 'min —' : `min ${formatNumber(rawMin, 0)}`;
+  }
+  if (latencyRawMaxMarkerEl) {
+    if (rawMax === null) {
+      latencyRawMaxMarkerEl.style.display = 'none';
+    } else {
+      const percent = Math.min(100, (Math.max(0, rawMax) / maxMs) * 100);
+      latencyRawMaxMarkerEl.style.display = '';
+      latencyRawMaxMarkerEl.style.left = `calc(${percent.toFixed(1)}% - 1px)`;
+    }
+  }
+  if (latencyRawMaxValueEl) {
+    latencyRawMaxValueEl.textContent = rawMax === null ? 'max —' : `max ${formatNumber(rawMax, 0)}`;
+  }
+  if (latencyCtrlMeterFillEl) {
+    const ctrl = latencyControlMs ?? latencyTargetMs ?? latencyMs;
+    if (ctrl === null) {
+      latencyCtrlMeterFillEl.style.setProperty('--level', '0%');
+    } else {
+      const percent = Math.min(100, (Math.max(0, Number(ctrl)) / maxMs) * 100);
+      latencyCtrlMeterFillEl.style.setProperty('--level', `${percent.toFixed(1)}%`);
+    }
+  }
 }
 
 function updateLatencyMeterUI() {
@@ -4457,6 +4756,55 @@ if (adaptiveResamplingToggleEl) {
   });
 }
 
+if (adaptiveResamplingAdvancedApplyBtnEl) {
+  adaptiveResamplingAdvancedApplyBtnEl.addEventListener('click', () => {
+    const kpNear = Math.max(0.00000001, Number(adaptiveKpNearInputEl?.value) || 0);
+    const kpFar = Math.max(0.00000001, Number(adaptiveKpFarInputEl?.value) || 0);
+    const ki = Math.max(0.00000001, Number(adaptiveKiInputEl?.value) || 0);
+    const maxAdjust = Math.max(0.000001, Number(adaptiveMaxAdjustInputEl?.value) || 0);
+    const maxAdjustFar = Math.max(0.000001, Number(adaptiveMaxAdjustFarInputEl?.value) || 0);
+    const nearFarThresholdMs = Math.max(1, Math.round(Number(adaptiveNearFarThresholdInputEl?.value) || 0));
+    const hardCorrectionThresholdMs = Math.max(0, Math.round(Number(adaptiveHardCorrectionThresholdInputEl?.value) || 0));
+    const measurementSmoothingAlpha = Math.min(1, Math.max(0, Number(adaptiveMeasurementSmoothingAlphaInputEl?.value) || 0));
+
+    adaptiveResamplingKpNear = kpNear;
+    adaptiveResamplingKpFar = kpFar;
+    adaptiveResamplingKi = ki;
+    adaptiveResamplingMaxAdjust = maxAdjust;
+    adaptiveResamplingMaxAdjustFar = maxAdjustFar;
+    adaptiveResamplingNearFarThresholdMs = nearFarThresholdMs;
+    adaptiveResamplingHardCorrectionThresholdMs = hardCorrectionThresholdMs;
+    adaptiveResamplingMeasurementSmoothingAlpha = measurementSmoothingAlpha;
+    updateAdaptiveResamplingUI();
+
+    invoke('control_adaptive_resampling_kp_near', { value: kpNear });
+    invoke('control_adaptive_resampling_kp_far', { value: kpFar });
+    invoke('control_adaptive_resampling_ki', { value: ki });
+    invoke('control_adaptive_resampling_max_adjust', { value: maxAdjust });
+    invoke('control_adaptive_resampling_max_adjust_far', { value: maxAdjustFar });
+    invoke('control_adaptive_resampling_near_far_threshold_ms', { value: nearFarThresholdMs });
+    invoke('control_adaptive_resampling_hard_correction_threshold_ms', { value: hardCorrectionThresholdMs });
+    invoke('control_adaptive_resampling_measurement_smoothing_alpha', { value: measurementSmoothingAlpha });
+
+    adaptiveKpNearDirty = false;
+    adaptiveKpNearEditing = false;
+    adaptiveKpFarDirty = false;
+    adaptiveKpFarEditing = false;
+    adaptiveKiDirty = false;
+    adaptiveKiEditing = false;
+    adaptiveMaxAdjustDirty = false;
+    adaptiveMaxAdjustEditing = false;
+    adaptiveMaxAdjustFarDirty = false;
+    adaptiveMaxAdjustFarEditing = false;
+    adaptiveNearFarThresholdDirty = false;
+    adaptiveNearFarThresholdEditing = false;
+    adaptiveHardCorrectionThresholdDirty = false;
+    adaptiveHardCorrectionThresholdEditing = false;
+    adaptiveMeasurementSmoothingAlphaDirty = false;
+    adaptiveMeasurementSmoothingAlphaEditing = false;
+  });
+}
+
 if (spreadMinSliderEl) {
   spreadMinSliderEl.addEventListener('input', () => {
     const valueDeg = Number(spreadMinSliderEl.value);
@@ -4566,6 +4914,20 @@ if (vbapCartesianGridToggleBtnEl) {
     updateVbapCartesianFaceGrid();
   });
 }
+
+[
+  ['auto', vbapModeAutoBtnEl],
+  ['polar', vbapModePolarBtnEl],
+  ['cartesian', vbapModeCartesianBtnEl]
+].forEach(([mode, button]) => {
+  if (!button) return;
+  button.addEventListener('click', () => {
+    if (vbapModeState.selection === mode) return;
+    vbapModeState.selection = mode;
+    updateVbapMode();
+    invoke('control_vbap_table_mode', { mode });
+  });
+});
 
 if (vbapPolarAzimuthResolutionInputEl) {
   vbapPolarAzimuthResolutionInputEl.addEventListener('change', () => {
@@ -4700,10 +5062,124 @@ if (trailInfoModalEl) {
   });
 }
 
+if (oscInfoBtnEl) {
+  oscInfoBtnEl.addEventListener('click', () => {
+    setOscInfoModalOpen(true);
+  });
+}
+
+if (oscInfoCloseBtnEl) {
+  oscInfoCloseBtnEl.addEventListener('click', () => {
+    setOscInfoModalOpen(false);
+  });
+}
+
+if (oscInfoModalEl) {
+  oscInfoModalEl.addEventListener('click', (event) => {
+    if (event.target === oscInfoModalEl) {
+      setOscInfoModalOpen(false);
+    }
+  });
+}
+
+if (roomGeometryInfoBtnEl) {
+  roomGeometryInfoBtnEl.addEventListener('click', () => {
+    setRoomGeometryInfoModalOpen(true);
+  });
+}
+
+if (roomGeometryInfoCloseBtnEl) {
+  roomGeometryInfoCloseBtnEl.addEventListener('click', () => {
+    setRoomGeometryInfoModalOpen(false);
+  });
+}
+
+if (roomGeometryInfoModalEl) {
+  roomGeometryInfoModalEl.addEventListener('click', (event) => {
+    if (event.target === roomGeometryInfoModalEl) {
+      setRoomGeometryInfoModalOpen(false);
+    }
+  });
+}
+
+if (adaptiveResamplingInfoBtnEl) {
+  adaptiveResamplingInfoBtnEl.addEventListener('click', () => {
+    setAdaptiveResamplingInfoModalOpen(true);
+  });
+}
+
+if (adaptiveResamplingInfoCloseBtnEl) {
+  adaptiveResamplingInfoCloseBtnEl.addEventListener('click', () => {
+    setAdaptiveResamplingInfoModalOpen(false);
+  });
+}
+
+if (adaptiveResamplingInfoModalEl) {
+  adaptiveResamplingInfoModalEl.addEventListener('click', (event) => {
+    if (event.target === adaptiveResamplingInfoModalEl) {
+      setAdaptiveResamplingInfoModalOpen(false);
+    }
+  });
+}
+
+if (telemetryGaugesInfoBtnEl) {
+  telemetryGaugesInfoBtnEl.addEventListener('click', () => {
+    setTelemetryGaugesInfoModalOpen(true);
+  });
+}
+
+if (telemetryGaugesInfoCloseBtnEl) {
+  telemetryGaugesInfoCloseBtnEl.addEventListener('click', () => {
+    setTelemetryGaugesInfoModalOpen(false);
+  });
+}
+
+if (telemetryGaugesInfoModalEl) {
+  telemetryGaugesInfoModalEl.addEventListener('click', (event) => {
+    if (event.target === telemetryGaugesInfoModalEl) {
+      setTelemetryGaugesInfoModalOpen(false);
+    }
+  });
+}
+
+if (adaptiveResamplingAdvancedToggleBtnEl) {
+  adaptiveResamplingAdvancedToggleBtnEl.addEventListener('click', () => {
+    setAdaptiveResamplingAdvancedOpen(!adaptiveResamplingAdvancedOpen);
+  });
+}
+
+if (telemetryGaugesToggleBtnEl) {
+  telemetryGaugesToggleBtnEl.addEventListener('click', () => {
+    setTelemetryGaugesOpen(!telemetryGaugesOpen);
+  });
+}
+
+if (trailSectionToggleBtnEl) {
+  trailSectionToggleBtnEl.addEventListener('click', () => {
+    setTrailSectionOpen(!trailSectionOpen);
+  });
+}
+
+if (vbapSectionToggleBtnEl) {
+  vbapSectionToggleBtnEl.addEventListener('click', () => {
+    setVbapSectionOpen(!vbapSectionOpen);
+  });
+}
+
+if (spreadSectionToggleBtnEl) {
+  spreadSectionToggleBtnEl.addEventListener('click', () => {
+    setSpreadSectionOpen(!spreadSectionOpen);
+  });
+}
+
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
     setDistanceDiffuseInfoModalOpen(false);
+    setAdaptiveResamplingInfoModalOpen(false);
     setTrailInfoModalOpen(false);
+    setOscInfoModalOpen(false);
+    setRoomGeometryInfoModalOpen(false);
+    setTelemetryGaugesInfoModalOpen(false);
   }
 });
 
@@ -4861,6 +5337,94 @@ if (latencyTargetInputEl) {
   latencyTargetInputEl.addEventListener('input', () => {
     latencyTargetEditing = true;
     latencyTargetDirty = true;
+  });
+}
+
+if (adaptiveKpNearInputEl) {
+  adaptiveKpNearInputEl.addEventListener('focus', () => {
+    adaptiveKpNearEditing = true;
+    adaptiveKpNearInputEl.select();
+  });
+  adaptiveKpNearInputEl.addEventListener('input', () => {
+    adaptiveKpNearEditing = true;
+    adaptiveKpNearDirty = true;
+  });
+}
+
+if (adaptiveKpFarInputEl) {
+  adaptiveKpFarInputEl.addEventListener('focus', () => {
+    adaptiveKpFarEditing = true;
+    adaptiveKpFarInputEl.select();
+  });
+  adaptiveKpFarInputEl.addEventListener('input', () => {
+    adaptiveKpFarEditing = true;
+    adaptiveKpFarDirty = true;
+  });
+}
+
+if (adaptiveKiInputEl) {
+  adaptiveKiInputEl.addEventListener('focus', () => {
+    adaptiveKiEditing = true;
+    adaptiveKiInputEl.select();
+  });
+  adaptiveKiInputEl.addEventListener('input', () => {
+    adaptiveKiEditing = true;
+    adaptiveKiDirty = true;
+  });
+}
+
+if (adaptiveMaxAdjustInputEl) {
+  adaptiveMaxAdjustInputEl.addEventListener('focus', () => {
+    adaptiveMaxAdjustEditing = true;
+    adaptiveMaxAdjustInputEl.select();
+  });
+  adaptiveMaxAdjustInputEl.addEventListener('input', () => {
+    adaptiveMaxAdjustEditing = true;
+    adaptiveMaxAdjustDirty = true;
+  });
+}
+
+if (adaptiveMaxAdjustFarInputEl) {
+  adaptiveMaxAdjustFarInputEl.addEventListener('focus', () => {
+    adaptiveMaxAdjustFarEditing = true;
+    adaptiveMaxAdjustFarInputEl.select();
+  });
+  adaptiveMaxAdjustFarInputEl.addEventListener('input', () => {
+    adaptiveMaxAdjustFarEditing = true;
+    adaptiveMaxAdjustFarDirty = true;
+  });
+}
+
+if (adaptiveNearFarThresholdInputEl) {
+  adaptiveNearFarThresholdInputEl.addEventListener('focus', () => {
+    adaptiveNearFarThresholdEditing = true;
+    adaptiveNearFarThresholdInputEl.select();
+  });
+  adaptiveNearFarThresholdInputEl.addEventListener('input', () => {
+    adaptiveNearFarThresholdEditing = true;
+    adaptiveNearFarThresholdDirty = true;
+  });
+}
+
+if (adaptiveHardCorrectionThresholdInputEl) {
+  adaptiveHardCorrectionThresholdInputEl.addEventListener('focus', () => {
+    adaptiveHardCorrectionThresholdEditing = true;
+    adaptiveHardCorrectionThresholdInputEl.select();
+  });
+  adaptiveHardCorrectionThresholdInputEl.addEventListener('input', () => {
+    adaptiveHardCorrectionThresholdEditing = true;
+    adaptiveHardCorrectionThresholdDirty = true;
+  });
+}
+
+if (adaptiveMeasurementSmoothingAlphaInputEl) {
+  adaptiveMeasurementSmoothingAlphaInputEl.addEventListener('focus', () => {
+    adaptiveMeasurementSmoothingAlphaEditing = true;
+    adaptiveMeasurementSmoothingAlphaInputEl.select();
+  });
+  adaptiveMeasurementSmoothingAlphaInputEl.addEventListener('input', () => {
+    adaptiveMeasurementSmoothingAlphaEditing = true;
+    adaptiveMeasurementSmoothingAlphaDirty = true;
   });
 }
 
@@ -5212,6 +5776,11 @@ if (roomGeometryToggleBtnEl && roomGeometryFormEl) {
 loadRoomGeometryPrefs();
 refreshRoomGeometryInputState();
 setRoomGeometryExpanded(false);
+setAdaptiveResamplingAdvancedOpen(false);
+setTelemetryGaugesOpen(false);
+setTrailSectionOpen(false);
+setVbapSectionOpen(false);
+setSpreadSectionOpen(false);
 
 // ── layout select ──────────────────────────────────────────────────────────
 
@@ -5294,6 +5863,19 @@ function applyInitState(payload) {
     }
   }
   updateVbapCartesian();
+  if (payload.vbapMode && typeof payload.vbapMode.selection === 'string') {
+    const selection = payload.vbapMode.selection.trim().toLowerCase();
+    if (selection === 'auto' || selection === 'polar' || selection === 'cartesian') {
+      vbapModeState.selection = selection;
+    }
+  }
+  if (payload.vbapMode && typeof payload.vbapMode.effectiveMode === 'string') {
+    const effectiveMode = payload.vbapMode.effectiveMode.trim().toLowerCase();
+    if (effectiveMode === 'polar' || effectiveMode === 'cartesian') {
+      vbapModeState.effectiveMode = effectiveMode;
+    }
+  }
+  updateVbapMode();
   if (payload.vbapPolar) {
     if (typeof payload.vbapPolar.azimuthResolution === 'number') {
       vbapPolarState.azimuthResolution = payload.vbapPolar.azimuthResolution > 0 ? payload.vbapPolar.azimuthResolution : null;
@@ -5345,6 +5927,33 @@ function applyInitState(payload) {
   if (typeof payload.adaptiveResampling === 'number') {
     adaptiveResamplingEnabled = payload.adaptiveResampling !== 0;
   }
+  if (typeof payload.adaptiveResamplingKpNear === 'number') {
+    adaptiveResamplingKpNear = payload.adaptiveResamplingKpNear;
+  }
+  if (typeof payload.adaptiveResamplingKpFar === 'number') {
+    adaptiveResamplingKpFar = payload.adaptiveResamplingKpFar;
+  }
+  if (typeof payload.adaptiveResamplingKi === 'number') {
+    adaptiveResamplingKi = payload.adaptiveResamplingKi;
+  }
+  if (typeof payload.adaptiveResamplingMaxAdjust === 'number') {
+    adaptiveResamplingMaxAdjust = payload.adaptiveResamplingMaxAdjust;
+  }
+  if (typeof payload.adaptiveResamplingMaxAdjustFar === 'number') {
+    adaptiveResamplingMaxAdjustFar = payload.adaptiveResamplingMaxAdjustFar;
+  }
+  if (typeof payload.adaptiveResamplingNearFarThresholdMs === 'number') {
+    adaptiveResamplingNearFarThresholdMs = payload.adaptiveResamplingNearFarThresholdMs;
+  }
+  if (typeof payload.adaptiveResamplingHardCorrectionThresholdMs === 'number') {
+    adaptiveResamplingHardCorrectionThresholdMs = payload.adaptiveResamplingHardCorrectionThresholdMs;
+  }
+  if (typeof payload.adaptiveResamplingMeasurementSmoothingAlpha === 'number') {
+    adaptiveResamplingMeasurementSmoothingAlpha = payload.adaptiveResamplingMeasurementSmoothingAlpha;
+  }
+  if (typeof payload.adaptiveResamplingBand === 'string') {
+    adaptiveResamplingBand = payload.adaptiveResamplingBand;
+  }
   updateAdaptiveResamplingUI();
   if (typeof payload.configSaved === 'number') {
     configSaved = payload.configSaved !== 0;
@@ -5355,6 +5964,9 @@ function applyInitState(payload) {
   }
   if (typeof payload.latencyInstantMs === 'number') {
     setLatencyInstantMs(payload.latencyInstantMs);
+  }
+  if (typeof payload.latencyControlMs === 'number') {
+    latencyControlMs = payload.latencyControlMs;
   }
   if (typeof payload.latencyTargetMs === 'number') {
     latencyTargetMs = payload.latencyTargetMs;
@@ -5585,6 +6197,18 @@ listen('vbap:cart:z_size', ({ payload }) => {
   updateVbapCartesian();
 });
 
+listen('vbap:table_mode', ({ payload }) => {
+  const value = String(payload?.value ?? '').trim().toLowerCase();
+  vbapModeState.selection = ['auto', 'polar', 'cartesian'].includes(value) ? value : null;
+  updateVbapMode();
+});
+
+listen('vbap:effective_mode', ({ payload }) => {
+  const value = String(payload?.value ?? '').trim().toLowerCase();
+  vbapModeState.effectiveMode = ['polar', 'cartesian'].includes(value) ? value : null;
+  updateVbapMode();
+});
+
 listen('vbap:polar:azimuth_resolution', ({ payload }) => {
   const value = Number(payload.value);
   vbapPolarState.azimuthResolution = value > 0 ? value : null;
@@ -5654,6 +6278,51 @@ listen('adaptive_resampling', ({ payload }) => {
   updateAdaptiveResamplingUI();
 });
 
+listen('adaptive_resampling:kp_near', ({ payload }) => {
+  adaptiveResamplingKpNear = Number(payload.value);
+  updateAdaptiveResamplingUI();
+});
+
+listen('adaptive_resampling:kp_far', ({ payload }) => {
+  adaptiveResamplingKpFar = Number(payload.value);
+  updateAdaptiveResamplingUI();
+});
+
+listen('adaptive_resampling:ki', ({ payload }) => {
+  adaptiveResamplingKi = Number(payload.value);
+  updateAdaptiveResamplingUI();
+});
+
+listen('adaptive_resampling:max_adjust', ({ payload }) => {
+  adaptiveResamplingMaxAdjust = Number(payload.value);
+  updateAdaptiveResamplingUI();
+});
+
+listen('adaptive_resampling:max_adjust_far', ({ payload }) => {
+  adaptiveResamplingMaxAdjustFar = Number(payload.value);
+  updateAdaptiveResamplingUI();
+});
+
+listen('adaptive_resampling:near_far_threshold_ms', ({ payload }) => {
+  adaptiveResamplingNearFarThresholdMs = Number(payload.value);
+  updateAdaptiveResamplingUI();
+});
+
+listen('adaptive_resampling:hard_correction_threshold_ms', ({ payload }) => {
+  adaptiveResamplingHardCorrectionThresholdMs = Number(payload.value);
+  updateAdaptiveResamplingUI();
+});
+
+listen('adaptive_resampling:measurement_smoothing_alpha', ({ payload }) => {
+  adaptiveResamplingMeasurementSmoothingAlpha = Number(payload.value);
+  updateAdaptiveResamplingUI();
+});
+
+listen('adaptive_resampling:band', ({ payload }) => {
+  adaptiveResamplingBand = typeof payload.value === 'string' ? payload.value : null;
+  updateAdaptiveResamplingUI();
+});
+
 listen('config:saved', ({ payload }) => {
   configSaved = payload.saved !== 0;
   updateConfigSavedUI();
@@ -5669,6 +6338,11 @@ listen('latency:instant', ({ payload }) => {
   setLatencyInstantMs(payload.value);
   updateLatencyDisplay();
   updateLatencyMeterUI();
+});
+
+listen('latency:control', ({ payload }) => {
+  latencyControlMs = Number(payload.value);
+  updateLatencyDisplay();
 });
 
 listen('latency:target', ({ payload }) => {

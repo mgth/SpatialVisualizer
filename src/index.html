@@ -107,6 +107,11 @@
         box-shadow: 0 0 6px rgba(255, 160, 90, 0.35);
       }
 
+      .meter-fill.latency-ctrl {
+        background: linear-gradient(90deg, #7aa8ff 0%, #8af0ff 52%, #7bffb8 100%);
+        box-shadow: 0 0 6px rgba(122, 168, 255, 0.35);
+      }
+
       .switch-row {
         display: flex;
         align-items: center;
@@ -243,6 +248,60 @@
 
       .room-geometry-form.open {
         display: flex;
+      }
+
+      .adaptive-advanced-form {
+        display: none;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-top: 0.35rem;
+        padding: 0.45rem 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+      }
+
+      .adaptive-advanced-form.open {
+        display: flex;
+      }
+
+      .telemetry-gauges-form {
+        display: none;
+        flex-direction: column;
+        gap: 0.3rem;
+        margin-top: 0.35rem;
+        padding: 0.45rem 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 8px;
+      }
+
+      .telemetry-gauges-form.open {
+        display: flex;
+      }
+
+      .save-footer {
+        position: fixed;
+        left: 50%;
+        bottom: 1rem;
+        transform: translateX(-50%);
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .save-footer-button {
+        min-width: 8.5rem;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        color: #d9ecff;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 0.45rem 1rem;
+        cursor: pointer;
       }
 
       .osc-config-row {
@@ -455,6 +514,123 @@
         overflow: hidden;
       }
 
+      .meter-range-mask {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        background: rgba(6, 9, 14, 0.42);
+        pointer-events: none;
+      }
+
+      .meter-bar.resample-meter-shell {
+        background: linear-gradient(
+          90deg,
+          rgba(255, 93, 93, 0.20) 0%,
+          rgba(255, 160, 90, 0.18) 18%,
+          rgba(255, 213, 106, 0.15) 34%,
+          rgba(138, 240, 255, 0.10) 50%,
+          rgba(255, 213, 106, 0.15) 66%,
+          rgba(255, 160, 90, 0.18) 82%,
+          rgba(255, 93, 93, 0.20) 100%
+        );
+      }
+
+      .meter-stack {
+        display: grid;
+        gap: 0.22rem;
+        width: 100%;
+      }
+
+      .meter-mini-row {
+        display: grid;
+        grid-template-columns: 4.2rem 1fr;
+        align-items: center;
+        gap: 0.35rem;
+        width: 100%;
+      }
+
+      .meter-mini-label {
+        font-size: 11px;
+        color: #d9ecff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-variant-numeric: tabular-nums;
+        align-self: start;
+        padding-top: 0;
+      }
+
+      .meter-subvalues {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        font-size: 10px;
+        color: #b9c7d8;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        margin-top: 0;
+      }
+
+      .meter-subvalues > :first-child {
+        justify-self: start;
+      }
+
+      .meter-subvalues > :nth-child(2) {
+        justify-self: center;
+        text-align: center;
+      }
+
+      .meter-subvalues > :last-child {
+        justify-self: end;
+        text-align: right;
+      }
+
+      .meter-subvalues.placeholder {
+        visibility: hidden;
+      }
+
+      .meter-marker {
+        position: absolute;
+        top: -1px;
+        bottom: -1px;
+        width: 2px;
+        border-radius: 999px;
+        pointer-events: none;
+        opacity: 0.95;
+      }
+
+      .meter-marker.min {
+        background: rgba(255, 160, 90, 0.95);
+        box-shadow: 0 0 4px rgba(255, 160, 90, 0.35);
+      }
+
+      .meter-marker.max {
+        background: rgba(255, 213, 106, 0.95);
+        box-shadow: 0 0 4px rgba(255, 213, 106, 0.35);
+      }
+
+      .resample-meter-shell {
+        position: relative;
+      }
+
+      .resample-meter-center {
+        position: absolute;
+        top: -1px;
+        bottom: -1px;
+        left: calc(50% - 1px);
+        width: 2px;
+        background: rgba(217, 236, 255, 0.6);
+        border-radius: 999px;
+        pointer-events: none;
+      }
+
+      .meter-fill.resample-pos {
+        background: linear-gradient(90deg, #8af0ff 0%, #7bffb8 100%);
+        box-shadow: 0 0 6px rgba(123, 255, 184, 0.3);
+      }
+
+      .meter-fill.resample-neg {
+        background: linear-gradient(90deg, #ffd56a 0%, #ff8a5c 100%);
+        box-shadow: 0 0 6px rgba(255, 138, 92, 0.3);
+      }
+
       .meter-fill {
         position: absolute;
         inset: 0;
@@ -633,6 +809,22 @@
         color: #ffffff;
       }
 
+      .toggle-btn.effective {
+        box-shadow: inset 0 0 0 1px rgba(96, 255, 154, 0.75), 0 0 0 1px rgba(42, 163, 87, 0.25);
+      }
+
+      .toggle-btn.effective::after {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-left: 0.35rem;
+        border-radius: 50%;
+        background: #5cff9a;
+        box-shadow: 0 0 8px rgba(92, 255, 154, 0.7);
+        vertical-align: middle;
+      }
+
       .gain-box {
         min-width: 54px;
         text-align: right;
@@ -800,7 +992,10 @@
       <div><strong data-i18n="app.title">Spatial Visualizer</strong></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div><span class="osc-status-dot" id="oscStatusDot"></span>OSC: <span id="status">Initializing...</span></div>
-        <button id="oscConfigToggleBtn" data-i18n-title="osc.configTitle" title="OSC Configuration">⚙</button>
+        <div style="display:flex;align-items:center;gap:0.35rem">
+          <button id="oscInfoBtn" type="button" class="info-icon-btn" title="OSC info">i</button>
+          <button id="oscConfigToggleBtn" data-i18n-title="osc.configTitle" title="OSC Configuration">⚙</button>
+        </div>
       </div>
       <div class="osc-config-form" id="oscConfigForm">
         <div class="osc-config-row">
@@ -821,7 +1016,10 @@
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.25rem">
         <div style="font-size:12px;font-weight:600">Room Geometry</div>
-        <button id="roomGeometryToggleBtn" title="Room Geometry">▸</button>
+        <div style="display:flex;align-items:center;gap:0.35rem">
+          <button id="roomGeometryInfoBtn" type="button" class="info-icon-btn" title="Room Geometry info">i</button>
+          <button id="roomGeometryToggleBtn" title="Room Geometry">▸</button>
+        </div>
       </div>
       <div id="roomGeometrySummary" class="room-geometry-summary">
         <div class="room-geometry-summary-row">
@@ -897,21 +1095,119 @@
         <input id="loudnessToggle" type="checkbox" />
       </div>
       <div class="inline-toggle">
-        <div>adaptive resampling</div>
+        <div class="title-with-info" style="flex:1 1 auto;min-width:0">
+          <div>adaptive resampling</div>
+          <div style="display:flex;align-items:center;gap:0.35rem">
+            <button id="adaptiveResamplingInfoBtn" type="button" class="info-icon-btn" title="Adaptive resampling info">i</button>
+            <button id="adaptiveResamplingAdvancedToggleBtn" type="button" class="info-icon-btn" title="Adaptive resampling advanced settings">⚙</button>
+          </div>
+        </div>
         <input id="adaptiveResamplingToggle" type="checkbox" />
       </div>
-      <div class="meter-row">
-        <div id="latencyInfo" class="fixed-metric">latency: —</div>
-        <div class="meter-bar">
-          <div id="latencyMeterFill" class="meter-fill latency"></div>
+      <div id="adaptiveResamplingAdvancedForm" class="adaptive-advanced-form">
+        <div class="control-row" style="margin-top:0">
+          <label style="font-size:12px;white-space:nowrap">Adaptive band</label>
+          <div id="adaptiveBandIndicator" style="display:flex;align-items:center;gap:0.4rem;color:#d9ecff;font-size:12px">
+            <span id="adaptiveBandDot" style="width:0.6rem;height:0.6rem;border-radius:999px;background:rgba(255,255,255,0.25);display:inline-block"></span>
+            <span id="adaptiveBandText">—</span>
+          </div>
+        </div>
+        <div class="control-row" style="margin-top:0">
+          <label for="adaptiveKpNearInput" style="font-size:12px;white-space:nowrap">Adaptive Kp near</label>
+          <input id="adaptiveKpNearInput" class="delay-input" type="number" min="0.00000001" step="0.00000001" value="0.00001000" style="width:8rem" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label for="adaptiveKpFarInput" style="font-size:12px;white-space:nowrap">Adaptive Kp far</label>
+          <input id="adaptiveKpFarInput" class="delay-input" type="number" min="0.00000001" step="0.00000001" value="0.00002000" style="width:8rem" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label for="adaptiveNearFarThresholdInput" style="font-size:12px;white-space:nowrap">Near/far threshold</label>
+          <input id="adaptiveNearFarThresholdInput" class="delay-input" type="number" min="1" step="1" value="120" style="width:8rem" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label for="adaptiveHardCorrectionThresholdInput" style="font-size:12px;white-space:nowrap">Hard correction threshold</label>
+          <input id="adaptiveHardCorrectionThresholdInput" class="delay-input" type="number" min="0" step="1" value="0" style="width:8rem" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label for="adaptiveMeasurementSmoothingAlphaInput" style="font-size:12px;white-space:nowrap">Smoothing alpha</label>
+          <input id="adaptiveMeasurementSmoothingAlphaInput" class="delay-input" type="number" min="0" max="1" step="0.01" value="0.15" style="width:8rem" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label for="adaptiveKiInput" style="font-size:12px;white-space:nowrap">Adaptive Ki</label>
+          <input id="adaptiveKiInput" class="delay-input" type="number" min="0.00000001" step="0.00000001" value="0.00000050" style="width:8rem" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label for="adaptiveMaxAdjustInput" style="font-size:12px;white-space:nowrap">Adaptive max</label>
+          <input id="adaptiveMaxAdjustInput" class="delay-input" type="number" min="0.000001" step="0.000001" value="0.010000" style="width:8rem" />
+        </div>
+        <div class="control-row" style="margin-top:0.2rem">
+          <label for="adaptiveMaxAdjustFarInput" style="font-size:12px;white-space:nowrap">Adaptive max far</label>
+          <input id="adaptiveMaxAdjustFarInput" class="delay-input" type="number" min="0.000001" step="0.000001" value="0.020000" style="width:8rem" />
+        </div>
+        <div style="margin-top:0.3rem;display:flex;justify-content:flex-end">
+          <button id="adaptiveResamplingAdvancedApplyBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.6rem;cursor:pointer">Apply</button>
         </div>
       </div>
       <div class="control-row" style="margin-top:0.2rem">
         <label for="latencyTargetInput" style="font-size:12px;white-space:nowrap">Target latency</label>
         <input id="latencyTargetInput" class="delay-input" type="number" min="1" step="1" value="500" style="width:5.5rem" />
         <button id="latencyTargetApplyBtn" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.15rem 0.5rem;cursor:pointer">Apply</button>
+        <div style="display:flex;align-items:center;gap:0.35rem;margin-left:auto">
+          <button id="telemetryGaugesInfoBtn" type="button" class="info-icon-btn" title="Gauges info">i</button>
+          <button id="telemetryGaugesToggleBtn" type="button" class="info-icon-btn" title="Show gauges">◴</button>
+        </div>
       </div>
-      <div id="resampleRatioInfo">resample: —</div>
+      <div id="telemetryGaugesForm" class="telemetry-gauges-form">
+      <div class="meter-row">
+        <div class="meter-stack" style="grid-column: 1 / -1;">
+          <div class="meter-mini-row">
+            <div class="meter-mini-label" style="transform:translateY(-8px)">raw</div>
+            <div style="display:grid;gap:0.05rem;width:100%">
+              <div class="meter-bar">
+                <div id="latencyMeterFill" class="meter-fill latency"></div>
+                <div id="latencyRawMinMask" class="meter-range-mask" style="left:0;width:0;display:none"></div>
+                <div id="latencyRawMaxMask" class="meter-range-mask" style="right:0;width:0;display:none"></div>
+                <div id="latencyRawMinMarker" class="meter-marker min"></div>
+                <div id="latencyRawMaxMarker" class="meter-marker max"></div>
+              </div>
+              <div class="meter-subvalues">
+                <span id="latencyRawMinValue">min —</span>
+                <span id="latencyRawInfo">—</span>
+                <span id="latencyRawMaxValue">max —</span>
+              </div>
+            </div>
+          </div>
+          <div class="meter-mini-row">
+            <div class="meter-mini-label" style="transform:translateY(-8px)">ctrl</div>
+            <div style="display:grid;gap:0.05rem;width:100%">
+              <div class="meter-bar">
+                <div id="latencyCtrlMeterFill" class="meter-fill latency-ctrl"></div>
+              </div>
+              <div class="meter-subvalues">
+                <span></span>
+                <span id="latencyCtrlInfo">—</span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="meter-row" id="resampleMeterRow">
+        <div class="meter-mini-row" style="grid-column: 1 / -1;">
+          <div class="meter-mini-label" style="transform:translateY(-8px)">resample</div>
+          <div style="display:grid;gap:0.05rem;width:100%">
+            <div class="meter-bar resample-meter-shell">
+              <div class="resample-meter-center"></div>
+              <div id="resampleNegMeterFill" class="meter-fill resample-neg"></div>
+              <div id="resamplePosMeterFill" class="meter-fill resample-pos"></div>
+            </div>
+            <div id="resampleRatioInfo" style="font-size:10px;color:#b9c7d8;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;text-align:center">
+              —
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
       <div id="audioFormatInfo">audio: — / —</div>
       <div class="control-row" style="margin-top:0.3rem">
         <label for="audioSampleRateInput" style="font-size:12px;white-space:nowrap">Sample rate</label>
@@ -933,8 +1229,10 @@
           <div class="inline-toggle" style="display:flex;align-items:center;gap:0.35rem">
             <button id="trailInfoBtn" type="button" class="info-icon-btn" title="Trails info">i</button>
             <input id="trailToggle" type="checkbox" checked />
+            <button id="trailSectionToggleBtn" type="button" class="toggle-btn" style="padding:0.1rem 0.45rem;font-size:11px">▸</button>
           </div>
         </div>
+        <div id="trailSectionContent" class="conditional-params">
         <div class="control-row" style="margin-top:0.3rem">
           <label style="font-size:12px;white-space:nowrap"><span data-i18n="trail.points">Points</span> <span id="trailLengthVal">80</span></label>
           <input id="trailLengthSlider" type="range" min="10" max="300" step="10" value="80" class="gain-slider" />
@@ -942,6 +1240,7 @@
         <div class="control-row" style="margin-top:0.2rem">
           <label style="font-size:12px;white-space:nowrap"><span data-i18n="trail.duration">Duration</span> <span id="trailTtlVal">7.0s</span></label>
           <input id="trailTtlSlider" type="range" min="1.0" max="20.0" step="0.5" value="7.0" class="gain-slider" />
+        </div>
         </div>
       </div>
     </div>
@@ -965,16 +1264,27 @@
           <div style="display:flex;gap:0.35rem;align-items:center">
             <button id="importLayoutBtn" data-i18n="config.import" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.6rem;cursor:pointer">Import layout</button>
             <button id="exportLayoutBtn" data-i18n="config.export" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.6rem;cursor:pointer">Export layout</button>
-            <button id="saveConfigBtn" data-i18n="config.save" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.25);color:#d9ecff;border-radius:6px;font-size:12px;padding:0.2rem 0.6rem;cursor:pointer">Save</button>
           </div>
         </div>
       </div>
       <div class="info-section" id="vbapSection">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem">
           <div class="info-title" style="margin:0">VBAP</div>
-          <button id="vbapCartesianGridToggleBtn" type="button" class="toggle-btn" style="padding:0.1rem 0.45rem;font-size:11px">Grid</button>
+          <div style="display:flex;align-items:center;gap:0.35rem">
+            <button id="vbapCartesianGridToggleBtn" type="button" class="toggle-btn" style="padding:0.1rem 0.45rem;font-size:11px">Grid</button>
+            <button id="vbapSectionToggleBtn" type="button" class="toggle-btn" style="padding:0.1rem 0.45rem;font-size:11px">▸</button>
+          </div>
         </div>
+        <div id="vbapSectionContent" class="conditional-params">
         <div id="vbapStatus" class="vbap-status">VBAP status: —</div>
+        <div class="control-row" style="margin-top:0.25rem;grid-template-columns:1fr auto;align-items:center">
+          <label style="font-size:12px;white-space:nowrap">Mode</label>
+          <div style="display:flex;gap:0.2rem;align-items:center">
+            <button id="vbapModeAutoBtn" type="button" class="toggle-btn" style="padding:0.15rem 0.45rem;font-size:11px">Auto</button>
+            <button id="vbapModePolarBtn" type="button" class="toggle-btn" style="padding:0.15rem 0.45rem;font-size:11px">Polar</button>
+            <button id="vbapModeCartesianBtn" type="button" class="toggle-btn" style="padding:0.15rem 0.45rem;font-size:11px">Cartesian</button>
+          </div>
+        </div>
         <div class="control-row" style="margin-top:0.25rem;grid-template-columns:1fr auto;align-items:start">
           <label style="font-size:12px;white-space:nowrap">VBAP cart</label>
           <div style="display:flex;flex-direction:column;gap:0.15rem;align-items:stretch">
@@ -1008,9 +1318,14 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
       <div class="info-section" id="spreadSection">
-        <div class="info-title">Spread</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem">
+          <div class="info-title" style="margin:0">Spread</div>
+          <button id="spreadSectionToggleBtn" type="button" class="toggle-btn" style="padding:0.1rem 0.45rem;font-size:11px">▸</button>
+        </div>
+        <div id="spreadSectionContent" class="conditional-params">
         <div id="spreadInfo">spread: —° / —°</div>
         <div class="control-row" style="margin-top:0.25rem">
           <label style="font-size:12px;white-space:nowrap">Min <span id="spreadMinVal">0°</span></label>
@@ -1019,6 +1334,7 @@
         <div class="control-row" style="margin-top:0.2rem">
           <label style="font-size:12px;white-space:nowrap">Max <span id="spreadMaxVal">180°</span></label>
           <input id="spreadMaxSlider" type="range" min="0" max="180" step="1" value="180" class="gain-slider" />
+        </div>
         </div>
       </div>
       <div class="info-section" id="distanceDiffuseSection">
@@ -1060,21 +1376,22 @@
         </div>
       </div>
       <div class="info-section" id="speakersSection">
-        <div class="info-title">Speakers</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.4rem">
+          <div class="info-title" style="margin:0">Speakers</div>
+          <button id="speakerAddBtn" type="button" class="toggle-btn">+ Add</button>
+        </div>
         <div id="speakersList" class="info-list">No speakers.</div>
       </div>
-      <div class="info-section" id="speakerEditSection">
+      <div class="info-section" id="speakerEditSection" style="display:none">
         <div class="info-title" id="speakerEditTitle">Speaker Editor</div>
         <div class="editor-row" style="margin-bottom:0.35rem">
           <label>Layout</label>
           <div style="display:flex;gap:0.3rem;justify-content:flex-end">
-            <button id="speakerAddBtn" type="button" class="toggle-btn">+ Add</button>
             <button id="speakerMoveUpBtn" type="button" class="toggle-btn">Up</button>
             <button id="speakerMoveDownBtn" type="button" class="toggle-btn">Down</button>
             <button id="speakerRemoveBtn" type="button" class="toggle-btn">Delete</button>
           </div>
         </div>
-        <div id="speakerEditEmpty" style="font-size:12px;color:rgba(255,255,255,0.7)">Select a speaker.</div>
         <div id="speakerEditBody" class="editor-body" style="display:none">
           <div class="editor-meta">
             <div><strong>Name:</strong></div>
@@ -1127,6 +1444,10 @@
       </div>
     </div>
 
+    <div class="save-footer">
+      <button id="saveConfigBtn" data-i18n="config.save" class="save-footer-button">Save</button>
+    </div>
+
     <div id="distanceDiffuseInfoModal" class="info-modal" aria-hidden="true">
       <div class="info-modal-card">
         <div class="info-modal-title">Distance Diffuse</div>
@@ -1168,6 +1489,66 @@
         </div>
         <div class="info-modal-actions">
           <button id="trailInfoCloseBtn" type="button" class="toggle-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="oscInfoModal" class="info-modal" aria-hidden="true">
+      <div class="info-modal-card">
+        <div class="info-modal-title">OSC</div>
+        <div class="info-modal-text">
+          <strong>Host</strong>: target host used for OSC communication.<br /><br />
+          <strong>GSRD Port</strong>: port where `gsrd` sends state and receives control.<br /><br />
+          <strong>Listen Port</strong>: local port used by the visualizer to receive OSC. `0` lets the system choose one automatically.
+        </div>
+        <div class="info-modal-actions">
+          <button id="oscInfoCloseBtn" type="button" class="toggle-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="roomGeometryInfoModal" class="info-modal" aria-hidden="true">
+      <div class="info-modal-card">
+        <div class="info-modal-title">Room Geometry</div>
+        <div class="info-modal-text">
+          Room geometry defines the physical room dimensions used to map normalized scene coordinates to meters.<br /><br />
+          The <strong>master axis</strong> sets the reference scale in meters per unit, and the other axes follow through their ratios.<br /><br />
+          These values affect distance-based processing and the spatial interpretation of the 3D scene.
+        </div>
+        <div class="info-modal-actions">
+          <button id="roomGeometryInfoCloseBtn" type="button" class="toggle-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="adaptiveResamplingInfoModal" class="info-modal" aria-hidden="true">
+      <div class="info-modal-card">
+        <div class="info-modal-title">Adaptive Resampling</div>
+        <div class="info-modal-text">
+          These parameters tune how fast the local resampler recenters the audio buffer on the requested latency target.<br /><br />
+          <strong>Kp near</strong>: proportional gain used when the buffer is close to target. Keep this conservative to avoid jitter.<br />
+          <strong>Kp far</strong>: proportional gain used when the error is large. Increase this for faster recovery after drift or disruption.<br />
+          <strong>Near/far threshold</strong>: error threshold, in milliseconds of buffer drift, where control switches from near to far gain.<br />
+          <strong>Smoothing alpha</strong>: source-side measurement smoothing used by the controller and hard correction. Lower values are calmer, higher values react faster.<br />
+          <strong>Ki</strong>: integral gain. Corrects steady-state bias and clock mismatch, but too much can make recovery sluggish or unstable.<br />
+          <strong>Adaptive max</strong>: maximum correction ratio clamp. Higher values recover faster, but can sound more aggressive.
+        </div>
+        <div class="info-modal-actions">
+          <button id="adaptiveResamplingInfoCloseBtn" type="button" class="toggle-btn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="telemetryGaugesInfoModal" class="info-modal" aria-hidden="true">
+      <div class="info-modal-card">
+        <div class="info-modal-title">Latency Gauges</div>
+        <div class="info-modal-text">
+          <strong>raw</strong>: instantaneous measured latency. The min/max markers show the recent sliding window.<br /><br />
+          <strong>ctrl</strong>: smoothed latency used internally by the adaptive controller.<br /><br />
+          <strong>resample</strong>: current adaptive resampling correction around the neutral 1.0 ratio. Left means slower, right means faster.
+        </div>
+        <div class="info-modal-actions">
+          <button id="telemetryGaugesInfoCloseBtn" type="button" class="toggle-btn">Close</button>
         </div>
       </div>
     </div>

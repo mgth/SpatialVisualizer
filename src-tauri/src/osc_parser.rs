@@ -214,6 +214,8 @@ pub enum OscEvent {
     StateLatency { value: f64 },
     #[serde(rename = "state:latency:instant")]
     StateLatencyInstant { value: f64 },
+    #[serde(rename = "state:latency:control")]
+    StateLatencyControl { value: f64 },
     #[serde(rename = "state:latency:target")]
     StateLatencyTarget { value: f64 },
     #[serde(rename = "state:resample_ratio")]
@@ -234,6 +236,10 @@ pub enum OscEvent {
     StateVbapCartYSize { value: u32 },
     #[serde(rename = "state:vbap:cart:z_size")]
     StateVbapCartZSize { value: u32 },
+    #[serde(rename = "state:vbap:table_mode")]
+    StateVbapTableMode { value: String },
+    #[serde(rename = "state:vbap:effective_mode")]
+    StateVbapEffectiveMode { value: String },
     #[serde(rename = "state:vbap:polar:azimuth_resolution")]
     StateVbapPolarAzimuthResolution { value: u32 },
     #[serde(rename = "state:vbap:polar:elevation_resolution")]
@@ -248,6 +254,24 @@ pub enum OscEvent {
     StateSpeakersRecomputing { enabled: bool },
     #[serde(rename = "state:adaptive_resampling")]
     StateAdaptiveResampling { enabled: bool },
+    #[serde(rename = "state:adaptive_resampling:kp_near")]
+    StateAdaptiveResamplingKpNear { value: f64 },
+    #[serde(rename = "state:adaptive_resampling:kp_far")]
+    StateAdaptiveResamplingKpFar { value: f64 },
+    #[serde(rename = "state:adaptive_resampling:ki")]
+    StateAdaptiveResamplingKi { value: f64 },
+    #[serde(rename = "state:adaptive_resampling:max_adjust")]
+    StateAdaptiveResamplingMaxAdjust { value: f64 },
+    #[serde(rename = "state:adaptive_resampling:max_adjust_far")]
+    StateAdaptiveResamplingMaxAdjustFar { value: f64 },
+    #[serde(rename = "state:adaptive_resampling:near_far_threshold_ms")]
+    StateAdaptiveResamplingNearFarThresholdMs { value: f64 },
+    #[serde(rename = "state:adaptive_resampling:hard_correction_threshold_ms")]
+    StateAdaptiveResamplingHardCorrectionThresholdMs { value: f64 },
+    #[serde(rename = "state:adaptive_resampling:measurement_smoothing_alpha")]
+    StateAdaptiveResamplingMeasurementSmoothingAlpha { value: f64 },
+    #[serde(rename = "state:adaptive_resampling:band")]
+    StateAdaptiveResamplingBand { value: String },
     #[serde(rename = "state:config:saved")]
     StateConfigSaved { saved: bool },
 }
@@ -384,6 +408,9 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Optio
         (3, "latency_instant") => Some(OscEvent::StateLatencyInstant {
             value: to_number(args[0])?,
         }),
+        (3, "latency_control") => Some(OscEvent::StateLatencyControl {
+            value: to_number(args[0])?,
+        }),
         (3, "latency_target") => Some(OscEvent::StateLatencyTarget {
             value: to_number(args[0])?,
         }),
@@ -457,6 +484,14 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Optio
                 _ => None,
             }
         }
+        (4, "vbap") if parts[3] == "table_mode" => {
+            let value = raw_args.first().and_then(unwrap_string)?;
+            Some(OscEvent::StateVbapTableMode { value })
+        }
+        (4, "vbap") if parts[3] == "effective_mode" => {
+            let value = raw_args.first().and_then(unwrap_string)?;
+            Some(OscEvent::StateVbapEffectiveMode { value })
+        }
         (5, "vbap") if parts[3] == "polar" => {
             match parts[4] {
                 "azimuth_resolution" => {
@@ -485,6 +520,42 @@ fn parse_gsrd_state(parts: &[&str], args: &[f64], raw_args: &[OscType]) -> Optio
         (3, "adaptive_resampling") => Some(OscEvent::StateAdaptiveResampling {
             enabled: to_number(args[0])? != 0.0,
         }),
+        (4, "adaptive_resampling") => match parts[3] {
+            "kp_near" => Some(OscEvent::StateAdaptiveResamplingKpNear {
+                value: to_number(args[0])?,
+            }),
+            "kp_far" => Some(OscEvent::StateAdaptiveResamplingKpFar {
+                value: to_number(args[0])?,
+            }),
+            "ki" => Some(OscEvent::StateAdaptiveResamplingKi {
+                value: to_number(args[0])?,
+            }),
+            "max_adjust" => Some(OscEvent::StateAdaptiveResamplingMaxAdjust {
+                value: to_number(args[0])?,
+            }),
+            "max_adjust_far" => Some(OscEvent::StateAdaptiveResamplingMaxAdjustFar {
+                value: to_number(args[0])?,
+            }),
+            "near_far_threshold_ms" => {
+                Some(OscEvent::StateAdaptiveResamplingNearFarThresholdMs {
+                    value: to_number(args[0])?,
+                })
+            }
+            "hard_correction_threshold_ms" => {
+                Some(OscEvent::StateAdaptiveResamplingHardCorrectionThresholdMs {
+                    value: to_number(args[0])?,
+                })
+            }
+            "measurement_smoothing_alpha" => {
+                Some(OscEvent::StateAdaptiveResamplingMeasurementSmoothingAlpha {
+                    value: to_number(args[0])?,
+                })
+            }
+            "band" => Some(OscEvent::StateAdaptiveResamplingBand {
+                value: unwrap_string(raw_args.first()?)?,
+            }),
+            _ => None,
+        },
         (4, "config") if parts[3] == "saved" => Some(OscEvent::StateConfigSaved {
             saved: to_number(args[0])? != 0.0,
         }),

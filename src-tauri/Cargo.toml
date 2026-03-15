@@ -14,6 +14,7 @@ serde_json = "1"
 rosc = "0.10"
 tokio = { version = "1", features = ["sync", "rt", "macros"] }
 log = "0.4"
+image = { version = "0.25", default-features = false, features = ["png"] }
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

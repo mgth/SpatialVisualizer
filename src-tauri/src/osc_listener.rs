@@ -910,6 +910,16 @@ fn handle_event(ev: OscEvent, app: &AppHandle, state: &Arc<Mutex<AppState>>) {
                     removed_ids,
                 )
             }
+            OscEvent::StateLatencyControl { value } => {
+                s.latency_control_ms = Some(value.round() as i64);
+                (
+                    Some((
+                        "latency:control",
+                        serde_json::json!({ "value": s.latency_control_ms }),
+                    )),
+                    removed_ids,
+                )
+            }
             OscEvent::StateLatencyTarget { value } => {
                 s.latency_target_ms = Some(value.round() as i64);
                 s.latency_ms = Some(value.round() as i64);
@@ -997,6 +1007,20 @@ fn handle_event(ev: OscEvent, app: &AppHandle, state: &Arc<Mutex<AppState>>) {
                     removed_ids,
                 )
             }
+            OscEvent::StateVbapTableMode { value } => {
+                s.vbap_mode.selection = Some(value.clone());
+                (
+                    Some(("vbap:table_mode", serde_json::json!({ "value": value }))),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateVbapEffectiveMode { value } => {
+                s.vbap_mode.effective_mode = Some(value.clone());
+                (
+                    Some(("vbap:effective_mode", serde_json::json!({ "value": value }))),
+                    removed_ids,
+                )
+            }
             OscEvent::StateVbapPolarAzimuthResolution { value } => {
                 s.vbap_polar.azimuth_resolution = Some(value);
                 (
@@ -1060,6 +1084,96 @@ fn handle_event(ev: OscEvent, app: &AppHandle, state: &Arc<Mutex<AppState>>) {
                     Some((
                         "adaptive_resampling",
                         serde_json::json!({ "enabled": if enabled { 1 } else { 0 } }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingKpNear { value } => {
+                s.adaptive_resampling_kp_near = Some(value);
+                (
+                    Some((
+                        "adaptive_resampling:kp_near",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingKpFar { value } => {
+                s.adaptive_resampling_kp_far = Some(value);
+                (
+                    Some((
+                        "adaptive_resampling:kp_far",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingKi { value } => {
+                s.adaptive_resampling_ki = Some(value);
+                (
+                    Some((
+                        "adaptive_resampling:ki",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingMaxAdjust { value } => {
+                s.adaptive_resampling_max_adjust = Some(value);
+                (
+                    Some((
+                        "adaptive_resampling:max_adjust",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingMaxAdjustFar { value } => {
+                s.adaptive_resampling_max_adjust_far = Some(value);
+                (
+                    Some((
+                        "adaptive_resampling:max_adjust_far",
+                        serde_json::json!({ "value": value }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingNearFarThresholdMs { value } => {
+                s.adaptive_resampling_near_far_threshold_ms = Some(value.round() as i64);
+                (
+                    Some((
+                        "adaptive_resampling:near_far_threshold_ms",
+                        serde_json::json!({ "value": s.adaptive_resampling_near_far_threshold_ms }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingHardCorrectionThresholdMs { value } => {
+                s.adaptive_resampling_hard_correction_threshold_ms = Some(value.round() as i64);
+                (
+                    Some((
+                        "adaptive_resampling:hard_correction_threshold_ms",
+                        serde_json::json!({ "value": s.adaptive_resampling_hard_correction_threshold_ms }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingMeasurementSmoothingAlpha { value } => {
+                s.adaptive_resampling_measurement_smoothing_alpha = Some(value);
+                (
+                    Some((
+                        "adaptive_resampling:measurement_smoothing_alpha",
+                        serde_json::json!({ "value": s.adaptive_resampling_measurement_smoothing_alpha }),
+                    )),
+                    removed_ids,
+                )
+            }
+            OscEvent::StateAdaptiveResamplingBand { value } => {
+                s.adaptive_resampling_band = Some(value.clone());
+                (
+                    Some((
+                        "adaptive_resampling:band",
+                        serde_json::json!({ "value": value }),
                     )),
                     removed_ids,
                 )

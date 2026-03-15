@@ -225,6 +225,28 @@ function parseGsrdStateMessage(parts, args) {
       enabled: value !== 0
     };
   }
+  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'adaptive_resampling') {
+    const value = toNumber(args[0]);
+    if (value === null) {
+      return null;
+    }
+    if (parts[3] === 'kp_near') {
+      return { type: 'state:adaptive_resampling:kp_near', value };
+    }
+    if (parts[3] === 'kp_far') {
+      return { type: 'state:adaptive_resampling:kp_far', value };
+    }
+    if (parts[3] === 'ki') {
+      return { type: 'state:adaptive_resampling:ki', value };
+    }
+    if (parts[3] === 'max_adjust') {
+      return { type: 'state:adaptive_resampling:max_adjust', value };
+    }
+    if (parts[3] === 'near_far_threshold_ms') {
+      return { type: 'state:adaptive_resampling:near_far_threshold_ms', value };
+    }
+    return null;
+  }
 
   if (parts.length === 3 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'gain') {
     const value = toNumber(args[0]);
@@ -393,6 +415,22 @@ function parseGsrdStateMessage(parts, args) {
       if (value === null) return null;
       return { type: `state:distance_diffuse:${key}`, value };
     }
+  }
+
+  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'vbap' && parts[3] === 'table_mode') {
+    const value = typeof args[0] === 'string' ? args[0].trim().toLowerCase() : '';
+    if (!['auto', 'polar', 'cartesian'].includes(value)) {
+      return null;
+    }
+    return { type: 'state:vbap:table_mode', value };
+  }
+
+  if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'vbap' && parts[3] === 'effective_mode') {
+    const value = typeof args[0] === 'string' ? args[0].trim().toLowerCase() : '';
+    if (!['polar', 'cartesian'].includes(value)) {
+      return null;
+    }
+    return { type: 'state:vbap:effective_mode', value };
   }
 
   if (parts.length === 4 && parts[0] === 'gsrd' && parts[1] === 'state' && parts[2] === 'config' && parts[3] === 'saved') {

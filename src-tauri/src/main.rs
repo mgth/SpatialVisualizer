@@ -193,6 +193,103 @@ fn control_latency_target(state: State<SharedState>, value: i32) {
 }
 
 #[tauri::command]
+fn control_adaptive_resampling_kp_near(state: State<SharedState>, value: f32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/adaptive_resampling/kp_near".to_string(),
+            value: value.max(0.00000001),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_adaptive_resampling_kp_far(state: State<SharedState>, value: f32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/adaptive_resampling/kp_far".to_string(),
+            value: value.max(0.00000001),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_adaptive_resampling_ki(state: State<SharedState>, value: f32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/adaptive_resampling/ki".to_string(),
+            value: value.max(0.00000001),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_adaptive_resampling_max_adjust(state: State<SharedState>, value: f32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/adaptive_resampling/max_adjust".to_string(),
+            value: value.max(0.000001),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_adaptive_resampling_max_adjust_far(state: State<SharedState>, value: f32) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/adaptive_resampling/max_adjust_far".to_string(),
+            value: value.max(0.000001),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_adaptive_resampling_near_far_threshold_ms(
+    state: State<SharedState>,
+    value: i32,
+) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/adaptive_resampling/near_far_threshold_ms".to_string(),
+            value: value.max(1),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_adaptive_resampling_hard_correction_threshold_ms(
+    state: State<SharedState>,
+    value: i32,
+) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendInt {
+            address: "/gsrd/control/adaptive_resampling/hard_correction_threshold_ms".to_string(),
+            value: value.max(0),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_adaptive_resampling_measurement_smoothing_alpha(
+    state: State<SharedState>,
+    value: f32,
+) {
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendFloat {
+            address: "/gsrd/control/adaptive_resampling/measurement_smoothing_alpha".to_string(),
+            value: value.clamp(0.0, 1.0),
+        },
+    );
+}
+
+#[tauri::command]
 fn control_spread_min(state: State<SharedState>, value: f32) {
     let clamped = value.max(0.0).min(1.0);
     send_control(
@@ -280,6 +377,21 @@ fn control_vbap_cart_z_size(state: State<SharedState>, value: i32) {
         OscControlMsg::SendInt {
             address: "/gsrd/control/vbap/cart/z_size".to_string(),
             value: value.max(1),
+        },
+    );
+}
+
+#[tauri::command]
+fn control_vbap_table_mode(state: State<SharedState>, mode: String) {
+    let normalized = mode.trim().to_ascii_lowercase();
+    if !matches!(normalized.as_str(), "auto" | "polar" | "cartesian") {
+        return;
+    }
+    send_control(
+        &state.osc_tx,
+        OscControlMsg::SendString {
+            address: "/gsrd/control/vbap/table_mode".to_string(),
+            value: normalized,
         },
     );
 }
@@ -589,6 +701,16 @@ fn control_audio_sample_rate(state: State<SharedState>, sample_rate: i32) {
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                let decoded = image::load_from_memory(include_bytes!("../icons/icon.png"))
+                    .expect("failed to decode window icon")
+                    .into_rgba8();
+                let (width, height) = decoded.dimensions();
+                let window_icon =
+                    tauri::image::Image::new_owned(decoded.into_raw(), width, height);
+                let _ = window.set_icon(window_icon);
+            }
+
             let config_dir = app
                 .path()
                 .app_config_dir()
@@ -647,6 +769,14 @@ fn main() {
             control_loudness,
             control_adaptive_resampling,
             control_latency_target,
+            control_adaptive_resampling_kp_near,
+            control_adaptive_resampling_kp_far,
+            control_adaptive_resampling_ki,
+            control_adaptive_resampling_max_adjust,
+            control_adaptive_resampling_max_adjust_far,
+            control_adaptive_resampling_near_far_threshold_ms,
+            control_adaptive_resampling_hard_correction_threshold_ms,
+            control_adaptive_resampling_measurement_smoothing_alpha,
             control_spread_min,
             control_spread_max,
             control_spread_from_distance,
@@ -655,6 +785,7 @@ fn main() {
             control_vbap_cart_x_size,
             control_vbap_cart_y_size,
             control_vbap_cart_z_size,
+            control_vbap_table_mode,
             control_vbap_polar_azimuth_resolution,
             control_vbap_polar_elevation_resolution,
             control_vbap_polar_distance_res,
